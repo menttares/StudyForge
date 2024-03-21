@@ -1,0 +1,240 @@
+@model List<ApplicationData>
+
+<div>
+    <div class="application-buttons">
+        <div class="application-buttons">
+            <select name="statusId">
+                <option value="1">Принято</option>
+                <option value="2">Отклонено</option>
+                <option value="3">В ожидании</option>
+            </select>
+            <div>
+                <button id="application_search">искать</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div id="application-main" class="container-application">
+    @foreach (var apl in Model)
+    {
+        <div class="application" id="apl-@apl.ApplicationId">
+            <div class="application__title">@apl.FirstName</div>
+            <div class="application__row">
+                <div class="application__col">телефон</div>
+                <div class="application__col">@apl.Phone </div>
+            </div>
+            <div class="application__row">
+                <div class="application__col">дата рождения</div>
+                <div class="application__col">@apl.Birthday </div>
+            </div>
+            <div class="application__buttons mt-3">
+                <div class="button event-clik" data-status="1" data-id="@apl.ApplicationId">принять</div>
+                <div class="button event-clik" data-status="2" data-id="@apl.ApplicationId">отклонить</div>
+                <div class="button event-clik" data-status="3" data-id="@apl.ApplicationId">в ожидании</div>
+            </div>
+        </div>
+    }
+</div>
+
+<script>
+    $(document).ready(function () {
+        $(".event-clik").each(function () {
+            $(this).click(function () {
+                var statusId = $(this).data("status");
+                var applicationId = $(this).data("id");
+
+                $.ajax({
+                    type: "POST",
+                    url: "/ManagementCourse/ApplicationChangeStatus", // Замените "YourControllerName" на имя вашего контроллера
+                    data: {
+                        statusId: statusId,
+                        ApplicationID: applicationId
+                    },
+                    success: function (response) {
+                        console.log("Status changed successfully");
+
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error:", error);
+                        // Здесь можно добавить обработку ошибок
+                    }
+                });
+            });
+        });
+    });
+
+    $(".event-clik").click(function () {
+        var statusId = $(this).data("status");
+        var applicationId = $(this).data("id");
+
+        $.ajax({
+            type: "POST",
+            url: "/ManagementCourse/ApplicationChangeStatus", // Замените "YourControllerName" на имя вашего контроллера
+            data: {
+                statusId: statusId,
+                ApplicationID: applicationId
+            },
+            success: function (response) {
+                console.log("Status changed successfully");
+
+            },
+            error: function (xhr, status, error) {
+                console.error("Error:", error);
+                // Здесь можно добавить обработку ошибок
+            }
+        });
+    });
+
+    $(".event-clik").each(function () {
+        $(this).click(function () {
+            var statusId = $(this).data("status");
+            var applicationId = $(this).data("id");
+
+            $.ajax({
+                type: "POST",
+                url: "/ManagementCourse/ApplicationChangeStatus", // Замените "YourControllerName" на имя вашего контроллера
+                data: {
+                    statusId: statusId,
+                    ApplicationID: applicationId
+                },
+                success: function (response) {
+                    console.log("Status changed successfully");
+
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error:", error);
+                    // Здесь можно добавить обработку ошибок
+                }
+            });
+        });
+    });
+
+
+    statusForm = null;
+    $("#application_search").click(function (e) {
+
+        var idData = $("select[name='statusId']").val();
+
+        statusForm = idData;
+        $.ajax({
+            type: "POST",
+            url: "/ManagementCourse/Application", // URL адрес, на который отправляем данные
+            data: {
+                statusId: idData
+            }, // Данные формы
+            success: function (response) {
+                loadData(response);
+            },
+            error: function (xhr, status, error) {
+                // Обработка ошибки
+                console.error("Error:", error);
+            },
+        });
+
+    });
+
+
+    function loadData(dataJson) {
+        let html = $("#application-main");
+        html.empty(); // Очищаем содержимое контейнера
+
+        var data = JSON.parse(dataJson);
+        console.log(data);
+
+        data.forEach(function (apl) {
+            let div = createaApl(apl);
+            html.append(div); // Добавляем новый элемент в контейнер
+        });
+
+        $(".event-clik").each(function () {
+            $(this).click(function (e) {
+                e.preventDefault();
+                var statusId = $(this).data("status");
+                var applicationId = $(this).data("id");
+
+                $.ajax({
+                    type: "POST",
+                    url: "/ManagementCourse/ApplicationChangeStatus", // Замените "YourControllerName" на имя вашего контроллера
+                    data: {
+                        statusId: statusId,
+                        ApplicationID: applicationId
+                    },
+                    success: function (response) {
+                        console.log("Status changed successfully");
+                        
+                        console.log(statusForm);
+                        console.log(statusId);
+                        if (statusId != statusForm) {
+                            $(`#apl- ${applicationId}`).css("display","none");
+                        }
+                        $("#application_search").click();
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error:", error);
+                        // Здесь можно добавить обработку ошибок
+                    }
+                });
+            });
+        });
+    }
+
+
+
+
+    function createaApl(apl) {
+        // Создаем основной элемент application
+        var applicationDiv = $("<div>").addClass("application");
+
+        // Создаем элемент для заголовка
+        var titleDiv = $("<div>").addClass("application__title").text(apl.FirstName);
+        applicationDiv.append(titleDiv);
+
+        // Создаем первый ряд элементов
+        var row1Div = $("<div>").addClass("application__row");
+
+        // Добавляем столбец для телефона
+        var phoneColDiv = $("<div>").addClass("application__col").text("телефон");
+        row1Div.append(phoneColDiv);
+
+        // Добавляем столбец с номером телефона
+        var phoneValueColDiv = $("<div>").addClass("application__col").text(apl.Phone);
+        row1Div.append(phoneValueColDiv);
+
+        applicationDiv.append(row1Div);
+
+        // Создаем второй ряд элементов
+        var row2Div = $("<div>").addClass("application__row");
+
+        // Добавляем столбец для даты рождения
+        var birthdayColDiv = $("<div>").addClass("application__col").text("дата рождения");
+        row2Div.append(birthdayColDiv);
+
+        // Добавляем столбец с датой рождения
+        var birthdayValueColDiv = $("<div>").addClass("application__col").text(apl.Birthday);
+        row2Div.append(birthdayValueColDiv);
+
+        applicationDiv.append(row2Div);
+
+        // Создаем блок кнопок
+        var buttonsDiv = $("<div>").addClass("application__buttons mt-3");
+
+        // Создаем кнопку "принять"
+        var acceptButton = $("<div>").addClass("button event-clik").attr("data-id", apl.ApplicationId).attr("data-status", 1).text("принять");
+        buttonsDiv.append(acceptButton);
+
+        // Создаем кнопку "отклонить"
+        var rejectButton = $("<div>").addClass("button event-clik").attr("data-id", apl.ApplicationId).attr("data-status", 2).text("отклонить");
+        buttonsDiv.append(rejectButton);
+
+        // Создаем кнопку "в ожидании"
+        var pendingButton = $("<div>").addClass("button event-clik").attr("data-id", apl.ApplicationId).attr("data-status", 3).text("в ожидании");
+        buttonsDiv.append(pendingButton);
+
+        applicationDiv.append(buttonsDiv);
+
+        return applicationDiv;
+    }
+
+</script>

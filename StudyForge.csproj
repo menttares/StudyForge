@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.2" />
+    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.4.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Npgsql" Version="8.0.2" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Watch Include="**\*.cshtml" />
+    <Watch Include="**\*.html" />
+    <Watch Include="**\*.css" />
+    <Watch Include="**\*.js" />
+    <Watch Include="**\*.jpeg" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,47 @@
+@model RegisterViewModel
+
+@{
+    ViewData["Title"] = "Регистрация";
+}
+
+@using (Html.BeginForm("Register", "Auth", FormMethod.Post, new { @class = "form-main", @name = "form-main" }))
+{
+    @Html.LabelFor(model => model.Name, "ФИО")
+    @Html.TextBoxFor(model => model.Name, new { @class = "form-control", placeholder = "Введите имя" })
+    @Html.ValidationMessageFor(model => model.Name)
+    <br>
+    @Html.LabelFor(model => model.Email, "Почта")
+    @Html.TextBoxFor(model => model.Email, new { @class = "form-control", placeholder = "Введите почту" })
+    @Html.ValidationMessageFor(model => model.Email)
+    <br>
+    @Html.LabelFor(model => model.Password, "Пароль")
+    @Html.PasswordFor(model => model.Password, new { @class = "form-control", placeholder = "Введите пароль" })
+    @Html.ValidationMessageFor(model => model.Password)
+    <br>
+    @Html.LabelFor(model => model.Phone, "Телефон")
+    @Html.TextBoxFor(model => model.Phone, new { @class = "form-control", placeholder = "Введите телефон" })
+    @Html.ValidationMessageFor(model => model.Phone)
+    <br>
+    <div>
+    @Html.CheckBoxFor(model => model.IsOrganization)
+    <span>Юридическое лицо?</span>
+</div>
+    <br>
+    <br>
+    @Html.LabelFor(model => model.LicenseNumber, "Лицензиция")
+    @Html.TextBoxFor(model => model.LicenseNumber, new { @class = "form-control", placeholder = "Введите номер лицензии" })
+    @Html.ValidationMessageFor(model => model.LicenseNumber)
+    <br>
+    <div id="error-message">
+
+</div>
+
+    <div class="auth-butoon">
+    <input class="button" type="submit" value="отправить" />
+</div>
+
+
+    <div class="auth-links">
+    <a asp-controller="Auth" asp-action="Authenticate">Есть аккаунт?</a>
+</div>
+}

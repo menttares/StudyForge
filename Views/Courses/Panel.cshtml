@@ -1,0 +1,97 @@
+﻿@{
+    ViewData["Title"] = "Обучение";
+
+    var sections = ViewData["Sections"] as List<SectionModel>;
+}
+
+
+<div class="catalog mt-5">
+    <div class="catalog__title">Обучение</div>
+    <div class="catalog-container">
+        @foreach (var section_p in sections) {
+            <div class="catalog-container__option" data-id="@section_p.id">@section_p.name </div>
+        }
+
+    </div>
+</div>
+
+
+<div class="filter mt-5">
+    <div class="filter__title">Фильтер</div>
+    <form class="filter-container" name="search">
+        <div class="filter-container__input-block">
+            <input name="searchStr" class="filter-input" type="text" placeholder="Поиск..">
+        </div>
+        <div class="filter-container__settings">
+            <div class="filter-setting">
+                <div class="filter-setting__title">цена</div>
+                <div class="filter-setting__container-input">
+                    <input name="startPrice" class="filter-setting__input" step="0.01" type="number" placeholder="от">
+                    <input name="endPrice" class="filter-setting__input" step="0.01" type="number" placeholder="до">
+                </div>
+            </div>
+            <div class="filter-setting">
+                <div class="filter-setting__title">дата начала набора</div>
+                <div class="filter-setting__container-input">
+                    <input name="startDate" class="filter-setting__input" type="date" placeholder="от">
+
+                </div>
+            </div>
+            <div class="filter-setting">
+                <div class="filter-setting__title">форма обучения</div>
+                <div class="filter-setting__container-input">
+                    <select name="idFormStudy">
+                        <option value="">Не важно</option>
+                        <option value="1">Очная</option>
+                        <option value="2">Дистанционная</option>
+                    </select>
+                </div>
+            </div>
+            <div class="filter-container__submit-block">
+                <button id="search">искать</button>
+            </div>
+        </div>
+    </form>
+
+</div>
+
+
+
+<div id="main-content" class="mt-5">
+    @* <div class="course">Z
+        <div class="course__title">Веб-дизайна</div>
+        <div class="course__description">описание описание описание</div>
+
+        <div class="course-table">
+            <div class="course-table__row">
+                <div class="course-table__col col-bold">учебные дни:</div>
+                <div class="course-table__col">10</div>
+            </div>
+            <div class="course-table__row">
+                <div class="course-table__col col-bold">форма обучения:</div>
+                <div class="course-table__col">10</div>
+            </div>
+            <div class="course-table__row">
+                <div class="course-table__col col-bold">длительность:</div>
+                <div class="course-table__col">10</div>
+            </div>
+            <div class="course-table__row">
+                <div class="course-table__col col-bold">дата страта набора:</div>
+                <div class="course-table__col">10</div>
+            </div>
+        </div>
+        <div class="course-price__container">
+            <div class="course-price__blok">
+                <div class="price-flex">
+                    <div class="course-price__title">Цена</div>
+                    <div class="course-price__currency"><span>750</span> <span>BYN</span></div>
+                </div>
+                <div class="course-price__subtitle">полная стоимость</div>
+            </div>
+        </div>
+        <div class="course-organizer">
+            <div class="course-organizer__title">Организатор</div>
+            <div class="course-organizer__subtitle">препадаватель</div>
+        </div>
+    </div> *@
+</div>

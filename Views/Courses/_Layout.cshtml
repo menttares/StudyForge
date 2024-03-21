@@ -1,0 +1,61 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/StudyForge.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/welcomeCarousel.css" asp-append-version="true" />
+
+    <link rel="stylesheet" href="~/lib/bootstrap-icons-1.11.3/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="~/css/courses.css" />
+</head>
+
+<body>
+
+
+    <div class="header">
+        <div class="header_logo-container">
+            <div class="header__logo-img-block">
+                <img class="header__logo-img" src="/images/logo.png">
+            </div>
+            <div class="header__text-container">
+                <span class="header__logo-text">study</span><span class="header__logo-text color-blue">forge</span>
+            </div>
+        </div>
+        <nav class="header-nav">
+            <a class="header-nav__link" asp-action="Index" asp-controller="Home">Главная</a>
+            <a class="header-nav__link" asp-action="" asp-controller="Courses">Обучение</a>
+            <a class="header-nav__link" href="#">О нас</a>
+            <a class="header-nav__link" asp-action="Main" asp-controller="ManagementCourse">личный кабинет</a>
+        </nav>
+    </div>
+
+
+    <main role="main" class="pb-3">
+        <div class="container">
+            @RenderBody()
+        </div>
+    </main>
+
+
+    <footer class="footer text-muted">
+
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/search.js" asp-append-version="true"></script>
+    <script src="~/js/course.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+<style>
+    .container {
+        margin-top: 100px;
+    }
+</style>
+
+</html>

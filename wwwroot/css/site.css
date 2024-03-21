@@ -1,0 +1,57 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+  font-family: 'Montserrat';
+}
+
+
+
+
+
+/* TODO: вынесети css подключения шрифта в новый файл */
+/* Подключение обычного Montserrat */
+@font-face {
+  font-family: 'Montserrat';
+  src: url('/fonts/montserrat/Montserrat-Regular.ttf') format('truetype');
+}
+
+/* Подключение жирного начертания Montserrat */
+@font-face {
+  font-family: 'Montserrat';
+  src: url('/fonts/montserrat/Montserrat-Bold.ttf') format('truetype');
+  font-weight: bold; /* Указание, что это жирное начертание */
+}
+
+/* Подключение курсивного начертания Montserrat */
+@font-face {
+  font-family: 'Montserrat';
+  src: url('/fonts/montserrat/Montserrat-Italic.ttf') format('truetype');
+  font-style: italic; /* Указание, что это курсивное начертание */
+}
+
+/* Подключение жирного курсивного начертания Montserrat */
+@font-face {
+  font-family: 'Montserrat';
+  src: url('/fonts/montserrat/Montserrat-BoldItalic.ttf') format('truetype');
+  font-weight: bold; /* Указание, что это жирное начертание */
+  font-style: italic; /* Указание, что это курсивное начертание */
+}
