@@ -1,0 +1,303 @@
+@{
+    List<StudyGroup> studyGroups = ViewData["studyGroups"] as List<StudyGroup>;
+    UserProfileInfo userProfileInfo = ViewData["userProfileInfo"] as UserProfileInfo;
+    List<ProgramCourse> programs = ViewData["program"] as List<ProgramCourse>;
+    bool isAdmin = User.IsInRole("admin");
+    bool isBannedCourse = (bool)ViewData["isBannedCourse"];
+}
+@model Course
+
+
+
+<div class="container">
+    <div class="row">
+        <!-- 1 блок: Описание курса -->
+        <div class="col-md-6">
+            <h2>@Model.CourseName</h2>
+            <p>@Model.CourseDescription</p>
+            <p>Дата создания: @Model.CourseCreatedAt.ToShortDateString()</p>
+            <p>Подкатегория курса: @Model.SectionName</p>
+            @if (isAdmin)
+            {
+
+                if (isBannedCourse)
+                {
+                    <button class="btn btn-success" data-toggle="modal" data-target="#unbanModal">Разблокировать</button>
+                }
+                else
+                {
+                    <button class="btn btn-danger" data-toggle="modal" data-target="#banModal">Заблокировать</button>
+                }
+            }
+
+        </div>
+
+        <!-- 2 блок: Учебные группы -->
+        <div class="col-md-6">
+            <h2>Учебные группы</h2>
+            <div class="d-flex flex-column">
+                @foreach (var group in studyGroups)
+                {
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">Учебная группа</h5>
+                            <p class="card-text">Набор: @group.AcceptedApplicationsCount / @group.Enrollment</p>
+                            <p class="card-text">Дата начала: @group.StartDate.ToShortDateString()</p>
+                            <p class="card-text">Цена: @group.Price</p>
+                            <!-- Добавьте другие поля для описания учебной группы -->
+                            <button class="btn btn-primary btn-record trigger-modal" data-id="@group.Id" data-toggle="modal"
+                                data-target="#contactModal">Записаться</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- 3 блок: Описание создателя курса -->
+    <div class="row mt-5">
+        <div class="col-md-12">
+            <h2>Создатель курса</h2>
+            <p>Имя: @userProfileInfo.Name</p>
+            <p>Специализация: @userProfileInfo.Specialization</p>
+            <p>Описание: @userProfileInfo.AboutMe</p>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-md-6">
+            <h2>Программы</h2>
+            <div class="d-flex flex-column">
+                @foreach (var program in programs)
+                {
+                    <div data-id="@program.CourseId">
+                        <div>@program.Name</div>
+                        <div>@program.Description</div>
+                    </div>
+                }
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+
+
+
+<!-- Модальное окно -->
+<div class="modal fade" id="contactModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Контактные данные</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="contactForm">
+                    <div class="form-group">
+                        <label for="firstName">Имя</label>
+                        <input type="text" class="form-control" id="firstName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">Фамилия</label>
+                        <input type="text" class="form-control" id="lastName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="middleName">Отчество (если есть)</label>
+                        <input type="text" class="form-control" id="middleName">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Телефон</label>
+                        <input type="text" class="form-control" id="phone" pattern="\+375\d{2}\d{3}\d{2}\d{2}" required>
+                        <small class="form-text text-muted">Формат: +375 (XX) XXX-XX-XX</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="dob">Дата рождения</label>
+                        <input type="date" class="form-control" id="dob" required>
+                        <div class="error-message" id="dobError"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" class="form-control" id="email" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Записаться</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="banModal" tabindex="-1" role="dialog" aria-labelledby="banModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="banModalLabel">Блокировка курса</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="banForm">
+                    <div class="form-group">
+                        <label for="banReason">Причина блокировки</label>
+                        <textarea class="form-control" id="banReason" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Заблокировать</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="unbanModal" tabindex="-1" role="dialog" aria-labelledby="unbanModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="unbanModalLabel">Подтверждение разблокировки</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Вы уверены, что хотите разблокировать этот курс?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="confirmUnbanButton">Разблокировать</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<style>
+    .error-message {
+        color: red;
+        font-size: 0.875em;
+    }
+
+    .is-invalid {
+        border-color: red;
+    }
+</style>
+
+<script>
+
+    $('#banForm').on('submit', function (event) {
+        event.preventDefault();
+        var reason = $('#banReason').val();
+
+        $.ajax({
+            url: '/admin/ban-course',
+            type: 'POST',
+            data: { courseId: @Model.CourseId, reason: reason },
+            success: function (response) {
+                $('.modal-backdrop').remove();
+                $('#banModal').removeClass('show').hide();
+                $('body').removeClass('modal-open');
+                // Логика обновления интерфейса после блокировки курса
+                var button = $('[data-target="#banModal"]');
+                button.removeClass('btn-danger').addClass('btn-success').text('Разблокировать');
+                button.attr('data-target', '#unbanModal');
+            },
+            error: function (xhr, status, error) {
+                alert('Ошибка при блокировке курса: ' + error);
+            }
+        });
+        $('#banModal').modal('hide');
+        $('.modal-backdrop').remove();
+    });
+
+    $('#confirmUnbanButton').click(function () {
+        var CourseId = @Model.CourseId
+
+            $.ajax({
+                url: '/admin/unban-course',
+                type: 'POST',
+                data: { CourseId: CourseId },
+                success: function (response) {
+                    $('#unbanModal').removeClass('show').hide();
+                    $('.modal-backdrop').remove();
+                    $('body').removeClass('modal-open');
+
+                    var button = $('[data-target="#unbanModal"]');
+                    button.removeClass('btn-success').addClass('btn-danger').text('Заблокировать');
+                    button.attr('data-target', '#banModal');
+                    // Логика обновления интерфейса после разблокировки курса
+                },
+                error: function (xhr, status, error) {
+                    alert('Ошибка при отправке запроса: ' + error);
+                }
+            });
+        $('#unbanModal').modal('hide');
+        $('.modal-backdrop').remove();
+    });
+
+
+    var triggeringButton; // Глобальная переменная для хранения кнопки, вызвавшей модальное окно
+
+    $('#contactModal').on('show.bs.modal', function (event) {
+        triggeringButton = $(event.relatedTarget); // Сохраняем ссылку на кнопку, вызвавшую модальное окно
+    });
+
+
+    $('#contactForm').on('submit', function (event) {
+        event.preventDefault();
+
+        const dob = new Date($('#dob').val());
+        const age = new Date().getFullYear() - dob.getFullYear();
+        const dobError = $('#dobError');
+        const dobField = $('#dob');
+
+        if (age < 18) {
+            dobError.text('Возраст должен быть не менее 18 лет.');
+            dobField.addClass('is-invalid');
+        } else {
+
+            const formData = {
+                IdStudyGroup: triggeringButton.data("id"),
+                FirstName: $('#firstName').val(),
+                LastName: $('#lastName').val(),
+                Surname: $('#middleName').val(),
+                Phone: $('#phone').val(),
+                Birthday: $('#dob').val(),
+                Email: $('#email').val(),
+            };
+
+            $.ajax({
+                type: 'POST',
+                url: '/Home/CreateApplication',
+                data: formData, // Сериализуем данные формы для отправки
+                success: function (response) {
+                    dobError.text('');
+                    dobField.removeClass('is-invalid');
+                    $('#contactModal').modal('hide');
+                    $('#contactModal').removeClass('show');
+                    $('body').removeClass('modal-open'); // Удаление класса 'modal-open' из <body>
+                    $('.modal-backdrop').remove(); // Удаление фона модального окна
+
+                    if (triggeringButton) {
+                        triggeringButton.text('отправлено...').removeClass('btn-primary').addClass('btn-secondary').prop('disabled', true);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error(xhr.responseText);
+
+                }
+            });
+
+        }
+    });
+
+
+</script>

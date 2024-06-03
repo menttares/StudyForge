@@ -1,0 +1,35 @@
+<div class="container mt-4">
+    <h2>Административная панель</h2>
+    <div class="nav-buttons">
+        <button class="btn btn-primary" data-url="/Admin/Accounts" onclick="loadContent(event)">Аккаунты</button>
+        <button class="btn btn-primary" data-url="/Admin/Statistics" onclick="loadContent(event)">Статистика</button>
+        <button class="btn btn-primary" data-url="/Admin/Bans" onclick="loadContent(event)">Баны</button>
+    </div>
+    <div class="mt-4" id="content">
+        <h3>Добро пожаловать в административную панель</h3>
+        <p>Пожалуйста, выберите раздел для просмотра.</p>
+    </div>
+</div>
+
+
+
+
+
+
+<script>
+    function loadContent(event) {
+        event.preventDefault();
+        var url = $(event.target).data('url');
+        $.ajax({
+            url: url,
+            type: 'GET',
+            success: function (data) {
+                $('#content').html(data);
+            },
+            error: function (xhr, status, error) {
+                console.error("Ошибка:", error);
+                $('#content').html('<p>Произошла ошибка при загрузке данных.</p>');
+            }
+        });
+    }
+</script>

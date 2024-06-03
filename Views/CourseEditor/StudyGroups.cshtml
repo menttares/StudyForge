@@ -1,0 +1,111 @@
+@{
+    List<CityData> CitysData = ViewData["Cities"] as List<CityData>;
+    List<FormData> FormsTrainings = ViewData["FormsTraining"] as List<FormData>;
+    int CourseId = (int)ViewData["CourseId"];
+
+}
+@model List<StudyGroup>
+
+<div class="col-auto">
+    <button id="addGroupButton" class="btn btn-primary">Добавить Группу</button>
+</div>
+
+<div class="d-flex flex-wrap">
+    @foreach (var studyGroup in Model)
+    {
+        <div class="card m-2" style="width: 18rem;" id="@studyGroup.Id">
+            <div class="card-body">
+                <h5 class="card-title">Группа №@studyGroup.Id</h5>
+                <p class="card-text">Набор: @studyGroup.Enrollment</p>
+                <p class="card-text">Дни:
+                    @{
+                        string Days = "";
+                        foreach (ScheduleDay scheduleDay in studyGroup.ScheduleDays)
+                        {
+                            Days += scheduleDay.Name + " ";
+                        }
+
+                        if (string.IsNullOrEmpty(Days))
+                        {
+                            Days = "Дни неопределены";
+                        }
+                    }
+                    @Html.Raw(Days)
+                </p>
+                <p class="card-text">Дата начала: @studyGroup.StartDate.ToShortDateString()</p>
+                <p class="card-text">Дата окончания: @(studyGroup.EndDate != null ?
+                studyGroup.EndDate.Value.ToShortDateString() : "Не указана")</p>
+                <p class="card-text">Цена: @studyGroup.Price</p>
+                <p class="card-text">Длительность: @studyGroup.Duration</p>
+                <p class="card-text">Город: @CitysData.FirstOrDefault(c => c.Id == studyGroup.CityId)?.Name</p>
+                <p class="card-text">Форма обучения: @FormsTrainings.FirstOrDefault(f => f.Id ==
+                studyGroup.FormsTrainingId)?.Name</p>
+                <button class="btn btn-danger delete-group" data-id="@studyGroup.Id">Удалить</button>
+                <a class="btn btn-primary edit-group" asp-controller="StudyGroupEditor" asp-action="Group"
+                    asp-route-GroupId="@studyGroup.Id">Изменить</a>
+            </div>
+        </div>
+    }
+</div>
+
+<script>
+    console.log(@CourseId);
+    $(document).ready(function () {
+    @* $(".edit-group").click(function () {
+            var groupId = $(this).data("id");
+            $("#enrollment-" + groupId).val($(this).siblings("p").eq(0).text().split(": ")[1]);
+            $(this).siblings(".edit-form").toggle();
+            }); *@
+
+            $(".save-changes").click(function () {
+                var groupId = $(this).data("id");
+                var newEnrollment = $("#enrollment-" + groupId).val();
+
+                // Отправка AJAX-запроса для сохранения изменений
+                $.ajax({
+                    url: "/StudyGroup/Update",
+                    method: "POST",
+                    data: {
+                        groupId: groupId,
+                        newEnrollment: newEnrollment
+                        // Добавьте другие данные для обновления
+                    },
+                    success: function (response) {
+                        // Обновление данных на странице
+                        // Можно обновить только измененные данные или перезагрузить всю страницу
+                    },
+                    error: function (xhr, status, error) {
+                        console.error(xhr.responseText);
+                    }
+                });
+            });
+
+        $("#addGroupButton").click(function (e) {
+            $.ajax({
+                url: `/StudyGroupEditor/New/@CourseId`,
+                method: "POST",
+                success: function (response) {
+                    
+                },
+                error: function (xhr, status, error) {
+                    console.error(xhr.responseText);
+                }
+            });
+        });
+
+
+        $(".delete-group").on("click", function (e) {
+            var groupId = $(this).data("id");
+            $.ajax({
+                url: `/StudyGroupEditor/Delete/${groupId}`,
+                method: "Delete",
+                success: function (response) {
+                    $("#" + groupId).hide();
+                },
+                error: function (xhr, status, error) {
+                    console.error(xhr.responseText);
+                }
+            });
+        });
+    });
+</script>

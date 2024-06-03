@@ -15,19 +15,25 @@
 //   });
 // });
 
-$("#search").on("click", function (e) {
+$("#SearchButton").on("click", function (e) {
   e.preventDefault();
 
-  var form = $("form[name='search']");
-  var formData = form.serialize();
+  var form = document.getElementById("FormSearch"); // Получаем элемент формы по его идентификатору
+  var formData = new FormData(form); // Создаем объект FormData и передаем в него форму
+
+  // // Добавляем дополнительный параметр в объект FormData
+  // formData.append("additionalParam", "additionalValue");
+
+  // Преобразуем объект FormData в строку для отправки на сервер
+  var serializedFormData = new URLSearchParams(formData).toString();
 
   $.ajax({
     type: "POST",
-    url: "/Courses/Search",
-    data: formData,
+    url: "/Home/Search",
+    data: serializedFormData,
     success: function (response) {
-      //console.log(response);
-      loadData(response);
+      console.log(response);
+      createCourseCards(response);
     },
     error: function (xhr, status, error) {
       console.log("Ответ сервера:", response);
@@ -36,154 +42,112 @@ $("#search").on("click", function (e) {
   });
 });
 
-$(".catalog-container__option").each(function () {
-  $(this).click(function (e) {
-    // Обработчик нажатия кнопки
-    //e.preventDefault();
-    var optionText = $(this).text();
-    var dataId = $(this).data("id");
-    console.log(dataId);
-    $.ajax({
-      type: "GET",
-      url: `/Courses/SearchCategory`,
-      data: {
-        Categoryid : dataId
-      },
-      success: function (response) {
-        //console.log(response);
-        loadData(response);
-      },
-      error: function (xhr, status, error) {
-        console.log("Ответ сервера:", response);
-        //viewMessageError(response.error);
-      },
-    });
+$(".dropdown-item").click(function () {
+  var sectionId = $(this).data("sectionid");
+  // Теперь вы можете использовать переменную sectionId для выполнения дальнейших действий
+
+  $.ajax({
+    type: "POST",
+    url: `/Home/SearchSection/${sectionId}`,
+
+    // data: sectionId,
+    success: function (response) {
+      console.log(response);
+      createCourseCards(response);
+    },
+    error: function (xhr, status, error) {
+      console.log("Ответ сервера:", response);
+      //viewMessageError(response.error);
+    },
   });
 });
 
-function loadData(data) {
-  let main = document.getElementById("main-content");
-  main.innerHTML = "";
-  let Newdata = JSON.parse(data);
-  Newdata.forEach((el) => {
-    let newElem = createCourseElement(el);
-    //console.log(el);
-    main.appendChild(newElem);
-  });
-}
+function createCourseCards(data) {
+  // Очищаем контейнер перед добавлением новых карточек
+  $("#CardsCourses").empty();
 
-function createCourseElement(el) {
-  console.log(el);
-  // Создаем основной элемент course
-  var courseElement = document.createElement("div");
-  courseElement.classList.add("course");
-
-  // Создаем элементы title и description
-  var titleElement = document.createElement("a");
-  titleElement.href = `/Course/${el.CourseId}`;
-  titleElement.classList.add("course__title");
-  titleElement.textContent = el["CourseName"];
-  courseElement.appendChild(titleElement);
-
-  var descriptionElement = document.createElement("div");
-  descriptionElement.classList.add("course__description");
-  descriptionElement.textContent = el["CourseDescription"];
-  courseElement.appendChild(descriptionElement);
-
-  // Создаем таблицу course-table и ее содержимое
-  var tableElement = document.createElement("div");
-  tableElement.classList.add("course-table");
-
-  var tableRows = [
-    {
-      label: "Набор:",
-      value: `${el.AcceptedApplicationsCount}/${el.Enrollment}`,
-    },
-    { label: "учебные дни:", value: el.StudyDays },
-    { label: "форма обучения:", value: el.FormOfStudyName },
-    { label: "город:", value: el.CityName },
-    { label: "длительность:", value: el.FormOfStudyName },
-    { label: "дата старта набора:", value: el.DateStart },
-  ];
-
-  tableRows.forEach(function (rowData) {
-    var rowElement = document.createElement("div");
-    rowElement.classList.add("course-table__row");
-
-    var colLabelElement = document.createElement("div");
-    colLabelElement.classList.add("course-table__col", "col-bold");
-    colLabelElement.textContent = rowData.label;
-    rowElement.appendChild(colLabelElement);
-
-    var colValueElement = document.createElement("div");
-    colValueElement.classList.add("course-table__col");
-    colValueElement.textContent = rowData.value;
-    rowElement.appendChild(colValueElement);
-
-    tableElement.appendChild(rowElement);
-  });
-
-  courseElement.appendChild(tableElement);
-
-  // Создаем блок course-price
-  var priceContainerElement = document.createElement("div");
-  priceContainerElement.classList.add("course-price__container");
-
-  var priceBlockElement = document.createElement("div");
-  priceBlockElement.classList.add("course-price__blok");
-
-  var priceFlexElement = document.createElement("div");
-  priceFlexElement.classList.add("price-flex");
-
-  var priceTitleElement = document.createElement("div");
-  priceTitleElement.classList.add("course-price__title");
-  priceTitleElement.textContent = "Цена";
-  priceFlexElement.appendChild(priceTitleElement);
-
-  var priceCurrencyElement = document.createElement("div");
-  priceCurrencyElement.classList.add("course-price__currency");
-  var currencyValueElement = document.createElement("span");
-  currencyValueElement.textContent = el.Price;
-  var currencyTextElement = document.createElement("span");
-  currencyTextElement.textContent = "BYN";
-  priceCurrencyElement.appendChild(currencyValueElement);
-  priceCurrencyElement.appendChild(currencyTextElement);
-
-  priceFlexElement.appendChild(priceCurrencyElement);
-  priceBlockElement.appendChild(priceFlexElement);
-
-  var priceSubtitleElement = document.createElement("div");
-  priceSubtitleElement.classList.add("course-price__subtitle");
-  priceSubtitleElement.textContent = "полная стоимость";
-  priceBlockElement.appendChild(priceSubtitleElement);
-
-  priceContainerElement.appendChild(priceBlockElement);
-  courseElement.appendChild(priceContainerElement);
-
-  // Создаем блок course-organizer
-  var organizerElement = document.createElement("div");
-  organizerElement.classList.add("course-organizer");
-
-  var organizerTitleElement = document.createElement("div");
-  organizerTitleElement.classList.add("course-organizer__title");
-  organizerTitleElement.textContent = el.ProfileName;
-  organizerElement.appendChild(organizerTitleElement);
-
-  var organizerSubtitleElement = document.createElement("div");
-  organizerSubtitleElement.classList.add("course-organizer__subtitle");
-  if (el.IsOrganization == true) {
-    organizerSubtitleElement.textContent = "организация";
+  if (data === null || data === undefined || data.length === 0) {
+    $("#StatusSearch").text("Результат не найден");
   } else {
-    organizerSubtitleElement.textContent = "преподаватель";
+    $("#StatusSearch").text(""); // Очищаем статус, если результаты найдены
+
+    // Перебираем каждый объект в массиве данных
+    data.forEach((course) => {
+      let scheduleString = "";
+      try {
+        const scheduleDaysArray = JSON.parse(course.scheduleDays);
+        if (Array.isArray(scheduleDaysArray)) {
+          scheduleDaysArray.forEach(day => {
+            scheduleString += day.name + " ";
+          })
+          ;
+        }
+
+        if (scheduleDaysArray.length == 0) {
+          scheduleString ="дни неопределены"
+        }
+
+      } catch (error) {
+        console.error("Ошибка при разборе данных о днях недели:", error);
+      }
+
+
+
+      var cardHtml = `
+<div class="col mb-4">
+  <div class="card h-100">
+    <div class="card-body">
+      <a class="card-title fs-2 link-dark link-offset-3 text-break" href="/Home/CourseHome/${course.courseId}">${
+        course.courseName
+      }</a>
+      <p class="card-text text-break">${course.courseDescription}</p>
+      <table class="table">
+        <tbody>
+          <tr>
+            <td>Категория:</td>
+            <td>${course.sectionName}</td>
+          </tr>
+          <tr>
+          <td>Дни обучения:</td>
+          <td>${ scheduleString}</td>
+        </tr>
+          <tr>
+            <td>Цена:</td>
+            <td>${course.groupPrice}</td>
+          </tr>
+          <tr>
+            <td>Набор:</td>
+            <td>${course.acceptedApplicationsCount} / ${
+        course.groupEnrollment
+      }</td>
+          </tr>
+          <tr>
+            <td>Дата старта:</td>
+            <td>${new Date(course.groupDateStart).toLocaleDateString()}</td>
+          </tr>
+          <tr>
+            <td>Дата окончания:</td>
+            <td>${new Date(course.groupDateEnd).toLocaleDateString()}</td>
+          </tr>
+          <tr>
+            <td>Создатель:</td>
+            <td>${course.creatorName}</td>
+          </tr>
+          <tr>
+            <td>Тип создателя:</td>
+            <td>${
+              course.creatorIsOrganization ? "организация" : "преподаватель"
+            }</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+`;
+
+      // Добавляем созданный HTML-код карточки в контейнер
+      $("#CardsCourses").append(cardHtml);
+    });
   }
-  organizerElement.appendChild(organizerSubtitleElement);
-
-  courseElement.appendChild(organizerElement);
-
-  // Возвращаем сформированный элемент course
-  return courseElement;
 }
-
-// Пример использования функции
-var courseElement = createCourseElement();
-document.body.appendChild(courseElement); // Добавляем созданный элемент в DOM

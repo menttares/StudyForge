@@ -1,148 +1,25 @@
--- Создание таблицы "изображений профиля"
-CREATE TABLE ImagesProfile (
-	-- ID ключ
-    id SERIAL PRIMARY KEY,
-	-- Имя файла
-    filename TEXT not null
-);
-
--- Создание таблицы "Профиль"
-CREATE TABLE profile (
-  -- ID профиля (рукописный ключ)
-  id SERIAL PRIMARY KEY,
-
-  -- ID аватара/фото профиля (ссылка на таблицу ImagesProfile)
-  id_ImagesProfile INTEGER  null REFERENCES ImagesProfile(id) null,
-	
-
-  -- Почта (уникальная, не null, обязателен символ'@' в поле)
-  email VARCHAR(255) UNIQUE NOT NULL CHECK (email LIKE '%@%'),
-
-  -- Пароль (5-20 символов, без пробелов, только цифры, буквы, спецсимволы)
-  password VARCHAR(20) NOT NULL CHECK (password ~ '^[a-zA-z\d\@\+\\#!-]{5,20}$'),
-
-  -- Организация, true - является юридическим лицом, иначе физическое - false
-  is_organization BOOL NULL DEFAULT 'false',
-
-  -- Телефон, но только белорусский
-  phone VARCHAR(255) NOT NULL check (phone ~ '^(\+375)(29|33|44|25|17)(\d{3})(\d{2})(\d{2})$'),
-
-  -- Имя человека или организации (не null, минимум 3 символа и максимум 40)
-  name VARCHAR(255) NOT NULL CHECK (LENGTH(name) >= 3 and LENGTH(name) <= 40),
-
-  -- О себе (необязательное поле)
-  about_me TEXT NULL,
-
-  -- Специализация, сфера работы организации (например, IT-технологии, промышленность)
-  -- или специальность человека(Например, техник-программист, экономист)
-  specialization VARCHAR(255) NULL,
-
-  -- Номер лицензии РБ (Обязательное поле)
-  license_number VARCHAR(255) UNIQUE not null check (license_number ~ '^(01|02|03|04|05|06|07|08|09|10|11|12|13|14|15|16|17|18|19|20)\d{2}\d{6}\d{2}$'),
-
-
-  -- Дата подтверждения профиля администратором (необязательное поле, т.к. это поле будет проверено в будущем администратором)
-  confirmation bool NULL,
-
-  -- Дата создания профиля (автоматически заполняется)
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-select * from profile;
-
--- Создание таблицы "Категория"
-CREATE TABLE category (
-  -- ID
-  id SERIAL PRIMARY KEY,
-  -- Название Категории
-  name VARCHAR(255) NOT NULL
-);
-
--- Создание таблицы "Раздел"
-CREATE TABLE section (
-  -- ID
-  id SERIAL PRIMARY KEY,
-  -- FK ключ к разделу, к котору относится раздел
-  id_category INTEGER REFERENCES category(id) not null,
-  -- Название Раздела
-  name VARCHAR(255) NOT NULL
-);
-
-
--- фото преподавателя
-CREATE TABLE teacherAvatar (
-  id SERIAL PRIMARY KEY,
-  Name VARCHAR(255) NOT NULL
-);
-
--- Создание таблицы курсов
-CREATE TABLE courses (
-  -- ID курса
-  id SERIAL PRIMARY KEY,
-  -- категория, к которому относится курс
-  id_section INTEGER REFERENCES section(id) not null,
-  -- создатель курса
-  id_profile INTEGER REFERENCES profile(id) not null,
-  -- Название курса
-  name VARCHAR(60) NOT NULL check(
-    LENGTH(name) >= 3
-    and LENGTH(name) <= 60
-  ),
-  -- Описание курса
-  description varchar(500) NULL,
-  -- Дата создания (автоматически заполняется)
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  -- закрыт ли курс организатором?
-  course_closed bool DEFAULT FALSE
-);
-
--- преподаватель
-CREATE TABLE teacher (
-  id SERIAL PRIMARY KEY,
-  id_course INTEGER REFERENCES courses(id) not null,
-	-- необязательно
-  id_Avatar INTEGER REFERENCES teacherAvatar(id) Null,
-  FirstName VARCHAR(255) NOT NULL,
-  AboutMe VARCHAR(500) NULL,
-  Skills VARCHAR(255) NULL,
-  Specialization VARCHAR(255) NULL
-);
-
--- создание программы курса
-CREATE TABLE program_course (
-  -- ID 
-  id SERIAL PRIMARY KEY,
-  -- Название курса
-  name VARCHAR(255) NOT NULL,
-  description VARCHAR(255) NULL,
-  id_course INTEGER REFERENCES courses(id) not null
-);
-
--- дни, таблица не будет никогда заполнятся, определяется всегда вначале создания БД
-CREATE TABLE days (
-  id SERIAL PRIMARY KEY,
-  Name VARCHAR(30) NOT NULL
-);
 
 -- форма обучения
-CREATE TABLE form_study (
+CREATE TABLE FormsTraining (
   id SERIAL PRIMARY KEY,
-  Name VARCHAR(255) NOT NULL
+  name VARCHAR(255) UNIQUE NOT NULL
 );
 
 -- города РБ и другие
-CREATE TABLE city (
-  ID SERIAL PRIMARY KEY,
-  Name VARCHAR(255) NOT NULL
+CREATE TABLE Cities (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) UNIQUE NOT NULL
 );
 
+select * from studygroups;
+
 -- учебная группа
-CREATE TABLE study_group (
+CREATE TABLE studygroups (
   id serial PRIMARY KEY,
   -- набор
-  enrollment integer not NULL check (enrollment > 0),
+  enrollment integer not NULL check (enrollment > 0 and enrollment < 300),
   -- дата начала набора
-  date_start date not NULL,
+  date_start date not NULL DEFAULT CURRENT_DATE,
   -- дата окончания набора (необязательно)
   date_end date NULL CHECK (
     date_end >= date_start
@@ -152,255 +29,525 @@ CREATE TABLE study_group (
   price numeric(10, 2) null check (
     price > 0
     and price < 10000000
-  ),
+  ) DEFAULT 0,
 	-- форма обучения
-  id_form_study integer REFERENCES form_study(id) NOT NULL,
+  id_FormsTraining integer REFERENCES FormsTraining(id) ON DELETE SET NULL,
 	-- город 
-  id_city integer REFERENCES city(id) NULL,
+  id_city integer REFERENCES Cities(id) ON DELETE SET NULL,
   -- длительность в часах
-  duration integer NULL check (duration > 0),
+  duration integer NULL check (duration > 0 and duration < 1000),
 
-  id_course INTEGER REFERENCES courses(id) null
+  id_course INTEGER REFERENCES courses(id) ON DELETE CASCADE
+);
+
+-- учебная группа
+CREATE OR REPLACE FUNCTION create_study_group(
+    p_enrollment INTEGER,
+    p_date_start DATE,
+    p_date_end DATE,
+    p_price NUMERIC(10, 2),
+    p_id_FormsTraining INTEGER,
+    p_id_city INTEGER,
+    p_duration INTEGER,
+    p_id_course INTEGER
+) 
+RETURNS INTEGER AS
+$$
+DECLARE
+    new_group_id INTEGER;
+BEGIN
+    BEGIN
+        INSERT INTO studygroups (enrollment, date_start, date_end, price, id_FormsTraining, id_city, duration, id_course)
+        VALUES (p_enrollment, p_date_start, p_date_end, p_price, p_id_FormsTraining, p_id_city, p_duration, p_id_course)
+        RETURNING id INTO new_group_id;
+    EXCEPTION
+        WHEN others THEN
+            RETURN 0;
+    END;
+
+    IF new_group_id IS NOT NULL THEN
+        RETURN new_group_id;
+    ELSE
+        RETURN 0;
+    END IF;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+SELECT create_study_group(
+    p_enrollment := 10, 
+    p_date_start := '2024-06-01', 
+    p_date_end := '2024-08-31', 
+    p_price := 1000.00, 
+    p_id_FormsTraining := 1, 
+    p_id_city := 1, 
+    p_duration := 120, 
+    p_id_course := 2
+) AS new_group_id;
+
+
+
+
+CREATE OR REPLACE FUNCTION update_study_group(
+    p_id INTEGER,
+    p_enrollment INTEGER,
+    p_date_start DATE,
+    p_date_end DATE,
+    p_price NUMERIC(10, 2),
+    p_id_forms_training INTEGER,
+    p_id_city INTEGER,
+    p_duration INTEGER
+) 
+RETURNS BOOLEAN AS
+$$
+BEGIN
+    UPDATE studygroups
+    SET 
+        enrollment = p_enrollment,
+        date_start = p_date_start,
+        date_end = p_date_end,
+        price = p_price,
+        id_FormsTraining = p_id_forms_training,
+        id_city = p_id_city,
+        duration = p_duration
+    WHERE
+        id = p_id;
+
+    IF FOUND THEN
+        RETURN TRUE;
+    ELSE
+        RETURN FALSE;
+    END IF;
+EXCEPTION
+    WHEN others THEN
+        RETURN FALSE;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+
+
+CREATE OR REPLACE VIEW StudyGroupsView AS
+SELECT
+    sg.id,
+    sg.enrollment,
+    sg.date_start,
+    sg.date_end,
+    sg.price,
+    sg.id_FormsTraining,
+    sg.id_city,
+    sg.duration,
+    sg.id_course,
+    count_accepted_applications(sg.id) AS accepted_applications_count,
+    get_schedule_days(sg.id) AS schedule_days
+FROM
+    studygroups sg;
+
+
+select * from StudyGroupsView;
+
+
+
+CREATE OR REPLACE VIEW CourseAndGroupView AS
+SELECT
+    c.id AS course_id,
+    c.name AS course_name,
+    c.description AS course_description,
+	sec.id AS SectionId,
+	sec.name AS SectionName,
+    cr.name AS creator_name,
+    cr.email AS creator_email,
+    cr.phone AS creator_phone,
+	cr.is_organization AS creator_is_organization,
+    sg.id AS group_id,
+    sg.enrollment AS group_enrollment,
+    sg.date_start AS group_date_start,
+    sg.date_end AS group_date_end,
+    sg.price AS group_price,
+    sg.duration AS group_duration,
+	count_accepted_applications(sg.id) AS accepted_applications_count,
+    get_schedule_days(sg.id) AS schedule_days,
+	c.course_closed AS course_closed
+FROM
+    courses c
+JOIN
+    studygroups sg ON c.id = sg.id_course
+JOIN
+    accounts cr ON c.id_Account = cr.id
+JOIN 
+	Sections sec ON sec.id = c.id_Section;
+
+
+select * from CourseAndGroupView;
+
+
+
+
+
+-- измененный фильтр
+CREATE OR REPLACE FUNCTION filter_courses_and_groups(
+    p_section_id INTEGER,
+    p_start_date DATE DEFAULT NULL,
+    p_end_date DATE DEFAULT NULL,
+    p_min_price NUMERIC(10, 2) DEFAULT NULL,
+    p_max_price NUMERIC(10, 2) DEFAULT NULL,
+    p_duration_hours INTEGER DEFAULT NULL,
+    p_organization_only BOOLEAN DEFAULT FALSE,
+    p_free_only BOOLEAN DEFAULT FALSE,
+	p_search_query VARCHAR DEFAULT NULL
+) 
+RETURNS SETOF CourseAndGroupView AS
+$$
+DECLARE
+    filter_conditions TEXT := ' WHERE course_closed = FALSE';
+BEGIN
+    -- Формируем условия для фильтрации
+
+    IF p_section_id IS NOT NULL THEN
+        filter_conditions := filter_conditions || ' AND SectionId = ' || p_section_id;
+    END IF;
+
+    IF p_start_date IS NOT NULL THEN
+        filter_conditions := filter_conditions || ' AND group_date_start >= ' || quote_literal(p_start_date);
+    END IF;
+
+    IF p_end_date IS NOT NULL THEN
+        filter_conditions := filter_conditions || ' AND group_date_end <= ' || quote_literal(p_end_date);
+    END IF;
+
+    IF p_min_price IS NOT NULL THEN
+        filter_conditions := filter_conditions || ' AND group_price >= ' || p_min_price;
+    END IF;
+
+    IF p_max_price IS NOT NULL THEN
+        filter_conditions := filter_conditions || ' AND group_price <= ' || p_max_price;
+    END IF;
+
+    IF p_duration_hours IS NOT NULL THEN
+        filter_conditions := filter_conditions || ' AND group_duration = ' || p_duration_hours;
+    END IF;
+
+    IF p_organization_only THEN
+        filter_conditions := filter_conditions || ' AND creator_is_organization = TRUE';
+    END IF;
+
+    IF p_free_only THEN
+        filter_conditions := filter_conditions || ' AND accepted_applications_count < group_enrollment';
+    END IF;
+
+    IF p_search_query IS NOT NULL THEN
+        -- Добавляем условие для поиска по частичному совпадению в названии курса и имени организатора
+        filter_conditions := filter_conditions || ' AND (LOWER(course_name) LIKE LOWER(' || quote_literal('%' || p_search_query || '%') || ')' ||
+                                               ' OR LOWER(creator_name) LIKE LOWER(' || quote_literal('%' || p_search_query || '%') || '))';
+    END IF;
+
+    -- Условие для исключения забаненных курсов
+    filter_conditions := filter_conditions || ' AND course_id NOT IN (SELECT id_Course FROM BannedCourses)';
+
+    RETURN QUERY EXECUTE '
+        SELECT *
+        FROM CourseAndGroupView
+        ' || filter_conditions;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+
+
+SELECT * FROM filter_courses_and_groups(
+	null,
+	null,
+	null,
+	null,
+	null,
+	null,
+	null,
+	null
 );
 
 
--- создаем список учебных дней группы
-create table timeslot_study_group (
-  id SERIAL PRIMARY KEY,
-  id_day INTEGER REFERENCES days(id) not null,
-  id_study_group INTEGER REFERENCES study_group(id) not null
+
+
+
+CREATE OR REPLACE FUNCTION filter_courses_and_groups(
+    p_section_id INTEGER,
+    p_start_date DATE DEFAULT NULL,
+    p_end_date DATE DEFAULT NULL,
+    p_min_price NUMERIC(10, 2) DEFAULT NULL,
+    p_max_price NUMERIC(10, 2) DEFAULT NULL,
+    p_duration_hours INTEGER DEFAULT NULL,
+    p_organization_only BOOLEAN DEFAULT FALSE,
+    p_free_only BOOLEAN DEFAULT FALSE,
+	p_search_query VARCHAR DEFAULT NULL
+) 
+RETURNS SETOF CourseAndGroupView AS
+$$
+DECLARE
+    filter_conditions TEXT;
+BEGIN
+    -- Формируем условия для фильтрации
+    filter_conditions := ' WHERE 1 = 1';
+    
+    IF p_section_id IS NOT NULL THEN
+        filter_conditions := filter_conditions || ' AND SectionId = ' || p_section_id;
+    END IF;
+
+    IF p_start_date IS NOT NULL THEN
+        filter_conditions := filter_conditions || ' AND group_date_start >= ' || quote_literal(p_start_date);
+    END IF;
+
+    IF p_end_date IS NOT NULL THEN
+        filter_conditions := filter_conditions || ' AND group_date_end <= ' || quote_literal(p_end_date);
+    END IF;
+
+    IF p_min_price IS NOT NULL THEN
+        filter_conditions := filter_conditions || ' AND group_price >= ' || p_min_price;
+    END IF;
+
+    IF p_max_price IS NOT NULL THEN
+        filter_conditions := filter_conditions || ' AND group_price <= ' || p_max_price;
+    END IF;
+
+    IF p_duration_hours IS NOT NULL THEN
+        filter_conditions := filter_conditions || ' AND group_duration = ' || p_duration_hours;
+    END IF;
+
+    IF p_organization_only THEN
+        filter_conditions := filter_conditions || ' AND creator_is_organization = TRUE';
+    END IF;
+
+    IF p_free_only THEN
+        filter_conditions := filter_conditions || ' AND accepted_applications_count < group_enrollment';
+    END IF;
+
+    RETURN QUERY EXECUTE '
+        SELECT *
+        FROM CourseAndGroupView
+        ' || filter_conditions;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+
+-- измененный
+CREATE OR REPLACE FUNCTION filter_courses_and_groups(
+    p_section_id INTEGER,
+    p_start_date DATE DEFAULT NULL,
+    p_end_date DATE DEFAULT NULL,
+    p_min_price NUMERIC(10, 2) DEFAULT NULL,
+    p_max_price NUMERIC(10, 2) DEFAULT NULL,
+    p_duration_hours INTEGER DEFAULT NULL,
+    p_organization_only BOOLEAN DEFAULT FALSE,
+    p_free_only BOOLEAN DEFAULT FALSE
+) 
+RETURNS SETOF CourseAndGroupView AS
+$$
+DECLARE
+    filter_conditions TEXT;
+BEGIN
+    -- Формируем условия для фильтрации
+    filter_conditions := ' WHERE 1 = 1';
+    
+    IF p_section_id IS NOT NULL THEN
+        filter_conditions := filter_conditions || ' AND SectionId = ' || p_section_id;
+    END IF;
+
+    IF p_start_date IS NOT NULL THEN
+        filter_conditions := filter_conditions || ' AND group_date_start >= ' || quote_literal(p_start_date);
+    END IF;
+
+    IF p_end_date IS NOT NULL THEN
+        filter_conditions := filter_conditions || ' AND group_date_end <= ' || quote_literal(p_end_date);
+    END IF;
+
+    IF p_min_price IS NOT NULL THEN
+        filter_conditions := filter_conditions || ' AND group_price >= ' || p_min_price;
+    END IF;
+
+    IF p_max_price IS NOT NULL THEN
+        filter_conditions := filter_conditions || ' AND group_price <= ' || p_max_price;
+    END IF;
+
+    IF p_duration_hours IS NOT NULL THEN
+        filter_conditions := filter_conditions || ' AND group_duration = ' || p_duration_hours;
+    END IF;
+
+    IF p_organization_only THEN
+        filter_conditions := filter_conditions || ' AND creator_is_organization = TRUE';
+    END IF;
+
+    IF p_free_only THEN
+        filter_conditions := filter_conditions || ' AND accepted_applications_count < group_enrollment';
+    END IF;
+
+    RETURN QUERY EXECUTE '
+        SELECT *
+        FROM CourseAndGroupView
+        ' || filter_conditions;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+
+
+SELECT * FROM filter_courses_and_groups(
+	null,
+	null,
+	null,
+	null,
+	null,
+	null,
+	null,
+	null,
+	null
 );
 
 
+CREATE OR REPLACE FUNCTION filter_courses_and_groups(
+    p_section_id INTEGER DEFAULT NULL,
+    p_start_date DATE DEFAULT NULL,
+    p_end_date DATE DEFAULT NULL,
+    p_min_price NUMERIC(10, 2) DEFAULT NULL,
+    p_max_price NUMERIC(10, 2) DEFAULT NULL,
+    p_duration_hours INTEGER DEFAULT NULL,
+    p_organization_only BOOLEAN DEFAULT FALSE,
+    p_free_only BOOLEAN DEFAULT FALSE,
+    p_search_query VARCHAR DEFAULT NULL
+) 
+RETURNS SETOF CourseAndGroupView AS
+$$
+DECLARE
+    filter_conditions TEXT;
+BEGIN
+    -- Формируем условия для фильтрации
+    filter_conditions := ' WHERE 1 = 1';
+    
+    IF p_section_id IS NOT NULL THEN
+        filter_conditions := filter_conditions || ' AND SectionId = ' || p_section_id;
+    END IF;
 
--- статус заявки 
-create table status_applications (
-  id SERIAL PRIMARY KEY,
-  Name VARCHAR(255) NOT NULL
-);
+    IF p_start_date IS NOT NULL THEN
+        filter_conditions := filter_conditions || ' AND group_date_start >= ' || quote_literal(p_start_date);
+    END IF;
 
+    IF p_end_date IS NOT NULL THEN
+        filter_conditions := filter_conditions || ' AND group_date_end <= ' || quote_literal(p_end_date);
+    END IF;
 
--- заявки 
-create table applications(
-  id SERIAL PRIMARY KEY,
-  id_study_group INTEGER REFERENCES study_group(id) not null,
-  FirstName VARCHAR(255) NOT NULL,
-  phone VARCHAR(255) NOT NULL check (
-    phone ~ '^(\+375)(29|33|44|25|17)(\d{3})(\d{2})(\d{2})$'
-  ),
-  -- Проверка пользователя, что ему есть 18 и не будущая дата
-  birthday date not null CHECK (
-    EXTRACT(
-      YEAR
-      FROM CURRENT_DATE
-    ) - EXTRACT(
-      YEAR
-      FROM birthday
-    ) >= 18
-    and birthday < CURRENT_DATE
-  ),
-	
-  id_status_applications INTEGER REFERENCES status_applications(id) not null
-);
+    IF p_min_price IS NOT NULL THEN
+        filter_conditions := filter_conditions || ' AND group_price >= ' || p_min_price;
+    END IF;
 
+    IF p_max_price IS NOT NULL THEN
+        filter_conditions := filter_conditions || ' AND group_price <= ' || p_max_price;
+    END IF;
 
--- администраторы платформы
-create table admins (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(100) check (
-    LENGTH(name) >= 3
-    and LENGTH(name) < 100
-  ),
-  login VARCHAR(50) NOT NULL check (login ~ '^[a-zA-z\d\@\+\\#!-]{5,20}$'),
-  password varchar(50) NOT NULL check (login ~ '^[a-zA-z\d\@\+\\#!-]{5,20}$')
-);
+    IF p_duration_hours IS NOT NULL THEN
+        filter_conditions := filter_conditions || ' AND group_duration = ' || p_duration_hours;
+    END IF;
 
-------------------
--- вставка данных
-------------------
-INSERT INTO profile (
-  email,
-  password,
-  is_organization,
-  phone,
-  name,
-  about_me,
-  specialization,
-  license_number,
-  confirmation
-)
-VALUES
-  ('user1@example.com', 'password123', FALSE, '+375291234567', 'Иван', 'О себе', 'Программирование', '012300000123', TRUE),
-  ('user2@example.com', 'password456', TRUE, '+375298674522', 'РосТех', 'Организация по разработке IT-технологий', 'IT-технологии, логистика', '012300000125', TRUE),
-  ('user3@example.com', 'password789', FALSE, '+375331234567', 'Петр', 'Интересуюсь спортом', 'Маркетинг', '022300000223', TRUE);
-  
-  
+    IF p_organization_only THEN
+        filter_conditions := filter_conditions || ' AND creator_is_organization = TRUE';
+    END IF;
 
--- Заполнение таблицы "Категории"
-INSERT INTO category (name) VALUES
-('Наука и технологии'),
-('Бизнес и маркетинг'),
-('Творчество');
+    IF p_free_only THEN
+        filter_conditions := filter_conditions || ' AND accepted_applications_count < group_enrollment';
+    END IF;
 
--- Заполнение таблицы "Разделов"
-INSERT INTO section (id_category, name) VALUES
-(1, 'Физика и астрономия'),
-(1, 'Информационные технологии'),
-(2, 'Менеджмент и лидерство'),
-(2, 'Маркетинг и реклама'),
-(3, 'Живопись и рисование'),
-(3, 'Музыка и композиция');
+    IF p_search_query IS NOT NULL THEN
+        -- Добавляем условие для поиска по частичному совпадению в названии курса и имени организатора
+        filter_conditions := filter_conditions || ' AND (LOWER(course_name) LIKE LOWER(' || quote_literal('%' || p_search_query || '%') || ')' ||
+                                               ' OR LOWER(creator_name) LIKE LOWER(' || quote_literal('%' || p_search_query || '%') || '))';
+    END IF;
 
-select * from section;
-
--- (Также приведены псевдоданные для иллюстрации)
-INSERT INTO courses (id_section, id_profile, name, description, course_closed) VALUES
-(2, 1, 'Основы программирования на Python', 'Введение в Python для начинающих.', false),
-(4, 2, 'Управление проектами', 'Основы управления проектами и командой.', true);
-
-
-
-INSERT INTO teacher (id_course, id_Avatar, FirstName, AboutMe, Skills, Specialization) VALUES
-(1, NULL, 'Петр Петров', 'Профессиональный программист с опытом работы более 10 лет.', 'Python, Java, C++', 'Программирование'),
-(2, NULL, 'Анна Сидорова', 'Специалист в области управления проектами и бизнес-анализа.', 'Управление проектами, аналитика', 'Менеджмент');
-
-INSERT INTO program_course (name, description, id_course) VALUES
-('Введение в Python', 'Основы синтаксиса и основные конструкции языка Python.', 1),
-('Алгоритмы в Python', 'Основы алгоритмов.', 1),
-('WEb в Python', 'основы web-технологий.', 1),
-('Управление временем', 'Техники и инструменты для эффективного управления временем в проектах.', 2),
-('Управление командой', 'Техники и инструменты для эффективного управления командой', 2);
-
-
-INSERT INTO days (Name) VALUES
-('ПН'),
-('ВТ'),
-('СР'),
-('ЧТ'),
-('ПТ'),
-('СБ'),
-('ВС');
-
-INSERT INTO form_study (Name) VALUES
-('Очная'),
-('Дистанционная');
-
-INSERT INTO city (Name) VALUES
-( 'Минск'),
-( 'Гомель'),
-( 'Гродно');
-
-
-INSERT INTO study_group (enrollment, date_start, date_end, price, id_form_study, id_city, duration, id_course) VALUES
-(20, '2024-04-01', '2024-09-30', 1000, 1, 1, 60, 1),
-(15, '2024-03-15', '2024-08-31', 800, 2, 2, 50, 2);
-
-
-INSERT INTO study_group (enrollment, date_start, date_end, price, id_form_study, id_city, duration, id_course) VALUES
-(10, '2024-01-01', '2024-03-24', 300, 1, 1, 60, 1),
-(10, '2024-01-15', '2024-03-31', 100, 2, 2, 50, 2);
-
-
-INSERT INTO timeslot_study_group(id_day, id_study_group) values 
-(1,2),
-(2,2),
-(3,2),
-(4,2),
-(1,1),
-(2,1),
-(3,1),
-(6,1);
-
-INSERT INTO status_applications (Name)
-VALUES 
-('Принято'),
-('Отклонено'),
-('В ожидании');
-
-
-
-
-select * from status_applications;
-
-INSERT INTO applications (id_study_group, FirstName, phone, birthday, id_status_applications)
-VALUES 
-(1, 'Иван', '+375291234567', '1995-05-15', 1),
-(1, 'Мария', '+375291234568', '1996-08-21', 2),
-(1, 'Алексей', '+375291234569', '1998-03-10', 3),
-(1, 'Елена', '+375291234570', '1994-11-27', 1);
-
--- Вставка примеров заявок для группы с ID = 2
-INSERT INTO applications (id_study_group, FirstName, phone, birthday, id_status_applications)
-VALUES 
-(2, 'Дмитрий', '+375291234571', '1997-02-18', 1),
-(2, 'Ольга', '+375291234572', '1993-09-05', 2),
-(2, 'Павел', '+375291234573', '1999-06-30', 2),
-(2, 'Наталья', '+375291234574', '1990-12-14', 1);
-
-
-
-
-select * from form_study;
-
-
-
-
--- Вставка новых курсов
-INSERT INTO courses (id_section, id_profile, name, description, course_closed) VALUES
-(1, 1, 'Космология и звезды', 'Изучение основ космологии и астрофизики.', false),
-(1, 3, 'Астрономия для начинающих', 'Введение в мир звезд и планет для новичков.', false),
-(2, 1, 'Алгоритмы и структуры данных', 'Глубокое погружение в алгоритмы и их структуры.', false),
-(2, 3, 'Веб-разработка на JavaScript', 'Освоение современных технологий веб-разработки с использованием JavaScript.', false),
-(3, 2, 'Основы акриловой живописи', 'Практические занятия по освоению техник акриловой живописи.', false),
-(3, 2, 'Музыкальная композиция', 'Изучение основ музыкальной композиции и создание собственных мелодий.', false);
-
-select * from courses;
--- Вставка новых преподавателей
-INSERT INTO teacher (id_course, id_Avatar, FirstName, AboutMe, Skills, Specialization) VALUES
-(12, NULL, 'Елена Иванова', 'Преподаватель с опытом в области алгоритмов и программирования.', 'Python, Java, C', 'Программирование'),
-(12, NULL, 'Михаил Сидоров', 'Опытный веб-разработчик, готовый поделиться своими знаниями.', 'JavaScript, HTML, CSS', 'Веб-разработка');
-
--- Вставка новой программы курса
-INSERT INTO program_course (name, description, id_course) VALUES
-('Звезды и галактики', 'Изучение строения и жизненного цикла звезд, а также галактик.', 3),
-('Путешествие по Солнечной системе', 'Познание планет и других объектов Солнечной системы.', 3),
-('Структуры данных в JS', 'Глубокий анализ структур данных и их применение на языке JS.', 6),
-('Мастер-класс по веб-разработке', 'Практические занятия по созданию веб-приложений с использованием современных инструментов.', 1);
-
--- Вставка новых учебных групп
-INSERT INTO study_group (enrollment, date_start, date_end, price, id_form_study, id_city, duration, id_course) VALUES
-(25, '2024-04-15', '2024-10-15', 400, 1, 1, 70, 5),
-(18, '2024-05-01', '2024-09-01', 400, 1, 2, 60, 6),
-(12, '2024-06-01', '2024-11-30', 100, 2, 1, 50, 7);
-
--- Вставка новых временных слотов для учебных групп
-INSERT INTO timeslot_study_group(id_day, id_study_group) VALUES 
-(1,3),
-(2,3),
-(3,3),
-(4,3),
-(5,3),
-(6,3),
-(7,3),
-(1,4),
-(2,4),
-(3,4),
-(4,4),
-(5,4),
-(6,4),
-(7,4),
-(1,5),
-(2,5),
-(3,5),
-(4,5),
-(5,5),
-(6,5),
-(7,5);
+    RETURN QUERY EXECUTE '
+        SELECT *
+        FROM CourseAndGroupView
+        ' || filter_conditions;
+END;
+$$
+LANGUAGE PLPGSQL;
 
 
 
 
 
+
+
+-- Функция для вывода всех данных из таблицы FormsTraining
+CREATE OR REPLACE FUNCTION get_all_forms_training()
+RETURNS TABLE (
+    form_id INT,
+    form_name VARCHAR(255)
+) AS $$
+BEGIN
+    RETURN QUERY SELECT id AS form_id, name AS form_name FROM FormsTraining;
+END;
+$$ LANGUAGE PLPGSQL;
+
+-- Функция для вывода всех данных из таблицы Cities
+CREATE OR REPLACE FUNCTION get_all_cities()
+RETURNS TABLE (
+    city_id INT,
+    city_name VARCHAR(255)
+) AS $$
+BEGIN
+    RETURN QUERY SELECT id AS city_id, name AS city_name FROM Cities;
+END;
+$$ LANGUAGE PLPGSQL;
+
+
+
+SELECT * FROM get_all_forms_training();
+SELECT * FROM get_all_cities();
+
+
+CREATE OR REPLACE FUNCTION get_study_groups_by_course_id(p_course_id INTEGER)
+RETURNS SETOF StudyGroupsView AS $$
+BEGIN
+    RETURN QUERY SELECT *
+                 FROM StudyGroupsView
+                 WHERE id_course = p_course_id;
+END;
+$$ LANGUAGE PLPGSQL;
+
+select * from get_study_groups_by_course_id(4);
+
+
+CREATE OR REPLACE FUNCTION get_study_group_by_id(p_group_id INTEGER)
+RETURNS SETOF StudyGroupsView AS $$
+BEGIN
+    RETURN QUERY SELECT *
+                 FROM StudyGroupsView
+                 WHERE id = p_group_id;
+END;
+$$ LANGUAGE PLPGSQL;
+
+select * from get_study_group_by_id(4);
+
+
+
+
+
+
+CREATE OR REPLACE FUNCTION delete_study_group_by_id(p_group_id INTEGER)
+RETURNS INTEGER AS $$
+BEGIN
+    DELETE FROM studygroups WHERE id = p_group_id;
+
+    IF FOUND THEN
+        RETURN 1;
+    ELSE
+        RETURN 0; -- Группа с указанным id не найдена
+    END IF;
+
+EXCEPTION
+    WHEN others THEN
+        RETURN 0; -- Произошла ошибка при удалении
+END;
+$$ LANGUAGE PLPGSQL;
+
+select * from delete_study_group_by_id(5);
 
 
 

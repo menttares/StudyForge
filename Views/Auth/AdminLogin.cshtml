@@ -1,4 +1,27 @@
+@model AuthenticateViewModel
 @{
-    ViewData["Title"] = "Админ";
+    ViewData["Title"] = "Авторизация";
 }
 
+@using (Html.BeginForm("AdminLogin", "Auth", FormMethod.Post, new { @class = "form-main", @name = "form-main"}))
+{
+    
+    @Html.LabelFor(model => model.Email, "Почта", htmlAttributes: new { @class = "auth-label"})
+    <br>
+    @Html.TextBoxFor(model => model.Email, new { @class = "form-control", placeholder = "Введите почту" })
+    @Html.ValidationMessageFor(model => model.Email)
+    <br>
+    @Html.LabelFor(model => model.Password, "Пароль", htmlAttributes: new { @class = "auth-label"})
+    <br>
+    @Html.PasswordFor(model => model.Password, new { @class = "form-control", placeholder = "Введите пароль" })
+    @Html.ValidationMessageFor(model => model.Password)
+    <br>
+    <div id="error-message">
+
+    </div>
+    <div class="auth-butoon">
+        <input type="submit" class="button" value="Вход" />
+    </div>
+
+
+}

@@ -16,10 +16,10 @@ namespace StudyForge.Controllers;
 
 public class AuthController : Controller
 {
-    private readonly ILogger<HomeController> _logger;
+    private readonly ILogger<AuthController> _logger;
     private PostgresDataService _database;
 
-    public AuthController(ILogger<HomeController> logger, PostgresDataService database)
+    public AuthController(ILogger<AuthController> logger, PostgresDataService database)
     {
         _logger = logger;
         _database = database;
@@ -41,10 +41,10 @@ public class AuthController : Controller
         {
             var claims = new List<Claim>
             {
-            new Claim(ClaimTypes.NameIdentifier, resutlData.Result.ToString()),
-            new Claim(ClaimTypes.Email, data.Email),
-            new Claim(ClaimsIdentity.DefaultNameClaimType, data.Email),
-            new Claim(ClaimsIdentity.DefaultRoleClaimType, "user"),
+                new Claim(ClaimTypes.NameIdentifier, resutlData.Result.ToString()),
+                new Claim(ClaimTypes.Email, data.Email),
+                new Claim(ClaimsIdentity.DefaultNameClaimType, data.Email),
+                new Claim(ClaimsIdentity.DefaultRoleClaimType, "user"),
             };
             var claimsIdentity = new ClaimsIdentity(claims, "Cookies");
             var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
@@ -57,7 +57,7 @@ public class AuthController : Controller
         }
         else if (resutlData.Status == ResultPostgresStatus.ValidDataError)
         {
-            return StatusCode(200, $"Неверные данные формы: {resutlData.MessageError}");
+            return StatusCode(200, $"Неверные данные формы: {resutlData.Message}");
         }
 
         return RedirectToAction("Index", "Home");
@@ -101,7 +101,7 @@ public class AuthController : Controller
         }
         else if (resutlData.Status == ResultPostgresStatus.ValidDataError)
         {
-            return StatusCode(200, $"Неверные данные формы: {resutlData.MessageError}");
+            return StatusCode(200, $"Неверные данные формы: {resutlData.Message}");
         }
 
         return RedirectToAction("Index", "Home");
@@ -115,8 +115,29 @@ public class AuthController : Controller
     }
 
     [HttpPost]
-    public IActionResult AdminLogin([FromBody] string data, string? ReturnUrl)
+    public async Task<IActionResult> AdminLogin([FromForm] AuthenticateViewModel data, string? ReturnUrl)
     {
+        var resutlData = _database.LoginAdmin(data.Email, data.Password);
+
+        if (resutlData.Status == ResultPostgresStatus.Ok)
+        {
+            var claims = new List<Claim>
+            {
+            new Claim(ClaimTypes.NameIdentifier, resutlData.Result.ToString()),
+            new Claim(ClaimTypes.Email, data.Email),
+            new Claim(ClaimsIdentity.DefaultNameClaimType, data.Email),
+            new Claim(ClaimsIdentity.DefaultRoleClaimType, "admin"),
+            };
+            var claimsIdentity = new ClaimsIdentity(claims, "Cookies");
+            var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+            await HttpContext.SignInAsync(claimsPrincipal);
+        }
+        else
+        {
+            return StatusCode(200, resutlData.Message);
+        }
+
         return RedirectToAction("Index", "Home");
     }
 

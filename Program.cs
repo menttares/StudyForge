@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Указывает логгеру по какому пути и в какой файл записывать все логги сообщений
@@ -25,6 +24,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.AccessDeniedPath = "/accessdenied";
     });
 builder.Services.AddAuthorization();
+builder.Services.AddHttpContextAccessor();
+
 
 // builder.Services.AddAuthorization();
 

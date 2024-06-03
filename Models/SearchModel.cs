@@ -3,18 +3,23 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace StudyForge.Models;
 
+public class SearchModel {
+    public int? SectionId { get; set; }
 
+    public DateTime? StartDate { get; set; } = null;
 
-public class SearchModel
-{
-    public int? idCategory {get; set;}
-    public string? searchStr {get; set;}
-    public decimal? startPrice {get; set;}
+    public DateTime? EndDate { get; set; } = null;
 
-    public decimal? endPrice {get; set;}
+    public decimal? MinPrice { get; set; }
 
-    public DateTime? startDate {get; set;}
+    public decimal? MaxPrice { get; set; }
 
-    public int? idFormStudy {get; set;}
+    public int? DurationHours { get; set; }
+
+    public bool Organization { get; set; } = false;
+
+    public bool FreeStudyGroup { get; set; } = false;
+
+    public string SearchQuery { get; set; } = string.Empty;
 
 }

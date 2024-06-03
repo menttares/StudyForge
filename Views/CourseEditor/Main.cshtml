@@ -1,0 +1,108 @@
+@{
+    List<Subsection> Subsections = ViewData["Subsections"] as List<Subsection>;
+}
+@model Course
+
+<table class="table">
+    <tbody>
+        <tr>
+            <td>Имя курса:</td>
+            <td id="courseNameCell">@Model.CourseName</td>
+        </tr>
+        <tr>
+            <td>Секция:</td>
+            <td id="sectionCell">@Model.SectionName</td>
+        </tr>
+        <tr>
+            <td>Описание курса:</td>
+            <td id="descriptionCell">@Model.CourseDescription</td>
+        </tr>
+        <tr>
+            <td>Закрыт курс:</td>
+            <td id="closedCell">@(Model.CourseClosed ? "Да" : "Нет")</td>
+        </tr>
+    </tbody>
+</table>
+
+<button id="editButton" class="btn btn-primary">Редактировать</button>
+
+<div id="editForm" style="display: none;">
+    <form>
+        <div class="form-group">
+            <label for="courseName">Имя курса:</label>
+            <input type="text" class="form-control" id="courseName" value="@Model.CourseName">
+        </div>
+        <div class="form-group">
+            <label for="section">Секция:</label>
+            <select class="form-control" id="section">
+                @foreach (var subsection in Subsections)
+                {
+                    @if (subsection.Id == Model.SectionId)
+                    {
+                        <option value="@subsection.Id" selected>@subsection.Name</option>
+                    }
+                    else
+                    {
+                        <option value="@subsection.Id">@subsection.Name</option>
+                    }
+
+                }
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="description">Описание курса:</label>
+            <textarea class="form-control" id="description" rows="3">@Model.CourseDescription</textarea>
+        </div>
+        <div class="form-check">
+            <input type="checkbox" value="true" class="form-check-input" id="closed" @(Model.CourseClosed ? "checked" :
+                "")>
+            <label class="form-check-label" for="closed">Закрыт курс</label>
+        </div>
+        <button id="saveButton" class="btn btn-success">Сохранить</button>
+    </form>
+</div>
+
+
+<script>
+    $(document).ready(function () {
+        $("#editButton").click(function () {
+            $("#editForm").toggle();
+        });
+
+        $("#saveButton").click(function (event) {
+
+            event.preventDefault();
+            var courseName = $("#courseName").val();
+            var section = $("#section").val();
+            var description = $("#description").val();
+            var closed = $("#closed").is(":checked");
+
+            // Отправка AJAX-запроса для сохранения данных
+            $.ajax({
+                url: "/CourseEditor/CoursePut",
+                method: "PUT",
+                data: {
+                    CourseId: @Model.CourseId,
+                    CourseName: courseName,
+                    SectionId: section,
+                    Description: description,
+                    Closed: closed
+                },
+                success: function (response) {
+                    $("#courseNameCell").text(courseName);
+                    $("#sectionCell").text($("#section option:selected").text());
+                    $("#descriptionCell").text(description);
+                    $("#closedCell").text(closed ? "Да" : "Нет");
+
+
+                    // Закрываем форму редактирования
+                    $("#editForm").hide();
+                },
+                error: function (xhr, status, error) {
+                    // Обработка ошибки
+                    console.error(xhr.responseText);
+                }
+            });
+        });
+    });
+</script>

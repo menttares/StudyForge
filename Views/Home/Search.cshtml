@@ -1,0 +1,122 @@
+@model List<CategoryWithSubsections>
+
+<div class="container">
+    <h2>Категории</h2>
+
+    <div class="d-flex justify-content-center align-items-start flex-wrap">
+
+        @foreach (CategoryWithSubsections category in Model)
+        {
+            <div class="dropdown p-2">
+                <button class="btn btn-light dropdown-toggle " type="button" id="dropdownMenuButton" data-toggle="dropdown"
+                    aria-haspopup="true" aria-expanded="false">
+                    @category.CategoryName
+                </button>
+                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                    @foreach (Subsection subsection in category.Subsections)
+                    {
+                        <div class="dropdown-item" data-sectionId="@subsection.Id">@subsection.Name</div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+
+
+<div class="container mt-5">
+    <h2>Фильтр</h2>
+    <form id="FormSearch" name="FormSearch">
+        <div class="input-group">
+            <span class="input-group-text" id="basic-addon1">
+                <i class="bi bi-search"></i>
+            </span>
+            <input name="SearchQuery" type="text" class="form-control" id="searchInput"
+                placeholder="Введите текст для поиска">
+        </div>
+        <div class="row mt-2">
+            <div class="form-group col-md-5">
+                <label for="minPriceInput">Минимальная цена</label>
+                <input name="MinPrice" type="number" class="form-control" id="minPriceInput" min="0"
+                    placeholder="Минимальная цена">
+            </div>
+            <div class="form-group col-md-5">
+                <label for="maxPriceInput">Максимальная цена</label>
+                <input name="MaxPrice" type="number" class="form-control" id="maxPriceInput" min="0"
+                    placeholder="Максимальная цена">
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="form-group col-md-6">
+                <label for="startDateInput">Дата начала</label>
+                <input name="StartDate" type="date" class="form-control" id="startDateInput">
+            </div>
+            <div class="form-group col-md-6">
+                <label for="endDateInput">Дата окончания</label>
+                <input name="EndDate" type="date" class="form-control" id="endDateInput">
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="form-group col-md-6">
+                <div class="form-check">
+                    <input name="Organization" class="form-check-input" type="checkbox" id="orgCheckbox" value="true">
+                    <label class="form-check-label" for="orgCheckbox">От организации</label>
+                </div>
+            </div>
+            <div class="form-group col-md-6">
+                <div class="form-check">
+                    <input name="FreeStudyGroup" class="form-check-input" type="checkbox" id="freeGroupsCheckbox"
+                        value="true">
+                    <label class="form-check-label" for="freeGroupsCheckbox">Свободные группы</label>
+                </div>
+            </div>
+        </div>
+
+        <button id="SearchButton" type="submit" class="btn btn-primary btn-block mt-4">Поиск</button>
+    </form>
+</div>
+
+<div class="container mt-5">
+    <h2>Результат</h2>
+    <div class="text-primary" id="StatusSearch"></div>
+    <div class="row row-cols-1 row-cols-md-2" id="CardsCourses">
+    </div>
+</div>
+
+
+
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="~/js/search.js" asp-append-version="true"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+
+<style>
+    .btn {
+        width: 200px;
+    }
+
+    /* Дополнительные стили для примера */
+    .dropdown-menu {
+        display: none;
+    }
+
+    .show-dropdown .dropdown-menu {
+        display: block;
+    }
+</style>
+
+<script>
+    // JavaScript для закрытия предыдущего выпадающего списка
+    $('.dropdown-toggle').click(function () {
+        $('.dropdown-menu').hide(); // Скрыть все выпадающие списки
+        $(this).next('.dropdown-menu').show(); // Показать выпадающий список после нажатия на кнопку
+    });
+
+    // JavaScript для закрытия выпадающего списка при клике вне его области
+    $(document).on('click', function (e) {
+        if (!$(e.target).closest('.dropdown').length) {
+            $('.dropdown-menu').hide(); // Скрыть выпадающие списки при клике вне области
+        }
+    });
+</script>

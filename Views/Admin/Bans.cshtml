@@ -1,0 +1,95 @@
+@model List<BannedCourseView>
+
+<h2>Забаненные курсы</h2>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Курс</th>
+            <th>Причина</th>
+            <th>Название Курса</th>
+            <th>Администратор</th>
+            <th>Дата Бана</th>
+            <th>Действие</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var course in Model)
+        {
+            <tr id="ban-row-@course.CourseId">
+                <td><a asp-controller="Home" asp-action="CourseHome" asp-route-CourseId="@course.CourseId">Курс</a></td>
+                <td>@course.Cause</td>
+                <td>@course.CourseName</td>
+                <td>@course.AdminName</td>
+                <td>@course.BannedAt</td>
+                <td>
+                    <button class="btn btn-danger unban-button" data-toggle="modal" data-target="#unbanModal"
+                        data-ban-id="@course.CourseId">Разблокировать</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div class="modal fade" id="unbanModal" tabindex="-1" role="dialog" aria-labelledby="unbanModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="unbanModalLabel">Подтверждение разблокировки</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Вы уверены, что хотите разблокировать этот курс?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="confirmUnbanButton">Разблокировать</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+
+<script>
+    $(document).ready(function () {
+
+        var CourseId;
+
+
+        // Обработка нажатия на кнопку "Разблокировать"
+        $('.unban-button').click(function () {
+            console.log(1)
+            CourseId = $(this).data('ban-id'); // Получаем banId из атрибута data-ban-id
+        });
+
+        // Обработка кнопки подтверждения
+        $('#confirmUnbanButton').click(function () {
+
+            $.ajax({
+                url: '/admin/unban-course',
+                type: 'POST',
+                data: { CourseId: CourseId },
+                success: function (response) {
+                     $('#unbanModal').modal('hide');
+                     $('.modal-backdrop').remove();
+                     $('#ban-row-' + CourseId).remove();
+
+                },
+                error: function (xhr, status, error) {
+                    alert('Ошибка при отправке запроса: ' + error);
+                }
+            });
+
+            // Закрываем модальное окно
+            $('#unbanModal').modal('hide');
+            $('.modal-backdrop').remove();
+        });
+    });
+</script>

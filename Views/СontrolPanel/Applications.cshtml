@@ -1,0 +1,156 @@
+@model List<Course>
+
+<style>
+    .clickable-course {
+        cursor: pointer;
+        padding: 10px;
+        margin: 10px;
+    }
+</style>
+
+
+<div class="container">
+    <!-- Поле выбора статуса заявки -->
+    <div class="mb-3">
+        <label for="statusSelect" class="form-label">Статус заявки:</label>
+        <select class="form-control" id="statusSelect">
+            <option value="1">Принятно</option>
+            <option value="2">Отклонено</option>
+            <option value="4">Ожидание</option>
+            <option value="null">Все</option>
+        </select>
+    </div>
+
+    <!-- Кликабельные поля с названием курсов -->
+    <div class="d-flex flex-wrap">
+        @foreach (Course course in Model)
+        {
+            <div class="clickable-course border rounded mr-3 mb-3" data-course-id="@course.CourseId">@course.CourseName
+            </div>
+        }
+    </div>
+
+    <div id="applicationsContainer" class="mt-5"></div>
+</div>
+
+
+
+<script>
+
+    $('.clickable-course').click(function () {
+        var courseId = $(this).data('course-id');
+        var selectedStatus = $('#statusSelect').val();
+
+
+        $.ajax({
+            type: 'GET',
+            url: '/СontrolPanel/GetApplications',
+            data: {
+                courseId: courseId,
+                statusId: selectedStatus
+            },
+            success: function (response) {
+                renderApplications(response);
+
+            },
+            error: function (xhr, status, error) {
+                console.error(xhr.responseText);
+
+            }
+        });
+    });
+
+
+    function renderApplications(applications) {
+        var container = $('#applicationsContainer');
+        container.empty();
+
+        applications.forEach(function (application) {
+            var applicationElement = `
+            <div class="card mb-3" id="${application.applicationId}>
+                <div class="card-body">
+                    <h5 class="card-title">${application.firstName} ${application.lastName}</h5>
+                    <p class="card-text">Телефон: ${application.phone}</p>
+                    <p class="card-text">Дата рождения: ${new Date(application.birthday).toLocaleDateString()}</p>
+                    <p class="card-text">Email: ${application.email}</p>
+                    <p class="card-text">Дата подачи: ${new Date(application.submissionDate).toLocaleDateString()}</p>
+                    <p class="card-text">Название формы обучения: ${application.formTrainingName}</p>
+                    <p class="card-text">Город: ${application.cityName}</p>
+                    <p class="card-text">Набор: ${application.enrollment}</p>
+                    <p class="card-text">Дата начала набора: ${new Date(application.dateStart).toLocaleDateString()}</p>
+                    <p class="card-text">Дата окончания набора: ${application.dateEnd ? new Date(application.dateEnd).toLocaleDateString() : '-'}</p>
+                    <p class="card-text">Цена: ${application.price ? application.price.toFixed(2) : '-'}</p>
+                    <p class="card-text">Длительность в часах: ${application.duration ? application.duration : '-'}</p>
+                    <select class="form-control status-select" data-application-id="${application.applicationId}">
+                        <option value="1" ${application.idStatusApplications == 1 ? 'selected' : ''}>Принято</option>
+                        <option value="2" ${application.idStatusApplications == 2 ? 'selected' : ''}>Отклонено</option>
+                        <option value="3" ${application.idStatusApplications == 3 ? 'selected' : ''}>Ожидание</option>
+                    </select>
+                </div>
+            </div>
+        `;
+            container.append(applicationElement);
+        });
+
+    @* $('.status-select').change(function () {
+            var applicationId = $(this).data('application-id');
+            var newStatus = $(this).val();
+
+            $.ajax({
+            type: 'POST',
+            url: '/СontrolPanel/UpdateApplicationStatus',
+            data: {
+            applicationId: applicationId,
+            status: newStatus
+            },
+            success: function (response) {
+            console.log('Статус обновлен:', response);
+            },
+            error: function (xhr, status, error) {
+            console.error(xhr.responseText);
+            }
+            });
+            }); *@
+    }
+
+    $(document).on('change', '.status-select', function () {
+        var applicationId = $(this).data('application-id'); // Получаем ID заявки из data-атрибута
+        var newStatus = $(this).val(); // Получаем новый статус заявки
+
+
+
+        $.ajax({
+            type: 'PUT',
+            url: `/СontrolPanel/ChangeApplicationStatus/${applicationId}/${newStatus}`, // Замените на URL вашего метода в контроллере
+            success: function (response) {
+                console.log('Статус заявки успешно изменен.');
+                // Получаем текущий статус заявки из DOM
+                // Получаем ID заявки
+                var applicationId = $(this).data('application-id');
+
+                // Скрываем карточку с заявкой
+                $('[data-application-id="' + applicationId + '"]').closest('.card').hide();
+
+                // Получаем текущий статус заявки из DOM
+                var currentStatus = $('.status-select[data-application-id="' + applicationId + '"]').val();
+
+                // Если текущий статус заявки совпадает со статусом поиска или если поиск по статусу заявок не установлен
+                @* if (currentStatus === newStatus || $('#statusSelect').val() === null) {
+                    console.log('Статус заявки совпадает со статусом поиска или поиск по статусу заявок не установлен.');
+                } else {
+                    console.log('Статус заявки не совпадает со статусом поиска, удаляем элемент.');
+
+                    // Удаляем элемент заявки
+                    var applicationElement = document.getElementById(applicationId);
+                    document.getElementById('applicationsContainer').removeChild(applicationElement);
+                } *@
+
+            },
+            error: function (xhr, status, error) {
+                console.error('Ошибка при изменении статуса заявки:', xhr.responseText);
+                // Обработка ошибки, если необходимо
+            }
+        });
+    });
+
+</script>

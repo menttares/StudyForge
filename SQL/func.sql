@@ -608,3 +608,6 @@ END;
 $$ LANGUAGE plpgsql;
 
 SELECT change_application_status(2, 68);
+
+
+

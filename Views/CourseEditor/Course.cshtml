@@ -1,0 +1,65 @@
+@{
+    int CourseId = (int)ViewData["CourseId"];
+}
+
+
+<div class="btn-group" role="group" aria-label="Basic outlined example">
+    <button type="button" class="btn btn-outline-primary course-button" data-page="Main">Курс</button>
+    <button type="button" class="btn btn-outline-primary course-button" data-page="StudyGroups">Учебные группы</button>
+    <button type="button" class="btn btn-outline-primary course-button" data-page="Programs">Программа</button>
+    <button type="button" class="btn btn-outline-primary course-button" data-page="Teachers">Преподаватели</button>
+</div>
+
+
+
+
+<div class="container mt-4" id="Course-Main">
+    
+</div>
+
+
+
+
+
+
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+
+<script>
+    var IdCourse = @CourseId;
+    console.log(IdCourse);
+    $().ready(function () {
+        $(".course-button").each(function () {
+            $(this).click(function () {
+                // Удалить класс active у всех кнопок
+                $(".course-button").removeClass("active");
+                // Добавить класс active к текущей нажатой кнопке
+                $(this).addClass("active");
+
+                // Получить значение атрибута data-page
+                var page = $(this).data("page");
+
+                // Выполнить AJAX-запрос
+                $.ajax({
+                    url: "/CourseEditor/" + page,
+                    method: "GET",
+                    data: {
+                        CourseId : IdCourse
+                    },
+                    success: function (data) {
+                        // Загрузить полученные данные в элемент с id Course-Main
+                        $("#Course-Main").html(data);
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Ошибка:", error);
+                        $("#Course-Main").html("");
+                    },
+                });
+            });
+        });
+
+        $(".course-button:first").trigger('click');
+    });
+</script>
+
+<script src="~/js/CourseEditor/Course.js"></script>

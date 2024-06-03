@@ -1,0 +1,73 @@
+@model List<UserProfileInfo>
+
+<h1>User Profiles</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Фото</th>
+            <th>Почта</th>
+            <th>Телефон</th>
+            <th>Имя</th>
+            <th>Описание</th>
+            <th>Специальность</th>
+            <th>Лицензия</th>
+            <th>Подверждения</th>
+            <th>Дата создания</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var profile in Model)
+        {
+            <tr id="@profile.AccountId">
+                <td>@profile.AccountId</td>
+                <td></td>
+                <td>@profile.Email</td>
+                <td>@profile.Phone</td>
+                <td>@profile.Name</td>
+                <td>@profile.AboutMe</td>
+                <td>@profile.Specialization</td>
+                <td>@profile.LicenseNumber</td>
+                <td>
+                    <select class="form-control confirmation-select" data-account-id="@profile.AccountId">
+                        <option value="true" selected="@profile.Confirmation == true">True</option>
+                        <option value="false" selected="@profile.Confirmation == false">False</option>
+                    </select>
+                </td>
+                <td>@profile.AccountCreatedAt.ToShortDateString()</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div class="alert alert-success alert-dismissible fade" id="success-alert" role="alert">
+    <strong>Успех!</strong> Изменения подверждены.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+
+
+<script>
+    $(".confirmation-select").change(function () {
+        var accountId = $(this).data("account-id");
+        var confirmation = $(this).val();
+
+        $.ajax({
+            url: "/Admin/UpdateAccount",
+            method: "POST",
+            data: {
+                accountId: accountId,
+                confirmation: confirmation
+            },
+            success: function () {
+                $("#success-alert").addClass("show");
+                setTimeout(function () {
+                    $("#success-alert").removeClass("show");
+                }, 3000);
+            },
+            error: function (xhr, status, error) {
+                console.error("Error:", error);
+            }
+        });
+    });
+</script>

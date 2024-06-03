@@ -1,0 +1,88 @@
+@model List<Course>
+
+<div class="container">
+    <div class="row justify-content-between align-items-center mb-3">
+        <div class="col-auto">
+            <h2>Все курсы</h2>
+        </div>
+        <div class="col-auto">
+            <button id="addCourseButton" class="btn btn-primary">Добавить курс</button>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <div class="list-group">
+                @foreach (var course in Model)
+                {
+                    <div class="list-group-item" id="group-@course.CourseId">
+                        <h3 class="mb-1">
+                            <a asp-controller="CourseEditor" asp-action="Course" asp-route-CourseId="@course.CourseId">
+                                @course.CourseName
+                            </a>
+
+                        </h3>
+                        <p class="mb-1">Описание: @course.CourseDescription</p>
+                        <p class="mb-1">Категория: @course.CategoryName</p>
+                        <p class="mb-1">Дата создания: @course.CourseCreatedAt.ToShortDateString()</p>
+                        @if (course.CourseClosed)
+                        {
+                            <p class="mb-1">Статус: Закрыт</p>
+                        }
+                        else
+                        {
+                            <p class="mb-1">Статус: Открыт</p>
+                        }
+                        <div class="btn-group" role="group" aria-label="Basic example">
+                            <button type="button" class="btn btn-danger delete-course"
+                                data-course-id="@course.CourseId">Удалить</button>
+                            <button type="button" class="btn btn-primary edit-course"
+                                data-course-id="@course.CourseId">Изменить</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        $("#addCourseButton").click(function (e) {
+            $.ajax({
+                url: "/СontrolPanel/CreateCourses", // Укажите URL для обработчика сохранения профиля
+                method: "POST",
+                success: function (response) {
+                    // Обработка успешного ответа
+                },
+                error: function (xhr, status, error) {
+                    // Обработка ошибки
+                    console.error(xhr.responseText);
+                },
+            });
+        });
+
+        $(".delete-course").on("click", function (e) {
+            var courseId = $(this).data("course-id"); // Получаем ID курса из атрибута data-course-id кнопки
+            // Отправляем AJAX-запрос на сервер для удаления курса с указанным ID
+            console.log(courseId);
+            $.ajax({
+                url: `/ControlPanel/DeleteCourse/${courseId}`, // Укажите URL для обработчика удаления курса
+                method: "Delete",
+                success: function (response) {
+                    // Обработка успешного ответа
+                    $("#group-" + courseId).hide();
+                },
+                error: function (xhr, status, error) {
+                    // Обработка ошибки
+                    console.error(xhr.responseText);
+                },
+            });
+
+
+        });
+    });
+</script>
+
+<!--script src="~/js/СontrolPanel/Courses.js"></script-->

@@ -1,0 +1,146 @@
+@{
+    int GroupId = (int)ViewData["GroupId"];
+    List<ScheduleDay> days = ViewData["Days"] as List<ScheduleDay>;
+    List<CityData> cities = ViewData["Cities"] as List<CityData>;
+    List<FormData> formDatas = ViewData["FormsTraining"] as List<FormData>;
+}
+@model StudyGroup
+
+
+
+<div class="container mt-5">
+    <h2>Редактирование учебной группы</h2>
+    <form method="post">
+        <input type="number" name="Id" hidden value="@Model.Id" />
+
+        <div class="form-group">
+            <label for="enrollment">Набор:</label>
+            <input type="number" class="form-control" id="enrollment" name="Enrollment" value="@Model.Enrollment">
+        </div>
+        <div class="form-group">
+            <label for="startDate">Дата начала:</label>
+            <input type="date" class="form-control" id="startDate" name="StartDate"
+                value="@Model.StartDate.ToString("yyyy-MM-dd")">
+        </div>
+        <div class="form-group">
+            <label for="endDate">Дата конца:</label>
+            <input type="date" class="form-control" id="endDate" name="EndDate"
+                value="@Model.EndDate?.ToString("yyyy-MM-dd")">
+        </div>
+        <div class="form-group">
+            <label for="price">Цена:</label>
+            <input type="text" class="form-control" id="price" name="Price" value="@Model.Price" pattern="\d+(,\d{2})?">
+        </div>
+        <div class="form-group">
+            <label for="formsTrainingId">Форма обучения:</label>
+            <select class="form-control" id="formsTrainingId" name="FormsTrainingId">
+                @foreach (var formData in formDatas)
+                {
+                    @if (formData.Id == Model.FormsTrainingId)
+                    {
+                        <option value="@formData.Id" selected>@formData.Name</option>
+                    }
+                    else
+                    {
+                        <option value="@formData.Id">@formData.Name</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="cityId">Город:</label>
+            <select class="form-control" id="cityId" name="CityId">
+                @foreach (var city in cities)
+                {
+                    @if (city.Id == Model.CityId)
+                    {
+                        <option value="@city.Id" selected>@city.Name</option>
+                    }
+                    else
+                    {
+                        <option value="@city.Id">@city.Name</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="duration">Количество часов:</label>
+            <input type="number" class="form-control" id="duration" name="Duration" value="@Model.Duration">
+        </div>
+
+        <div class="form-group">
+            <label for="ScheduleDays">Дни недели:</label>
+            <select multiple class="form-control" id="ScheduleDays" name="ScheduleDays[]">
+                @if (days is not null || days.Count != 0)
+                {
+                    @foreach (var day in days)
+                    {
+
+                        if (Model.ScheduleDays != null && Model.ScheduleDays.Any(d => d.Id == day.Id))
+                        {
+                            <option value="@day.Id" selected>@day.Name</option>
+                        }
+                        else
+                        {
+                            <option value="@day.Id">@day.Name</option>
+                        }
+                    }
+                }
+                else
+                {
+                    @Html.Raw("Дни неопределены")
+                    ;
+                }
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-2">Сохранить</button>
+    </form>
+</div>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        $("form").submit(function (event) {
+            event.preventDefault(); // Предотвращаем отправку формы по умолчанию
+
+            var selectedDays = $("#ScheduleDays").val();
+            // Заполняем скрытое поле ScheduleDays этими идентификаторами
+            $("#scheduleDays").val(selectedDays);
+
+            var formData = $(this).serialize(); // Получаем данные формы в формате строки
+
+            $.ajax({
+                url: "/StudyGroupEditor/UpdateGroup", // Адрес для отправки запроса
+                method: "POST", // Метод запроса
+                data: formData, // Данные для отправки
+                success: function (response) { // Обработка успешного ответа
+                    // Очистка полей формы (если нужно)
+                    $("form")[0].reset();
+                    // Проверяем, есть ли уже уведомление на странице
+                    if ($(".alert").length === 0) {
+                        // Если уведомления нет, выводим новое уведомление об успехе с помощью Bootstrap
+                        $("<div/>", {
+                            "class": "alert alert-success",
+                            "role": "alert",
+                            "text": "Учебная группа успешно обновлена!"
+                        }).appendTo("body");
+                    }
+                },
+                error: function (xhr, status, error) { // Обработка ошибки
+                    console.error("Произошла ошибка:", error);
+                    // Проверяем, есть ли уже уведомление на странице
+                    if ($(".alert").length === 0) {
+                        // Если уведомления нет, выводим новое уведомление об ошибке с помощью Bootstrap
+                        $("<div/>", {
+                            "class": "alert alert-danger",
+                            "role": "alert",
+                            "text": "Произошла ошибка при обновлении учебной группы. Пожалуйста, попробуйте снова."
+                        }).appendTo("body");
+                    }
+                }
+            });
+        });
+    });
+</script>

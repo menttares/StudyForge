@@ -1,0 +1,144 @@
+@{
+    int CourseId = (int)ViewData["CourseId"];
+}
+
+@model List<ProgramCourse>
+
+<h1>Программы курса</h1>
+
+<div class="mb-2">
+    <button id="addRow" class="btn btn-primary">Добавить</button>
+</div>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Название</th>
+            <th>Описание</th>
+            <th>Дествия</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var course in Model)
+        {
+            <tr id="@course.Id">
+                <td>@course.Name</td>
+                <td>@course.Description</td>
+                <td>
+                    <button class="btn btn-warning btn-sm editRow" data-id="@course.Id">Изменить</button>
+                    <button class="btn btn-danger btn-sm deleteRow" data-id="@course.Id">Удалить</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+<script>
+    document.getElementById("addRow").addEventListener("click", function () {
+        $.ajax({
+            url: "/CourseEditor/CreateProgram",
+            method: "POST",
+            data: {
+                CourseId: @CourseId
+            },
+            success: function (data) {
+                var newProgramCourse = data;
+
+                // Создание новой строки в таблице
+                var newRow = `
+                <tr id="${newProgramCourse.id}">
+                    <td>${newProgramCourse.name}</td>
+                    <td>${newProgramCourse.description}</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm editRow" data-id="${newProgramCourse.id}">Изменить</button>
+                        <button class="btn btn-danger btn-sm deleteRow" data-id="${newProgramCourse.id}">Удалить</button>
+                    </td>
+                </tr>
+                `;
+
+                $('tbody').append(newRow);
+            },
+            error: function (xhr, status, error) {
+                console.error("Ошибка:", error);
+            },
+        });
+    });
+
+    $(document).on("click", ".editRow", function () {
+        var row = $(this).closest("tr"); // Находим ближайшую строку
+        var name = row.find("td:eq(0)").text(); // Получаем данные из первой ячейки
+        var description = row.find("td:eq(1)").text(); // Получаем данные из второй ячейки
+        // Заменяем данные ячеек на поля ввода
+        row.find("td:eq(0)").html('<input type="text" class="form-control" value="' + name + '">');
+        row.find("td:eq(1)").html('<textarea class="form-control description-input" maxlength="400" rows="3">' + description + '</textarea>');
+
+        // Заменяем кнопку "Изменить" на кнопку "Сохранить"
+        $(this).removeClass("btn-warning").addClass("btn-success").text("Сохранить").removeClass("editRow").addClass("saveRow");
+    });
+
+    // Обработчик нажатия кнопки "Сохранить"
+    $(document).on("click", ".saveRow", function () {
+        var row = $(this).closest("tr"); // Находим ближайшую строку
+        var id = row.attr("id");
+        var name = row.find("td:eq(0) input").val(); // Получаем значение поля ввода из первой ячейки
+        var description = row.find("td:eq(1) textarea").val(); // Получаем значение поля ввода из второй ячейки
+
+        // Отправляем данные на сервер для обновления
+        $.ajax({
+            url: "/CourseEditor/UpdateProgram",
+            method: "PUT",
+            data: {
+                Id: id,
+                Name: name,
+                Description: description,
+                CourseId: @CourseId
+            },
+            success: function (data) {
+                // Обновляем ячейки таблицы с обновленными данными
+                row.find("td:eq(0)").text(name);
+                row.find("td:eq(1)").text(description);
+
+                // Восстанавливаем кнопку "Изменить"
+                row.find(".saveRow").removeClass("btn-success").addClass("btn-warning").text("Изменить").removeClass("saveRow").addClass("editRow");
+            },
+            error: function (xhr, status, error) {
+                console.error("Ошибка:", error);
+            },
+        });
+    });
+
+    $(document).on("click", ".deleteRow", function (e) {
+        var Id = $(this).data("id");
+        $.ajax({
+            url: "/CourseEditor/DeleteProgram",
+            method: "DELETE",
+            data: {
+                id: Id,
+            },
+            success: function (data) {
+                // Удаляем строку таблицы при успешном удалении
+                $("#" + Id).remove();
+            },
+            error: function (xhr, status, error) {
+                console.error("Ошибка:", error);
+            },
+        });
+    });
+
+
+</script>
+
+
+
+<style>
+    .table td {
+        width: 25%;
+        /* Устанавливаем фиксированную ширину для всех ячеек таблицы */
+    }
+
+    .input-cell {
+        width: 100%;
+        /* Устанавливаем ширину поля ввода на 100% от родительского контейнера */
+    }
+</style>
