@@ -72,6 +72,28 @@ insert into BannedCourses(id_Course, id_Administrator, cause) values
 	(17,1,'нет причины')
 
 
+CREATE OR REPLACE FUNCTION is_course_banned(p_course_id INTEGER)
+RETURNS BOOLEAN AS $$
+DECLARE
+    v_exists BOOLEAN;
+BEGIN
+    -- Проверка наличия записи о бане в таблице BannedCourses
+    SELECT EXISTS (
+        SELECT 1
+        FROM BannedCourses
+        WHERE id_Course = p_course_id
+    ) INTO v_exists;
+
+    -- Возвращаем результат
+    RETURN v_exists;
+END;
+$$ LANGUAGE plpgsql;
+
+select * from courses;
+select * from BannedCourses;
+select is_course_banned(17);
+
+	
 CREATE OR REPLACE FUNCTION add_ban(
     p_course_id INTEGER,
     p_admin_id INTEGER,
@@ -95,12 +117,12 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-select add_ban(18,1,'нет причины');
+select add_ban(17,1,'нет причины');
 
-CREATE OR REPLACE FUNCTION delete_ban(ban_id INTEGER)
+CREATE OR REPLACE FUNCTION delete_ban_by_course_id(p_course_id INTEGER)
 RETURNS BOOLEAN AS $$
 BEGIN
-    DELETE FROM BannedCourses WHERE id = ban_id;
+    DELETE FROM BannedCourses WHERE id_Course = p_course_id;
     IF FOUND THEN
         RETURN TRUE;
     ELSE
@@ -111,6 +133,7 @@ EXCEPTION
         RETURN FALSE;
 END;
 $$ LANGUAGE plpgsql;
+
 
 SELECT delete_ban(1); 
 

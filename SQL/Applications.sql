@@ -39,6 +39,50 @@ create table applications(
   id_StatusApplications INTEGER REFERENCES StatusApplications(id)
 );
 
+
+CREATE VIEW ApplicationsStatiStatisticsView AS
+SELECT 
+    a.id AS application_id,
+    sg.id AS group_id,
+	c.id AS course_id,
+    c.name AS group_name,
+	sg.enrollment AS enrollment,
+    count_accepted_applications(sg.id) as count_accepted,
+    a.submission_date
+FROM 
+    applications a
+JOIN 
+    StudyGroups sg ON a.id_StudyGroup = sg.id
+JOIN 
+    Courses c ON sg.id_course = c.id;
+
+
+select * from ApplicationsStatiStatisticsView;
+
+CREATE OR REPLACE FUNCTION get_applications_by_creator(creator_id INT)
+RETURNS SETOF ApplicationsStatiStatisticsView AS $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM Courses WHERE id_Account = creator_id) THEN
+        RAISE NOTICE 'No creator with id %', creator_id;
+        RETURN;
+    END IF;
+    
+    RETURN QUERY
+    SELECT asv.*
+    FROM 
+        ApplicationsStatiStatisticsView asv
+    JOIN 
+        Courses c ON asv.course_id = c.id
+    WHERE 
+        c.id_Account = creator_id;
+END;
+$$ LANGUAGE plpgsql;
+
+
+SELECT * FROM get_applications_by_creator(1);
+
+
+
 ALTER TABLE applications ADD COLUMN submission_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 
 CREATE OR REPLACE FUNCTION create_application(

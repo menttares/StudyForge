@@ -1232,4 +1232,48 @@ public class PostgresDataService
     }
 
 
+public List<ApplicationStatistics> GetApplicationsByCreator(int creatorId)
+{
+    var results = new List<ApplicationStatistics>();
+
+    using (var connection = new NpgsqlConnection(_connectionString))
+    {
+        connection.Open();
+
+        using (var command = new NpgsqlCommand("SELECT * FROM CourseApplicationsStatisticsView WHERE id_Account = @creator_id", connection))
+        {
+            command.Parameters.AddWithValue("creator_id", creatorId);
+
+            try
+            {
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.HasRows)
+                    {
+                        while (reader.Read())
+                        {
+                            results.Add(new ApplicationStatistics
+                            {
+                                CourseId = reader.GetInt32(reader.GetOrdinal("course_id")),
+                                CourseName = reader.GetString(reader.GetOrdinal("course_name")),
+                                TotalAcceptedApplications = reader.GetInt32(reader.GetOrdinal("total_accepted_applications"))
+                            });
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"No applications found for creator id {creatorId}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+            }
+        }
+    }
+
+    return results;
+}
+
 }

@@ -45,7 +45,9 @@ public class СontrolPanelController : Controller
 
         var id = int.Parse(ClaimIdentifier.Value);
 
-        return PartialView();
+        List<ApplicationStatistics> data = _database.GetApplicationsByCreator(id);
+
+        return PartialView(data);
     }
 
     public IActionResult Applications()

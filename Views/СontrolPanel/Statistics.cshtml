@@ -1,0 +1,55 @@
+@model List<ApplicationStatistics>
+
+@{
+    // Преобразуем данные модели в JSON формат
+    var courseNames = Model.Select(m => m.CourseName).ToArray();
+    var totalAcceptedApplications = Model.Select(m => m.TotalAcceptedApplications).ToArray();
+}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<canvas id="myChart" width="400" height="400"></canvas>
+<!-- Скрипт для инициализации графика -->
+<script>
+    // Получаем данные из Razor-модели
+    var courseNames = @Html.Raw(Json.Serialize(courseNames));
+    var totalAcceptedApplications = @Html.Raw(Json.Serialize(totalAcceptedApplications));
+
+    // Функция для генерации случайного цвета
+    function getRandomColor() {
+        var letters = '0123456789ABCDEF';
+        var color = '#';
+        for (var i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+    }
+
+    // Генерируем массив случайных цветов для каждого столбца
+    var backgroundColors = courseNames.map(() => getRandomColor());
+    var borderColors = backgroundColors.map(color => color);
+
+    var ctx = document.getElementById('myChart').getContext('2d');
+    var myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: courseNames, // Используем названия курсов в качестве меток
+            datasets: [{
+                label: 'Принятые заявки',
+                data: totalAcceptedApplications, // Используем количество принятых заявок в качестве данных
+                backgroundColor: backgroundColors,
+                borderColor: borderColors,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true, // Адаптивность
+            maintainAspectRatio: false, // Сохранять соотношение сторон
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
