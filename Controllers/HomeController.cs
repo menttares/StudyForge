@@ -45,7 +45,7 @@ public class HomeController : Controller
     public IActionResult CourseHome(int CourseId)
     {
         Course course = _database.GetCourseInfo(CourseId);
-        List<StudyGroup> studyGroups = _database.GetAllStudyGroupCourse(CourseId);
+        List<CourseAndGroupView> studyGroups = _database.getCourseStudyGroupsView(CourseId);
         UserProfileInfo userProfileInfo = _database.GetUserProfileInfo(course.AccountId);
         List<ProgramCourse> programCourses = _database.GetProgramsByCourseId(CourseId);
 

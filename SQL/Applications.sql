@@ -40,27 +40,26 @@ create table applications(
 );
 
 
-CREATE VIEW ApplicationsStatiStatisticsView AS
+CREATE VIEW CourseApplicationsStatisticsView AS
 SELECT 
-    a.id AS application_id,
-    sg.id AS group_id,
-	c.id AS course_id,
-    c.name AS group_name,
-	sg.enrollment AS enrollment,
-    count_accepted_applications(sg.id) as count_accepted,
-    a.submission_date
+    c.id AS course_id,
+    c.name AS course_name,
+	c.id_Account AS id_Account,
+    SUM(CASE WHEN a.id_StatusApplications = (SELECT id FROM StatusApplications WHERE name = 'принято') THEN 1 ELSE 0 END) AS total_accepted_applications
 FROM 
     applications a
 JOIN 
     StudyGroups sg ON a.id_StudyGroup = sg.id
 JOIN 
-    Courses c ON sg.id_course = c.id;
+    Courses c ON sg.id_course = c.id
+GROUP BY 
+    c.id, c.name, c.id_Account;
 
 
-select * from ApplicationsStatiStatisticsView;
+select * from CourseApplicationsStatisticsView;
 
 CREATE OR REPLACE FUNCTION get_applications_by_creator(creator_id INT)
-RETURNS SETOF ApplicationsStatiStatisticsView AS $$
+RETURNS SETOF CourseApplicationsStatisticsView AS $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM Courses WHERE id_Account = creator_id) THEN
         RAISE NOTICE 'No creator with id %', creator_id;
@@ -70,7 +69,7 @@ BEGIN
     RETURN QUERY
     SELECT asv.*
     FROM 
-        ApplicationsStatiStatisticsView asv
+        CourseApplicationsStatisticsView asv
     JOIN 
         Courses c ON asv.course_id = c.id
     WHERE 

@@ -181,7 +181,20 @@ JOIN
 select * from CourseAndGroupView;
 
 
+CREATE OR REPLACE FUNCTION get_course_instances(p_course_id INTEGER)
+RETURNS SETOF CourseAndGroupView AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+	*
+  FROM
+    CourseAndGroupView c
+  WHERE
+    c.course_id = p_course_id;
+END;
+$$ LANGUAGE plpgsql;
 
+select * from get_course_instances(17);
 
 
 -- измененный фильтр

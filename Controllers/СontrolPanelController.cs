@@ -39,6 +39,19 @@ public class СontrolPanelController : Controller
         return PartialView();
     }
 
+    public IActionResult LogOut()
+    {
+        var cookieNames = HttpContext.Request.Cookies.Keys.ToArray();
+        foreach (var cookieName in cookieNames)
+        {
+            HttpContext.Response.Cookies.Delete(cookieName);
+        }
+
+        HttpContext.SignOutAsync();
+
+        return RedirectToAction("Index", "Home");
+    }
+
     public IActionResult Statistics()
     {
         var ClaimIdentifier = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
@@ -67,7 +80,7 @@ public class СontrolPanelController : Controller
         List<ApplicationDetails> applications = _database.GetApplications(courseId, statusId);
         return Json(applications);
     }
-    
+
     [HttpPut("/СontrolPanel/ChangeApplicationStatus/{applicationId}/{newStatus}")]
     public IActionResult ChangeApplicationStatus(int applicationId, int newStatus)
     {

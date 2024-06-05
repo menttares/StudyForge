@@ -141,6 +141,4 @@ public class AuthController : Controller
         return RedirectToAction("Index", "Home");
     }
 
-
-
 }

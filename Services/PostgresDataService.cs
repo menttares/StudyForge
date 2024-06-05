@@ -1232,48 +1232,97 @@ public class PostgresDataService
     }
 
 
-public List<ApplicationStatistics> GetApplicationsByCreator(int creatorId)
-{
-    var results = new List<ApplicationStatistics>();
-
-    using (var connection = new NpgsqlConnection(_connectionString))
+    public List<ApplicationStatistics> GetApplicationsByCreator(int creatorId)
     {
-        connection.Open();
+        var results = new List<ApplicationStatistics>();
 
-        using (var command = new NpgsqlCommand("SELECT * FROM CourseApplicationsStatisticsView WHERE id_Account = @creator_id", connection))
+        using (var connection = new NpgsqlConnection(_connectionString))
         {
-            command.Parameters.AddWithValue("creator_id", creatorId);
+            connection.Open();
 
-            try
+            using (var command = new NpgsqlCommand("SELECT * FROM CourseApplicationsStatisticsView WHERE id_Account = @creator_id", connection))
             {
-                using (var reader = command.ExecuteReader())
+                command.Parameters.AddWithValue("creator_id", creatorId);
+
+                try
                 {
-                    if (reader.HasRows)
+                    using (var reader = command.ExecuteReader())
                     {
-                        while (reader.Read())
+                        if (reader.HasRows)
                         {
-                            results.Add(new ApplicationStatistics
+                            while (reader.Read())
                             {
-                                CourseId = reader.GetInt32(reader.GetOrdinal("course_id")),
-                                CourseName = reader.GetString(reader.GetOrdinal("course_name")),
-                                TotalAcceptedApplications = reader.GetInt32(reader.GetOrdinal("total_accepted_applications"))
-                            });
+                                results.Add(new ApplicationStatistics
+                                {
+                                    CourseId = reader.GetInt32(reader.GetOrdinal("course_id")),
+                                    CourseName = reader.GetString(reader.GetOrdinal("course_name")),
+                                    TotalAcceptedApplications = reader.GetInt32(reader.GetOrdinal("total_accepted_applications"))
+                                });
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine($"No applications found for creator id {creatorId}");
                         }
                     }
-                    else
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"An error occurred: {ex.Message}");
+                }
+            }
+        }
+
+        return results;
+    }
+
+
+    public List<CourseAndGroupView> getCourseStudyGroupsView(int courseId)
+    {
+        List<CourseAndGroupView> coursesAndGroups = new List<CourseAndGroupView>();
+
+
+        using (NpgsqlConnection connection = new NpgsqlConnection(_connectionString))
+        {
+            connection.Open();
+
+            using (NpgsqlCommand command = new NpgsqlCommand("SELECT * FROM get_course_instances(@p_course_id)", connection))
+            {
+                // Добавление параметров
+                command.Parameters.AddWithValue("@p_course_id", NpgsqlDbType.Integer, courseId);
+
+                using (NpgsqlDataReader reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
                     {
-                        Console.WriteLine($"No applications found for creator id {creatorId}");
+                        CourseAndGroupView courseAndGroup = new CourseAndGroupView();
+
+                        courseAndGroup.CourseId = reader.GetInt32(0);
+                        courseAndGroup.CourseName = reader.GetString(1);
+                        courseAndGroup.CourseDescription = reader.GetString(2);
+                        courseAndGroup.SectionId = reader.GetInt32(3);
+                        courseAndGroup.SectionName = reader.GetString(4);
+                        courseAndGroup.CreatorName = reader.GetString(5);
+                        courseAndGroup.CreatorEmail = reader.GetString(6);
+                        courseAndGroup.CreatorPhone = reader.GetString(7);
+                        courseAndGroup.CreatorIsOrganization = reader.GetBoolean(8);
+                        courseAndGroup.GroupId = reader.GetInt32(9);
+                        courseAndGroup.GroupEnrollment = reader.GetInt32(10);
+                        courseAndGroup.GroupDateStart = reader.GetDateTime(11);
+                        courseAndGroup.GroupDateEnd = reader.IsDBNull(12) ? (DateTime?)null : reader.GetDateTime(12);
+                        courseAndGroup.GroupPrice = reader.GetDecimal(13);
+                        courseAndGroup.GroupDuration = reader.GetInt32(14);
+                        courseAndGroup.AcceptedApplicationsCount = reader.GetInt32(15);
+                        courseAndGroup.ScheduleDays = reader.GetString(16);
+                        courseAndGroup.CourseClosed = reader.GetBoolean(17);
+
+                        coursesAndGroups.Add(courseAndGroup);
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An error occurred: {ex.Message}");
-            }
         }
+
+
+        return coursesAndGroups;
     }
-
-    return results;
-}
-
 }

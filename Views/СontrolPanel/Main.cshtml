@@ -1,54 +1,53 @@
-
-    <div class="container-fluid">
-        <div class="row">
-            <div class="d-flex col flex-column flex-shrink-0 p-3 bg-white border-end" style="width: 280px;">
-                <div class="dropdown">
-                    <a href="#"
-                        class="d-flex align-items-center nav-link link-body-emphasis text-decoration-none dropdown-toggle"
-                        data-bs-toggle="dropdown" aria-expanded="false">
-                        Профиль
-                    </a>
-                    <ul class="dropdown-menu text-small shadow">
-                        <li><a class="dropdown-item" href="#" data-page="Profile">Мой аккаунт</a></li>
-                        <li><a class="dropdown-item" href="#" data-page="Home">Настройки</a></li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li><a class="dropdown-item" data-page="LogOut" href="#">Выйти</a></li>
-                    </ul>
-                </div>
-                <hr>
-                <ul class="nav nav-pills flex-column mb-auto">
-                    <li class="nav-item">
-                        <a href="#" class="nav-link active" data-page="Home" aria-current="page">
-                            Главная
-                        </a>
-                    </li>
+<div class="container-fluid">
+    <div class="row">
+        <div class="d-flex col flex-column flex-shrink-0 p-3 bg-white border-end" style="width: 280px;">
+            <div class="dropdown">
+                <a href="#"
+                    class="d-flex align-items-center link-body-emphasis text-decoration-none dropdown-toggle"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                    Профиль
+                </a>
+                <ul class="dropdown-menu text-small shadow">
+                    <li><a class="dropdown-item" href="#" data-page="Profile">Мой аккаунт</a></li>
+                    <li><a class="dropdown-item" href="#" data-page="Home">Настройки</a></li>
                     <li>
-                        <a href="#" class="nav-link link-body-emphasis" data-page="Statistics">
-                            Статистика
-                        </a>
+                        <hr class="dropdown-divider">
                     </li>
-                    <li>
-                        <a href="#" class="nav-link link-body-emphasis" data-page="Courses">
-                            Курсы
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="nav-link link-body-emphasis" data-page="Applications">
-                            Заявки
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="nav-link link-body-emphasis" data-page="Home">
-                            Другое
-                        </a>
-                    </li>
+                    <li><a class="dropdown-item"   asp-action="LogOut" asp-controller="СontrolPanel">Выйти</a></li>
                 </ul>
             </div>
-
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" id="container-main-content">
-                
-            </main>
+            <hr>
+            <ul class="nav nav-pills flex-column mb-auto">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active" data-page="Home" aria-current="page">
+                        Главная
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-link link-body-emphasis" data-page="Statistics">
+                        Статистика
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-link link-body-emphasis" data-page="Courses">
+                        Курсы
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-link link-body-emphasis" data-page="Applications">
+                        Заявки
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-link link-body-emphasis" data-page="Home">
+                        Другое
+                    </a>
+                </li>
+            </ul>
         </div>
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" id="container-main-content">
+
+        </main>
     </div>
+</div>

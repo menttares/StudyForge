@@ -1,5 +1,5 @@
 @{
-    List<StudyGroup> studyGroups = ViewData["studyGroups"] as List<StudyGroup>;
+    List<CourseAndGroupView> studyGroups = ViewData["studyGroups"] as List<CourseAndGroupView>;
     UserProfileInfo userProfileInfo = ViewData["userProfileInfo"] as UserProfileInfo;
     List<ProgramCourse> programs = ViewData["program"] as List<ProgramCourse>;
     bool isAdmin = User.IsInRole("admin");
@@ -29,7 +29,14 @@
                     <button class="btn btn-danger" data-toggle="modal" data-target="#banModal">Заблокировать</button>
                 }
             }
-
+            <div class="row mt-5">
+                <div class="col-md-12">
+                    <h2>Создатель курса</h2>
+                    <p>Имя: @userProfileInfo.Name</p>
+                    <p>Специализация: @userProfileInfo.Specialization</p>
+                    <p>Описание: @userProfileInfo.AboutMe</p>
+                </div>
+            </div>
         </div>
 
         <!-- 2 блок: Учебные группы -->
@@ -41,12 +48,14 @@
                     <div class="card mb-3">
                         <div class="card-body">
                             <h5 class="card-title">Учебная группа</h5>
-                            <p class="card-text">Набор: @group.AcceptedApplicationsCount / @group.Enrollment</p>
-                            <p class="card-text">Дата начала: @group.StartDate.ToShortDateString()</p>
-                            <p class="card-text">Цена: @group.Price</p>
+                            <p class="card-text">Набор: @group.AcceptedApplicationsCount / @group.GroupEnrollment</p>
+                            <p class="card-text">Дата начала: @group.GroupDateStart.ToShortDateString()</p>
+                            <p class="card-text">Цена: @group.GroupPrice</p>
+                            <p class="card-text">Форма: @group.GroupPrice</p>
+                            <p class="card-text">Количество часов: @group.GroupDuration</p>
                             <!-- Добавьте другие поля для описания учебной группы -->
-                            <button class="btn btn-primary btn-record trigger-modal" data-id="@group.Id" data-toggle="modal"
-                                data-target="#contactModal">Записаться</button>
+                            <button class="btn btn-primary btn-record trigger-modal" data-id="@group.GroupId"
+                                data-toggle="modal" data-target="#contactModal">Записаться</button>
                         </div>
                     </div>
                 }
@@ -54,31 +63,45 @@
         </div>
     </div>
 
-    <!-- 3 блок: Описание создателя курса -->
-    <div class="row mt-5">
-        <div class="col-md-12">
-            <h2>Создатель курса</h2>
-            <p>Имя: @userProfileInfo.Name</p>
-            <p>Специализация: @userProfileInfo.Specialization</p>
-            <p>Описание: @userProfileInfo.AboutMe</p>
-        </div>
-    </div>
-
-    <div class="row mt-5">
-        <div class="col-md-6">
-            <h2>Программы</h2>
-            <div class="d-flex flex-column">
+    <div class="row mt-5 align-items-center">
+        <h2>Программы</h2>
+        <div class="col-md-6 d-flex justify-content-center">
+            <div class="accordion" id="accordionPanelsStayOpenExample">
                 @foreach (var program in programs)
                 {
-                    <div data-id="@program.CourseId">
-                        <div>@program.Name</div>
-                        <div>@program.Description</div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button " type="button" data-bs-toggle="collapse"
+                                data-bs-target="#panelsStayOpen-@program.Id" aria-expanded="true"
+                                aria-controls="panelsStayOpen-@program.Id">
+                                @program.Name
+                            </button>
+                        </h2>
+                        <div id="panelsStayOpen-@program.Id" class="accordion-collapse collapse show">
+                            <div class="accordion-body">
+                                @program.Description
+                            </div>
+                        </div>
                     </div>
                 }
             </div>
         </div>
-
     </div>
+    @* <div class="row mt-5">
+    <div class="col-md-6">
+    <h2>Программы</h2>
+    <div class="d-flex flex-column">
+    @foreach (var program in programs)
+    {
+    <div data-id="@program.CourseId">
+    <div>@program.Name</div>
+    <div>@program.Description</div>
+    </div>
+    }
+    </div>
+    </div>
+
+    </div> *@
 
 </div>
 
