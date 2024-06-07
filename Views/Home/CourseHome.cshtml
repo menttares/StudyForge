@@ -31,7 +31,13 @@
             }
             <div class="row mt-5">
                 <div class="col-md-12">
-                    <h2>Создатель курса</h2>
+                    @if (studyGroups[0].CreatorIsOrganization)
+                    {
+                        <h2>Организация:</h2>
+                    }
+                    else {
+                        <h2>Создатель курса</h2>
+                    }
                     <p>Имя: @userProfileInfo.Name</p>
                     <p>Специализация: @userProfileInfo.Specialization</p>
                     <p>Описание: @userProfileInfo.AboutMe</p>
