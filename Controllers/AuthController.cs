@@ -37,7 +37,7 @@ public class AuthController : Controller
 
         var resutlData = _database.login_user(data.Email, data.Password);
 
-        if (resutlData.Status == ResultPostgresStatus.Ok)
+        if (resutlData.Status == ResultPostgresStatus.Ok && ModelState.IsValid)
         {
             var claims = new List<Claim>
             {
@@ -50,17 +50,12 @@ public class AuthController : Controller
             var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
 
             await HttpContext.SignInAsync(claimsPrincipal);
-        }
-        else if (resutlData.Status == ResultPostgresStatus.PostgresError || resutlData.Status == ResultPostgresStatus.Exception)
-        {
-            return StatusCode(500, "Внутрення ошибка. Пожалуйста, войдите позже");
-        }
-        else if (resutlData.Status == ResultPostgresStatus.ValidDataError)
-        {
-            return StatusCode(200, $"Неверные данные формы: {resutlData.Message}");
+
+            return RedirectToAction("Index", "Home");
         }
 
-        return RedirectToAction("Index", "Home");
+
+        return View(data);
     }
 
     [HttpGet]
@@ -81,7 +76,7 @@ public class AuthController : Controller
             data.Phone
         );
 
-        if (resutlData.Status == ResultPostgresStatus.Ok)
+        if (resutlData.Status == ResultPostgresStatus.Ok && ModelState.IsValid)
         {
             var claims = new List<Claim>
             {
@@ -95,16 +90,8 @@ public class AuthController : Controller
 
             await HttpContext.SignInAsync(claimsPrincipal);
         }
-        else if (resutlData.Status == ResultPostgresStatus.PostgresError || resutlData.Status == ResultPostgresStatus.Exception)
-        {
-            return StatusCode(500, "Внутрення ошибка. Пожалуйста, войдите позже");
-        }
-        else if (resutlData.Status == ResultPostgresStatus.ValidDataError)
-        {
-            return StatusCode(200, $"Неверные данные формы: {resutlData.Message}");
-        }
 
-        return RedirectToAction("Index", "Home");
+        return View(data);
     }
 
 
@@ -117,9 +104,11 @@ public class AuthController : Controller
     [HttpPost]
     public async Task<IActionResult> AdminLogin([FromForm] AuthenticateViewModel data, string? ReturnUrl)
     {
+
+
         var resutlData = _database.LoginAdmin(data.Email, data.Password);
 
-        if (resutlData.Status == ResultPostgresStatus.Ok)
+        if (resutlData.Status == ResultPostgresStatus.Ok && ModelState.IsValid)
         {
             var claims = new List<Claim>
             {
@@ -132,13 +121,12 @@ public class AuthController : Controller
             var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
 
             await HttpContext.SignInAsync(claimsPrincipal);
-        }
-        else
-        {
-            return StatusCode(200, resutlData.Message);
+
+            return RedirectToAction("Index", "Home");
         }
 
-        return RedirectToAction("Index", "Home");
+        return View(data);
+
     }
 
 }

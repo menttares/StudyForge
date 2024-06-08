@@ -18,18 +18,21 @@ public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
 
+    private readonly IEmailService _emailService;
+
     private PostgresDataService _database;
 
 
-    public HomeController(ILogger<HomeController> logger, PostgresDataService database)
+    public HomeController(ILogger<HomeController> logger, PostgresDataService database, IEmailService emailService)
     {
         _logger = logger;
         _database = database;
+        _emailService = emailService;
     }
-
 
     public IActionResult Index()
     {
+
         return View();
     }
 
@@ -100,7 +103,8 @@ public class HomeController : Controller
             model.Email
         );
 
-        if(newId == 0) {
+        if (newId == 0)
+        {
             return BadRequest();
         }
 

@@ -6,27 +6,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"]</title>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/Auth/auth.css" asp-append-version="true" />
 </head>
 
 <body>
 
-    <div class="block-auth">
-        <div class="block-auth__title">
-            STYDYFORGE
-        </div>
-        <div class="">
-            @RenderBody()
+    <div class="container">
+        <div class="row justify-content-center align-items-center min-vh-100">
+            <div class="col-12 col-md-8 col-lg-6 bg-form p-5">
+                <div class="text-center mb-4">
+                    <img src="~/images/STUDYFORGE_LOGO.png" class="img-fluid mb-3" alt="Логотип" style="max-width: 80px;">
+                    <h1>STUDYFORGE</h1>
+                </div>
+                @RenderBody()
+            </div>
         </div>
     </div>
+
 
 
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
-    
-    <script src="~/js/auth.js" asp-append-version="true"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 

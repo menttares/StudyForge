@@ -5,28 +5,34 @@
 
 @using (Html.BeginForm("Authenticate", "Auth", FormMethod.Post, new { @class = "form-main", @name = "form-main" }))
 {
-    
-    @Html.LabelFor(model => model.Email, "Почта", htmlAttributes: new { @class = "auth-label"})
-    <br>
+    <div class="text-center">
+        авторизация
+    </div>
+    <div class="form-group mt-3">
+    @Html.LabelFor(model => model.Email, "Почта", htmlAttributes: new { @class = "auth-label" })
     @Html.TextBoxFor(model => model.Email, new { @class = "form-control", placeholder = "Введите почту" })
-    @Html.ValidationMessageFor(model => model.Email)
-    <br>
-    @Html.LabelFor(model => model.Password, "Пароль", htmlAttributes: new { @class = "auth-label"})
-    <br>
+    <span class="validation-span">
+        @Html.ValidationMessageFor(model => model.Email)
+    </span>
+</div>
+    <div class="form-group mt-3">
+    @Html.LabelFor(model => model.Password, "Пароль", htmlAttributes: new { @class = "auth-label" })
     @Html.PasswordFor(model => model.Password, new { @class = "form-control", placeholder = "Введите пароль" })
-    @Html.ValidationMessageFor(model => model.Password)
-    <br>
+    <span class="validation-span">
+        @Html.ValidationMessageFor(model => model.Password)
+    </span>
+</div>
     <div id="error-message">
+    <!-- Ошибки общего характера можно сюда -->
+</div>
+    <div class="auth-button text-center mt-3">
+    <input type="submit" class="btn btn-primary btn-lg" value="Вход" />
+</div>
 
-    </div>
-    <div class="auth-butoon">
-        <input type="submit" class="button" value="Вход" />
-    </div>
-
-
-    <div class="auth-links">
-        <a asp-controller="Auth" asp-action="Register">Нет аккаунта?</a>
-        <a asp-controller="Auth" asp-action="-">Забыли пароль?</a>
-        <a asp-controller="Auth" asp-action="AdminLogin">админ</a>
+    <div class="auth-links text-center mt-3">
+        <a asp-controller="Auth" asp-action="Register" class="btn-link">Нет аккаунта?</a>
+        <a asp-controller="Auth" asp-action="ForgotPassword" class="btn-link">Забыли пароль?</a>
+        <a asp-controller="Auth" asp-action="AdminLogin" class="btn-link">Админ</a>
     </div>
 }
+

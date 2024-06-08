@@ -8,6 +8,7 @@ using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using StudyForge.Models;
 using Microsoft.AspNetCore.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,9 +24,11 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.LoginPath = "/Auth/Authenticate";
         options.AccessDeniedPath = "/accessdenied";
     });
+    
 builder.Services.AddAuthorization();
 builder.Services.AddHttpContextAccessor();
-
+builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
+builder.Services.AddTransient<IEmailService, EmailService>();
 
 // builder.Services.AddAuthorization();
 

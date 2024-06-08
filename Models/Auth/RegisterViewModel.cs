@@ -7,6 +7,7 @@ public class RegisterViewModel
 
     
     [Required(ErrorMessage = "Поле 'Имя' обязательно для заполнения")]
+    [RegularExpression(@"^[А-Яа-яA-Za-z]{3,40}$", ErrorMessage = "Имя должен быть от 3 до 40 символов, только английские и русские буквы")]
     public string Name {get; set;} = string.Empty;
 
     [Required(ErrorMessage = "Поле 'Email' обязательно для заполнения")]
