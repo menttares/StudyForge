@@ -1325,4 +1325,52 @@ public class PostgresDataService
 
         return coursesAndGroups;
     }
+
+    public ApplicationDetailsView? GetApplicationDetails(int applicationId)
+    {
+        ApplicationDetailsView? result = null;
+
+        using (var connection = new NpgsqlConnection(_connectionString))
+        {
+            connection.Open();
+
+            using (var command = new NpgsqlCommand("select * from GetApplicationDetails(@applicationId)", connection))
+            {
+                command.Parameters.AddWithValue("applicationId", applicationId);
+
+                try
+                {
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            result = new()
+                            {
+                                ApplicationId = reader.GetInt32(0),
+                                GroupId = reader.GetInt32(1),
+                                CourseId = reader.GetInt32(2),
+                                CourseName = reader.GetString(3),
+                                TrainingFormId = reader.GetInt32(4),
+                                TrainingFormName = reader.GetString(5),
+                                CityId = reader.GetInt32(6),
+                                CityName = reader.GetString(7),
+                                ApplicationStatusId = reader.GetInt32(8),
+                                ApplicationStatusName = reader.GetString(9),
+                                ApplicantEmail = reader.GetString(10),
+                                CreatorProfileId = reader.GetInt32(11),
+                                CreatorEmail = reader.GetString(12),
+                                CreatorPhone = reader.GetString(13)
+                            };
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"An error occurred: {ex.Message}");
+                }
+            }
+        }
+
+        return result;
+    }
 }

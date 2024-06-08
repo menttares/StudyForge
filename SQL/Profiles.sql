@@ -70,6 +70,55 @@ CREATE TABLE Accounts (
 );
 
 
+CREATE VIEW ApplicationDetailsView AS
+SELECT 
+    a.id AS application_id,
+    sg.id AS group_id,
+    c.id AS course_id,
+    c.name AS course_name,
+    ft.id AS training_form_id,
+    ft.name AS training_form_name,
+    city.id AS city_id,
+    city.name AS city_name,
+    sa.id AS application_status_id,
+    sa.name AS application_status_name,
+    a.email AS applicant_email,
+    acc.id AS creator_profile_id,
+    acc.email AS creator_email,
+    acc.phone AS creator_phone
+FROM 
+    applications a
+JOIN 
+    StudyGroups sg ON a.id_StudyGroup = sg.id
+JOIN 
+    Courses c ON sg.id_course = c.id
+JOIN 
+    FormsTraining ft ON sg.id_FormsTraining = ft.id
+JOIN 
+    Cities city ON sg.id_city = city.id
+JOIN 
+    StatusApplications sa ON a.id_StatusApplications = sa.id
+JOIN 
+    Accounts acc ON c.id_Account = acc.id;
+
+select * from ApplicationDetailsView;
+
+
+CREATE OR REPLACE FUNCTION GetApplicationDetails(applicationId INT)
+RETURNS setof ApplicationDetailsView
+AS $$
+BEGIN
+    RETURN QUERY 
+    SELECT *
+    FROM 
+        ApplicationDetailsView ad
+    WHERE 
+        ad.application_id = applicationId;
+END;
+$$ LANGUAGE plpgsql;
+
+select * from GetApplicationDetails(1);
+
 -- администратор платформы
 create table Administrators (
   id SERIAL PRIMARY KEY,

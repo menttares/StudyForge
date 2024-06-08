@@ -18,13 +18,16 @@ public class СontrolPanelController : Controller
 {
     private readonly ILogger<СontrolPanelController> _logger;
 
+    private readonly IEmailService _emailService;
+
     private PostgresDataService _database;
 
 
-    public СontrolPanelController(ILogger<СontrolPanelController> logger, PostgresDataService database)
+    public СontrolPanelController(ILogger<СontrolPanelController> logger, PostgresDataService database, IEmailService emailService)
     {
         _logger = logger;
         _database = database;
+        _emailService = emailService;
     }
 
     [HttpGet("[Controller]")]
@@ -82,16 +85,65 @@ public class СontrolPanelController : Controller
     }
 
     [HttpPut("/СontrolPanel/ChangeApplicationStatus/{applicationId}/{newStatus}")]
-    public IActionResult ChangeApplicationStatus(int applicationId, int newStatus)
+    public async Task<IActionResult> ChangeApplicationStatus(int applicationId, int newStatus)
     {
-        bool isUpdate = _database.UpdateApplicationStatus(applicationId, newStatus);
-
-        if (!isUpdate)
+        try
         {
+
+            bool isUpdate = _database.UpdateApplicationStatus(applicationId, newStatus);
+
+
+            if (!isUpdate)
+            {
+                return BadRequest();
+            }
+
+            ApplicationDetailsView app = _database.GetApplicationDetails(applicationId);
+            if (app == null)
+            {
+                return BadRequest();
+            }
+
+            string Message = "";
+            if (app.ApplicationStatusName == "принято")
+            {
+                Message = $"""
+                Ваша заявка на курс {app.CourseName} принята!
+                С вами должен созвониться организатор курса
+                
+                Связь с организатором:
+                Почта: {app.CreatorEmail}
+                Телефон: {app.CreatorPhone}
+                """;
+            }
+            else if (app.ApplicationStatusName == "отклонено")
+            {
+                Message = $"""
+                Ваша заявка на курс {app.CourseName} отклонена!
+                """;
+            }
+            else if (app.ApplicationStatusName == "ожидание")
+            {
+                Message = $"""
+                Ваша заявка на курс {app.CourseName} в ожидаемом
+                Ждите ответа от организатора
+                """;
+            }
+            else
+            {
+                throw new Exception("Не правильный ApplicationStatus");
+            }
+
+
+            await _emailService.SendEmailAsync(app.ApplicantEmail, "Ваша Заявка", Message);
+
+            return Ok();
+        }
+        catch (System.Exception ex)
+        {
+            _logger.LogError(ex.Message);
             return BadRequest();
         }
-
-        return Ok();
     }
     public IActionResult Profile()
     {

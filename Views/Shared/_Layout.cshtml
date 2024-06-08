@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - StudyForge</title>
+    <title>@ViewData["Title"]</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/StudyForge.styles.css" asp-append-version="true" />
@@ -15,9 +15,13 @@
 
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">StudyForge</a>
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                    <img src="~/images/logo.png" alt="StudyForge Logo" style="height: 40px;">
+                </a>
+                <a class="navbar-brand text-uppercase fw-bold" asp-area="" asp-controller="Home"
+                    asp-action="Index">StudyForge</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
                     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -37,9 +41,12 @@
                             {
                                 <a class="nav-link text-dark" href="/Admin/Main/">Панель администратора</a>
                             }
-                            else
+                            else if (User.IsInRole("user"))
                             {
                                 <a class="nav-link text-dark" href="/СontrolPanel/">Личный кабинет</a>
+                            }
+                            else {
+                                <a class="nav-link text-dark" href="/СontrolPanel/">Вход в аккаунт</a>
                             }
                         </li>
                     </ul>
@@ -48,12 +55,14 @@
         </nav>
     </header>
 
-
-    <div class="container-fluid">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
+    <main role="main" class="pb-3">
+        @RenderBody()
+    </main>
+    @* <div class="container-fluid">
+    <main role="main" class="pb-3">
+    @RenderBody()
+    </main>
+    </div> *@
 
     <footer class="border-top footer text-muted">
         <div class="container">
