@@ -84,48 +84,49 @@ public class PostgresDataService
         string phone
     )
     {
-        try
+        // try
+        // {
+        using (var connection = new NpgsqlConnection(_connectionString))
         {
-            using (var connection = new NpgsqlConnection(_connectionString))
+            connection.Open();
+            using (var command = new NpgsqlCommand("SELECT register_profile(@p_name, @p_license_number, @p_email, @p_password, @p_is_organization, @p_phone)", connection))
             {
-                connection.Open();
-                using (var command = new NpgsqlCommand("SELECT register_profile(@p_name, @p_license_number, @p_email, @p_password, @p_is_organization, @p_phone)", connection))
+                command.Parameters.AddWithValue("p_name", name);
+                command.Parameters.AddWithValue("p_license_number", licenseNumber);
+                command.Parameters.AddWithValue("p_email", email);
+                command.Parameters.AddWithValue("p_password", password);
+                command.Parameters.AddWithValue("p_is_organization", isOrganization);
+                command.Parameters.AddWithValue("p_phone", phone);
+
+                var resultIdParameter = new NpgsqlParameter("result_id", NpgsqlDbType.Integer);
+                resultIdParameter.Direction = ParameterDirection.Output;
+                command.Parameters.Add(resultIdParameter);
+
+                var errorMessageParameter = new NpgsqlParameter("error_message", NpgsqlDbType.Text);
+                errorMessageParameter.Direction = ParameterDirection.Output;
+                command.Parameters.Add(errorMessageParameter);
+
+                command.ExecuteNonQuery();
+                Console.WriteLine(command.Parameters["result_id"].Value);
+                int resultId = Convert.ToInt32(command.Parameters["result_id"].Value);
+
+                string errorMessage = command.Parameters["error_message"].Value.ToString();
+
+                switch (resultId)
                 {
-                    command.Parameters.AddWithValue("p_name", name);
-                    command.Parameters.AddWithValue("p_license_number", licenseNumber);
-                    command.Parameters.AddWithValue("p_email", email);
-                    command.Parameters.AddWithValue("p_password", password);
-                    command.Parameters.AddWithValue("p_is_organization", isOrganization);
-                    command.Parameters.AddWithValue("p_phone", phone);
-
-                    var resultIdParameter = new NpgsqlParameter("result_id", NpgsqlDbType.Integer);
-                    resultIdParameter.Direction = ParameterDirection.Output;
-                    command.Parameters.Add(resultIdParameter);
-
-                    var errorMessageParameter = new NpgsqlParameter("error_message", NpgsqlDbType.Text);
-                    errorMessageParameter.Direction = ParameterDirection.Output;
-                    command.Parameters.Add(errorMessageParameter);
-
-                    command.ExecuteNonQuery();
-
-                    int resultId = Convert.ToInt32(command.Parameters["result_id"].Value);
-                    string errorMessage = command.Parameters["error_message"].Value.ToString();
-
-                    switch (resultId)
-                    {
-                        case > 0:
-                            return new ResultPostgresData(ResultPostgresStatus.Ok, resultId, errorMessage);
-                        default:
-                            return new ResultPostgresData(ResultPostgresStatus.ValidDataError, resultId, errorMessage);
-                    }
-
+                    case > 0:
+                        return new ResultPostgresData(ResultPostgresStatus.Ok, resultId, errorMessage);
+                    default:
+                        return new ResultPostgresData(ResultPostgresStatus.ValidDataError, resultId, errorMessage);
                 }
+
             }
         }
-        catch (Exception ex)
-        {
-            return new ResultPostgresData(ResultPostgresStatus.Exception, 0, ex.Message);
-        }
+        // }
+        // catch (Exception ex)
+        // {
+        //     return new ResultPostgresData(ResultPostgresStatus.Exception, 0, ex.Message);
+        // }
     }
 
 
@@ -164,7 +165,7 @@ public class PostgresDataService
     }
 
     public List<CourseAndGroupView> FilterCoursesAndGroups(int? sectionId = null, DateTime? startDate = null, DateTime? endDate = null, decimal? minPrice = null, decimal? maxPrice = null,
-        int? durationHours = null, bool organizationOnly = false, bool freeOnly = false, string? searchQuery = null)
+         int? durationHours = null, bool organizationOnly = false, bool freeOnly = false, string? searchQuery = null)
     {
         List<CourseAndGroupView> coursesAndGroups = new List<CourseAndGroupView>();
 
@@ -176,17 +177,15 @@ public class PostgresDataService
             using (NpgsqlCommand command = new NpgsqlCommand("SELECT * FROM filter_courses_and_groups(@p_section_id, @p_start_date, @p_end_date, @p_min_price, @p_max_price, @p_duration_hours, @p_organization_only, @p_free_only, @p_search_query)", connection))
             {
                 // Добавление параметров
-                command.Parameters.AddWithValue("@p_search_query", NpgsqlDbType.Text, (object)searchQuery ?? DBNull.Value);
-                command.Parameters.AddWithValue("@p_section_id", NpgsqlDbType.Integer, (object)sectionId ?? DBNull.Value);
-                command.Parameters.AddWithValue("@p_start_date", NpgsqlDbType.Date, (object)startDate ?? DBNull.Value);
-                command.Parameters.AddWithValue("@p_end_date", NpgsqlDbType.Date, (object)endDate ?? DBNull.Value);
-                command.Parameters.AddWithValue("@p_min_price", NpgsqlDbType.Numeric, (object)minPrice ?? DBNull.Value);
-                command.Parameters.AddWithValue("@p_max_price", NpgsqlDbType.Numeric, (object)maxPrice ?? DBNull.Value);
-                command.Parameters.AddWithValue("@p_duration_hours", NpgsqlDbType.Integer, (object)durationHours ?? DBNull.Value);
-                command.Parameters.AddWithValue("@p_organization_only", NpgsqlDbType.Boolean, (object)organizationOnly ?? DBNull.Value);
-                command.Parameters.AddWithValue("@p_free_only", NpgsqlDbType.Boolean, (object)freeOnly ?? DBNull.Value);
-
-
+                command.Parameters.AddWithValue("p_section_id", NpgsqlDbType.Integer, (object)sectionId ?? DBNull.Value);
+                command.Parameters.AddWithValue("p_start_date", NpgsqlDbType.Date, (object)startDate ?? DBNull.Value);
+                command.Parameters.AddWithValue("p_end_date", NpgsqlDbType.Date, (object)endDate ?? DBNull.Value);
+                command.Parameters.AddWithValue("p_min_price", NpgsqlDbType.Numeric, (object)minPrice ?? DBNull.Value);
+                command.Parameters.AddWithValue("p_max_price", NpgsqlDbType.Numeric, (object)maxPrice ?? DBNull.Value);
+                command.Parameters.AddWithValue("p_duration_hours", NpgsqlDbType.Integer, (object)durationHours ?? DBNull.Value);
+                command.Parameters.AddWithValue("p_organization_only", NpgsqlDbType.Boolean, (object)organizationOnly ?? DBNull.Value);
+                command.Parameters.AddWithValue("p_free_only", NpgsqlDbType.Boolean, (object)freeOnly ?? DBNull.Value);
+                command.Parameters.AddWithValue("p_search_query", NpgsqlDbType.Varchar, (object)searchQuery ?? DBNull.Value);
 
                 using (NpgsqlDataReader reader = command.ExecuteReader())
                 {
@@ -206,12 +205,14 @@ public class PostgresDataService
                         courseAndGroup.GroupId = reader.GetInt32(9);
                         courseAndGroup.GroupEnrollment = reader.GetInt32(10);
                         courseAndGroup.GroupDateStart = reader.GetDateTime(11);
-                        courseAndGroup.GroupDateEnd = reader.IsDBNull(12) ? (DateTime?)null : reader.GetDateTime(12);
+                        courseAndGroup.GroupDateEnd = reader.IsDBNull(12) ? null : reader.GetDateTime(12);
                         courseAndGroup.GroupPrice = reader.GetDecimal(13);
                         courseAndGroup.GroupDuration = reader.GetInt32(14);
                         courseAndGroup.AcceptedApplicationsCount = reader.GetInt32(15);
                         courseAndGroup.ScheduleDays = reader.GetString(16);
                         courseAndGroup.CourseClosed = reader.GetBoolean(17);
+                        courseAndGroup.FormTrainingName = reader.IsDBNull(18) ? null : reader.GetString(18);
+                        courseAndGroup.CityName = reader.IsDBNull(19) ? null : reader.GetString(19);
 
                         coursesAndGroups.Add(courseAndGroup);
                     }
@@ -222,6 +223,8 @@ public class PostgresDataService
 
         return coursesAndGroups;
     }
+
+
 
 
     public UserProfileInfo GetUserProfileInfo(int profileId)
@@ -541,13 +544,15 @@ public class PostgresDataService
                             Id = reader.GetInt32(0),
                             Enrollment = reader.GetInt32(1),
                             StartDate = reader.GetDateTime(2),
-                            EndDate = reader.IsDBNull(3) ? (DateTime?)null : reader.GetDateTime(3),
+                            EndDate = reader.IsDBNull(3) ? null : reader.GetDateTime(3),
                             Price = reader.GetDecimal(4),
                             FormsTrainingId = reader.GetInt32(5),
                             CityId = reader.GetInt32(6),
                             Duration = reader.GetInt32(7),
                             CourseId = reader.GetInt32(8),
                             AcceptedApplicationsCount = reader.GetInt32(9),
+                            FormTraining = reader.IsDBNull(11) ? null : reader.GetString(11),
+                            СityName = reader.IsDBNull(12) ? null : reader.GetString(12)
 
                         };
                         List<ScheduleDay> scheduleDays = JsonConvert.DeserializeObject<List<ScheduleDay>>(reader.GetString(10));
@@ -1073,9 +1078,9 @@ public class PostgresDataService
                             Email = reader.GetString(3),
                             Phone = reader.GetString(4),
                             Name = reader.GetString(5),
-                            AboutMe = reader.GetString(6),
-                            SpecializationId = reader.GetInt32(7),
-                            Specialization = reader.GetString(8),
+                            AboutMe = reader.IsDBNull(6) ? string.Empty : reader.GetString(6), // Проверка на NULL и присвоение значения по умолчанию
+                            SpecializationId = reader.IsDBNull(7) ? null : reader.GetInt32(7),
+                            Specialization = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
                             LicenseNumber = reader.GetString(9),
                             Confirmation = reader.GetBoolean(10),
                             AccountCreatedAt = reader.GetDateTime(11)
@@ -1231,52 +1236,6 @@ public class PostgresDataService
         }
     }
 
-
-    public List<ApplicationStatistics> GetApplicationsByCreator(int creatorId)
-    {
-        var results = new List<ApplicationStatistics>();
-
-        using (var connection = new NpgsqlConnection(_connectionString))
-        {
-            connection.Open();
-
-            using (var command = new NpgsqlCommand("SELECT * FROM CourseApplicationsStatisticsView WHERE id_Account = @creator_id", connection))
-            {
-                command.Parameters.AddWithValue("creator_id", creatorId);
-
-                try
-                {
-                    using (var reader = command.ExecuteReader())
-                    {
-                        if (reader.HasRows)
-                        {
-                            while (reader.Read())
-                            {
-                                results.Add(new ApplicationStatistics
-                                {
-                                    CourseId = reader.GetInt32(reader.GetOrdinal("course_id")),
-                                    CourseName = reader.GetString(reader.GetOrdinal("course_name")),
-                                    TotalAcceptedApplications = reader.GetInt32(reader.GetOrdinal("total_accepted_applications"))
-                                });
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine($"No applications found for creator id {creatorId}");
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"An error occurred: {ex.Message}");
-                }
-            }
-        }
-
-        return results;
-    }
-
-
     public List<CourseAndGroupView> getCourseStudyGroupsView(int courseId)
     {
         List<CourseAndGroupView> coursesAndGroups = new List<CourseAndGroupView>();
@@ -1373,4 +1332,103 @@ public class PostgresDataService
 
         return result;
     }
+
+
+    public bool CheckAccountConfirmation(int userId)
+    {
+        try
+        {
+            using (var connection = new NpgsqlConnection(_connectionString))
+            {
+                connection.Open();
+                using (var command = new NpgsqlCommand("SELECT check_account_confirmation(@p_user_id)", connection))
+                {
+                    command.Parameters.AddWithValue("p_user_id", userId);
+
+                    // Выполняем запрос и получаем результат
+                    bool isConfirmed = (bool)command.ExecuteScalar();
+
+                    return isConfirmed;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // В случае ошибки возвращаем false
+            return false;
+        }
+    }
+
+
+    public List<CourseStatistics> GetCoursesPerSection()
+    {
+        List<CourseStatistics> courseStatisticsList = new List<CourseStatistics>();
+
+        try
+        {
+            using (var connection = new NpgsqlConnection(_connectionString))
+            {
+                connection.Open();
+                using (var command = new NpgsqlCommand("SELECT * FROM Get_Courses_PerSection()", connection))
+                {
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            CourseStatistics courseStatistics = new CourseStatistics
+                            {
+                                SectionName = reader.GetString(0),
+                                CourseCount = reader.GetInt32(1)
+                            };
+                            courseStatisticsList.Add(courseStatistics);
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Обработка ошибок
+            Console.WriteLine("Error: " + ex.Message);
+        }
+
+        return courseStatisticsList;
+    }
+
+
+    public List<ApplicationsPerCourse> GetCourseApplicationsStatisticsByCreatorId(int creatorId)
+    {
+        List<ApplicationsPerCourse> statistics = new List<ApplicationsPerCourse>();
+
+        using (NpgsqlConnection connection = new NpgsqlConnection(_connectionString))
+        {
+            connection.Open();
+
+            string sql = "SELECT * FROM GetCourseApplicationsStatisticsByCreatorId(@creatorId)";
+
+            using (NpgsqlCommand command = new NpgsqlCommand(sql, connection))
+            {
+                command.Parameters.AddWithValue("creatorId", creatorId);
+
+                using (NpgsqlDataReader reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        ApplicationsPerCourse stat = new ApplicationsPerCourse
+                        {
+                            CourseId = reader.GetInt32(0),
+                            CourseName = reader.GetString(1),
+                            ApplicationCount = reader.GetInt32(2),
+                            CreatorId = reader.GetInt32(3)
+                        };
+
+                        statistics.Add(stat);
+                    }
+                }
+            }
+        }
+
+        return statistics;
+    }
+
 }

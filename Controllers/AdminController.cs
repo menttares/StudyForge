@@ -57,7 +57,8 @@ public class AdminController : Controller
 
     public PartialViewResult Statistics()
     {
-        return PartialView("Statistics");
+        List<CourseStatistics> statistics = _database.GetCoursesPerSection();
+        return PartialView(statistics);
     }
 
 

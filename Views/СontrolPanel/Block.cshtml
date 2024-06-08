@@ -1,0 +1,27 @@
+@{
+    ViewData["Title"] = "Account Confirmation";
+}
+
+@{
+    ViewData["Title"] = "Подтверждение аккаунта";
+}
+
+<div class="alert alert-warning mt-5" role="alert">
+    <h4 class="alert-heading">Аккаунт не подтвержден!</h4>
+    <p>Ваш аккаунт еще не подтвержден. Пожалуйста, подождите минимум 24 часа для проверки вашей лицензии.</p>
+    <p>Причиной блокировки может быть истечение срока годности вашей лицензии, нарушение правил платформы, или вы зарегистрировали новый аккаунт.</p>
+    <hr>
+    <p class="mb-0">Если вам нужна дополнительная помощь, свяжитесь с нами по адресу <a href="mailto:studyforgeadm@gmail.com">studyforgeadm@gmail.com</a>.</p>
+</div>
+
+<div class="d-flex justify-content-center mt-4">
+    <div class="btn-group" role="group">
+        <a href="/Home/Index" class="btn btn-primary">
+            <i class="bi bi-house-door"></i> Перейти на главную
+        </a>
+        <a href="/Auth/LogOut" class="btn btn-danger">
+            <i class="bi bi-box-arrow-right"></i> Выйти из этого аккаунта
+        </a>
+    </div>
+</div>
+

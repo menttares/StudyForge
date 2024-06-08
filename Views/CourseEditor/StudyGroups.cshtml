@@ -1,6 +1,4 @@
 @{
-    List<CityData> CitysData = ViewData["Cities"] as List<CityData>;
-    List<FormData> FormsTrainings = ViewData["FormsTraining"] as List<FormData>;
     int CourseId = (int)ViewData["CourseId"];
 
 }
@@ -11,7 +9,7 @@
 </div>
 
 <div class="d-flex flex-wrap">
-    @foreach (var studyGroup in Model)
+    @foreach (StudyGroup studyGroup in Model)
     {
         <div class="card m-2" style="width: 18rem;" id="@studyGroup.Id">
             <div class="card-body">
@@ -37,9 +35,8 @@
                 studyGroup.EndDate.Value.ToShortDateString() : "Не указана")</p>
                 <p class="card-text">Цена: @studyGroup.Price</p>
                 <p class="card-text">Длительность: @studyGroup.Duration</p>
-                <p class="card-text">Город: @CitysData.FirstOrDefault(c => c.Id == studyGroup.CityId)?.Name</p>
-                <p class="card-text">Форма обучения: @FormsTrainings.FirstOrDefault(f => f.Id ==
-                studyGroup.FormsTrainingId)?.Name</p>
+                <p class="card-text">Город: @studyGroup.СityName</p>
+                <p class="card-text">Форма обучения: @studyGroup.FormTraining</p>
                 <button class="btn btn-danger delete-group" data-id="@studyGroup.Id">Удалить</button>
                 <a class="btn btn-primary edit-group" asp-controller="StudyGroupEditor" asp-action="Group"
                     asp-route-GroupId="@studyGroup.Id">Изменить</a>

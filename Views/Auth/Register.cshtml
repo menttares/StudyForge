@@ -10,7 +10,7 @@
         Регистрация
     </div>
                 <div class="form-group mt-2">
-                    @Html.LabelFor(model => model.Name, "ФИО", htmlAttributes: new { @class = "auth-label" })
+                    @Html.LabelFor(model => model.Name, "Имя", htmlAttributes: new { @class = "auth-label" })
                     @Html.TextBoxFor(model => model.Name, new { @class = "form-control", placeholder = "Введите имя" })
                     <span class="validation-span">
                         @Html.ValidationMessageFor(model => model.Name)
@@ -49,7 +49,7 @@
                     </span>
                 </div>
                 <div id="error-message">
-                    <!-- Ошибки общего характера можно сюда -->
+                    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
                 </div>
                 <div class="auth-button text-center mt-3">
                     <input type="submit" class="btn btn-primary btn-lg" value="Зарегистрироваться" />

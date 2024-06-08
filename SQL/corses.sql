@@ -139,12 +139,62 @@ SELECT
     sg.duration,
     sg.id_course,
     count_accepted_applications(sg.id) AS accepted_applications_count,
-    get_schedule_days(sg.id) AS schedule_days
+    get_schedule_days(sg.id) AS schedule_days,
+	ft.name AS form_training_name,
+	city.name AS city_name
 FROM
-    studygroups sg;
-
+    studygroups sg
+JOIN
+    FormsTraining ft ON sg.id_FormsTraining = ft.id
+JOIN
+    Cities city ON sg.id_city = city.id
+JOIN
+    courses c ON sg.id_course = c.id;
 
 select * from StudyGroupsView;
+
+
+
+
+
+
+CREATE OR REPLACE VIEW CourseAndGroupView AS
+SELECT
+    c.id AS course_id,
+    c.name AS course_name,
+    c.description AS course_description,
+    sec.id AS section_id,
+    sec.name AS section_name,
+    cr.name AS creator_name,
+    cr.email AS creator_email,
+    cr.phone AS creator_phone,
+    cr.is_organization AS creator_is_organization,
+    sg.id AS group_id,
+    sg.enrollment AS group_enrollment,
+    sg.date_start AS group_date_start,
+    sg.date_end AS group_date_end,
+    sg.price AS group_price,
+    sg.duration AS group_duration,
+    count_accepted_applications(sg.id) AS accepted_applications_count,
+    get_schedule_days(sg.id) AS schedule_days,
+    c.course_closed AS course_closed,
+    ft.name AS form_training_name,
+    city.name AS city_name
+FROM
+    courses c
+JOIN
+    studygroups sg ON c.id = sg.id_course
+JOIN
+    accounts cr ON c.id_Account = cr.id
+JOIN 
+    Sections sec ON sec.id = c.id_Section
+JOIN
+    FormsTraining ft ON sg.id_FormsTraining = ft.id
+JOIN
+    Cities city ON sg.id_city = city.id;
+
+
+select * from CourseAndGroupView;
 
 
 

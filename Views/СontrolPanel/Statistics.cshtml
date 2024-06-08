@@ -1,55 +1,55 @@
-@model List<ApplicationStatistics>
+@model List<ApplicationsPerCourse>
 
-@{
-    // Преобразуем данные модели в JSON формат
-    var courseNames = Model.Select(m => m.CourseName).ToArray();
-    var totalAcceptedApplications = Model.Select(m => m.TotalAcceptedApplications).ToArray();
-}
+<h2>Статистика заявок на курсы</h2>
+
+<div style="width: 80%; margin: auto;">
+    <canvas id="applicationsChart" width="800" height="400"></canvas>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<canvas id="myChart" width="400" height="400"></canvas>
-<!-- Скрипт для инициализации графика -->
 <script>
-    // Получаем данные из Razor-модели
-    var courseNames = @Html.Raw(Json.Serialize(courseNames));
-    var totalAcceptedApplications = @Html.Raw(Json.Serialize(totalAcceptedApplications));
+    $(document).ready(function () {
+        var applicationData = @Html.Raw(Json.Serialize(Model.Select(a => new { a.CourseName, a.ApplicationCount })));
 
-    // Функция для генерации случайного цвета
-    function getRandomColor() {
-        var letters = '0123456789ABCDEF';
-        var color = '#';
-        for (var i = 0; i < 6; i++) {
-            color += letters[Math.floor(Math.random() * 16)];
+        // Инициализация массивов
+        var courseNames = [];
+        var applicationCounts = [];
+        var colors = [];
+
+        // Генерация случайного цвета в формате RGBA
+        function randomColor() {
+            return 'rgba(' + Math.floor(Math.random() * 256) + ',' + Math.floor(Math.random() * 256) + ',' + Math.floor(Math.random() * 256) + ', 0.6)';
         }
-        return color;
-    }
 
-    // Генерируем массив случайных цветов для каждого столбца
-    var backgroundColors = courseNames.map(() => getRandomColor());
-    var borderColors = backgroundColors.map(color => color);
+        // Заполнение массивов данными из applicationData и генерация случайных цветов
+        applicationData.forEach(function (data) {
+            courseNames.push(data.courseName);
+            applicationCounts.push(data.applicationCount);
+            colors.push(randomColor());
+        });
 
-    var ctx = document.getElementById('myChart').getContext('2d');
-    var myChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: courseNames, // Используем названия курсов в качестве меток
-            datasets: [{
-                label: 'Принятые заявки',
-                data: totalAcceptedApplications, // Используем количество принятых заявок в качестве данных
-                backgroundColor: backgroundColors,
-                borderColor: borderColors,
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true, // Адаптивность
-            maintainAspectRatio: false, // Сохранять соотношение сторон
-            scales: {
-                y: {
-                    beginAtZero: true
+        // Отображение графика
+        var ctx = document.getElementById('applicationsChart').getContext('2d');
+        var myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: courseNames,
+                datasets: [{
+                    label: 'Количество заявок на курсы',
+                    data: applicationCounts,
+                    backgroundColor: colors, // Случайные цвета для каждого столбца
+                    borderColor: 'rgba(0, 0, 0, 1)', // Цвет границ столбцов
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
                 }
             }
-        }
+        });
     });
 </script>

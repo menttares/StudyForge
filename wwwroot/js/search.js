@@ -1,19 +1,4 @@
-// $(function(){
 
-//   $.ajax({
-//     type: "POST",
-//     url: "/Course",
-//     data: {id : },
-//     success: function (response) {
-//       //console.log(response);
-//       console.log(response);
-//     },
-//     error: function (xhr, status, error) {
-//       console.log("Ответ сервера:", response);
-//       //viewMessageError(response.error);
-//     },
-//   });
-// });
 
 $("#SearchButton").on("click", function (e) {
   e.preventDefault();
@@ -94,58 +79,63 @@ function createCourseCards(data) {
 
 
       var cardHtml = `
-<div class="col mb-4">
-  <div class="card h-100">
-    <div class="card-body">
-      <a class="card-title fs-2 link-dark link-offset-3 text-break" href="/Home/CourseHome/${course.courseId}">${
-        course.courseName
-      }</a>
-      <p class="card-text text-break">${course.courseDescription}</p>
-      <table class="table">
-        <tbody>
-          <tr>
-            <td>Категория:</td>
-            <td>${course.sectionName}</td>
-          </tr>
-          <tr>
-          <td>Дни обучения:</td>
-          <td>${ scheduleString}</td>
-        </tr>
-          <tr>
-            <td>Цена:</td>
-            <td>${course.groupPrice}</td>
-          </tr>
-          <tr>
-            <td>Набор:</td>
-            <td>${course.acceptedApplicationsCount} / ${
-        course.groupEnrollment
-      }</td>
-          </tr>
-          <tr>
-            <td>Дата старта:</td>
-            <td>${new Date(course.groupDateStart).toLocaleDateString()}</td>
-          </tr>
-          <tr>
-            <td>Дата окончания:</td>
-            <td>${new Date(course.groupDateEnd).toLocaleDateString()}</td>
-          </tr>
-          <tr>
-            <td>Создатель:</td>
-            <td>${course.creatorName}</td>
-          </tr>
-          <tr>
-            <td>Тип создателя:</td>
-            <td>${
-              course.creatorIsOrganization ? "организация" : "преподаватель"
-            }</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-`;
-
+      <div class="col mb-4">
+        <div class="card h-100">
+          <div class="card-body">
+            <a class="card-title fs-2 link-dark link-offset-3 text-break" href="/Home/CourseHome/${course.courseId}">${
+              course.courseName
+            }</a>
+            <p class="card-text text-break">${course.courseDescription}</p>
+            <table class="table">
+              <tbody>
+                <tr>
+                  <td>Категория:</td>
+                  <td>${course.sectionName}</td>
+                </tr>
+                <tr>
+                  <td>Дни обучения:</td>
+                  <td>${scheduleString}</td>
+                </tr>
+                <tr>
+                  <td>Цена:</td>
+                  <td>${course.groupPrice} BYN</td>
+                </tr>
+                <tr>
+                  <td>Набор:</td>
+                  <td>${course.acceptedApplicationsCount} / ${
+                    course.groupEnrollment
+                  }</td>
+                </tr>
+                <tr>
+                  <td>Дата старта:</td>
+                  <td>${new Date(course.groupDateStart).toLocaleDateString()}</td>
+                </tr>
+                <tr>
+                  <td>Дата окончания:</td>
+                  <td>${course.endDate  ? new Date(course.groupDateEnd).toLocaleDateString() : "не определено"}</td>
+                </tr>
+                <tr>
+                  <td>Город:</td>
+                  <td>${course.cityName || "не определено"}</td>
+                </tr>
+                <tr>
+                  <td>Создатель:</td>
+                  <td>${course.creatorName}</td>
+                </tr>
+                <tr>
+                  <td>Тип создателя:</td>
+                  <td>${course.creatorIsOrganization ? "организация" : "преподаватель"}</td>
+                </tr>
+                <tr>
+                  <td>Тип обучения:</td>
+                  <td>${course.formTrainingName || "не определено"}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    `;
       // Добавляем созданный HTML-код карточки в контейнер
       $("#CardsCourses").append(cardHtml);
     });

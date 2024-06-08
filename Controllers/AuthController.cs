@@ -53,6 +53,14 @@ public class AuthController : Controller
 
             return RedirectToAction("Index", "Home");
         }
+        else if (resutlData.Result == -1)
+        {
+            ModelState.AddModelError("Email", "Пользователь с такой почтой не существует");
+        }
+        else if (resutlData.Result == -2)
+        {
+            ModelState.AddModelError("Password", "Неверный пароль");
+        }
 
 
         return View(data);
@@ -90,6 +98,18 @@ public class AuthController : Controller
 
             await HttpContext.SignInAsync(claimsPrincipal);
         }
+        else if (resutlData.Result == -1)
+        {
+            ModelState.AddModelError("Email", "Пользователь с таким email уже существует");
+        }
+        else if (resutlData.Result == -2)
+        {
+            ModelState.AddModelError("LicenseNumber", "Пользователь с таким license_number уже существует");
+        }
+        else if (resutlData.Result == -4)
+        {
+            ModelState.AddModelError("Phone", "Пользователь с таким телефоном уже существует");
+        }
 
         return View(data);
     }
@@ -124,9 +144,30 @@ public class AuthController : Controller
 
             return RedirectToAction("Index", "Home");
         }
+        else if (resutlData.Result == -1)
+        {
+            ModelState.AddModelError("Email", "Пользователь с такой почтой не существует");
+        }
+        else if (resutlData.Result == -2)
+        {
+            ModelState.AddModelError("Password", "Неверный пароль");
+        }
 
         return View(data);
 
     }
 
+
+    public IActionResult LogOut()
+    {
+        var cookieNames = HttpContext.Request.Cookies.Keys.ToArray();
+        foreach (var cookieName in cookieNames)
+        {
+            HttpContext.Response.Cookies.Delete(cookieName);
+        }
+
+        HttpContext.SignOutAsync();
+
+        return RedirectToAction("Index", "Home");
+    }
 }

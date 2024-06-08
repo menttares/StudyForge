@@ -57,6 +57,56 @@ CREATE TABLE Courses (
 	
 );
 
+
+CREATE VIEW CoursesPerSection AS
+SELECT
+    s.name AS section_name,
+    COUNT(c.id) AS course_count
+FROM
+    Sections s
+LEFT JOIN
+    Courses c ON s.id = c.id_Section
+GROUP BY
+    s.name;
+
+CREATE OR REPLACE FUNCTION Get_Courses_PerSection()
+RETURNS setof CoursesPerSection AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+	*
+    FROM
+        CoursesPerSection;
+END;
+$$ LANGUAGE plpgsql;
+
+
+select * from CoursesPerSection;
+
+CREATE VIEW NewAccountsPerDay AS
+SELECT
+    DATE_TRUNC('day', created_at) AS registration_date,
+    COUNT(id) AS new_account_count
+FROM
+    Accounts
+GROUP BY
+    registration_date
+ORDER BY
+    registration_date;
+
+CREATE VIEW CoursesPerDay AS
+SELECT
+    DATE_TRUNC('day', created_at) AS creation_date,
+    COUNT(id) AS course_count
+FROM
+    Courses
+GROUP BY
+    creation_date
+ORDER BY
+    creation_date;
+
+
+
 CREATE TABLE BannedCourses (
   -- ID записи о забаненном курсе
   id SERIAL PRIMARY KEY,

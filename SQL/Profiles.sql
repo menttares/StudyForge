@@ -70,6 +70,34 @@ CREATE TABLE Accounts (
 );
 
 
+
+CREATE OR REPLACE FUNCTION check_account_confirmation(
+    p_user_id INTEGER
+) 
+RETURNS BOOLEAN AS $$
+DECLARE
+    is_confirmed BOOLEAN;
+BEGIN
+    -- Инициализируем переменную значениями по умолчанию
+    is_confirmed := false;
+
+    -- Проверяем, подтвержден ли аккаунт с указанным ID
+    SELECT confirmation INTO is_confirmed FROM Accounts WHERE id = p_user_id;
+
+    -- Возвращаем результат проверки
+    RETURN is_confirmed;
+EXCEPTION
+    -- Обрабатываем исключения
+    WHEN OTHERS THEN
+        -- В случае ошибки возвращаем false
+        RETURN false;
+END;
+$$ LANGUAGE PLPGSQL;
+
+
+select * from check_account_confirmation(4);
+
+
 CREATE VIEW ApplicationDetailsView AS
 SELECT 
     a.id AS application_id,
@@ -117,7 +145,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-select * from GetApplicationDetails(1);
+
 
 -- администратор платформы
 create table Administrators (
@@ -180,48 +208,6 @@ $$ LANGUAGE PLPGSQL;
 
 
 
-
--- функция регистрация
-CREATE OR REPLACE FUNCTION register_profile(
-    p_name VARCHAR,
-    p_license_number VARCHAR,
-    p_email VARCHAR,
-    p_password VARCHAR,
-    p_is_organization BOOL,
-    p_phone VARCHAR
-) 
-RETURNS TABLE (result_id INTEGER, error_message TEXT) AS
-$$
-DECLARE
-    inserted_id INTEGER;
-BEGIN
-    -- Проверяем, существует ли уже пользователь с таким email
-    IF EXISTS (SELECT 1 FROM Accounts WHERE email = p_email) THEN
-        RETURN QUERY SELECT -1, 'Пользователь с таким email уже существует';
-    END IF;
-    
-    -- Проверяем, существует ли уже пользователь с такой лицензией
-    IF EXISTS (SELECT 1 FROM Accounts WHERE license_number = p_license_number) THEN
-        RETURN QUERY SELECT -3, 'Пользователь с таким license_number уже существует';
-    END IF;
-
-    -- Добавляем новый профиль
-    INSERT INTO Accounts (name, license_number, email, password, is_organization, phone)
-    VALUES (p_name, p_license_number, p_email, p_password, p_is_organization, p_phone)
-    RETURNING id INTO inserted_id;
-
-    -- Возврат сообщения об успешной регистрации
-    RETURN QUERY SELECT inserted_id, 'Регистрация успешна';
-    
-EXCEPTION
-    WHEN OTHERS THEN
-        -- Возвращаем сообщение об ошибке
-        RETURN QUERY SELECT 0, 'Произошла ошибка при регистрации пользователя: ' || SQLERRM;
-END;
-$$
-LANGUAGE PLPGSQL;
-
-
 CREATE OR REPLACE FUNCTION register_profile(
     p_name VARCHAR,
     p_license_number VARCHAR,
@@ -237,16 +223,26 @@ DECLARE
     inserted_id INTEGER;
 BEGIN
     -- Проверяем, существует ли уже пользователь с таким email
-    IF EXISTS (SELECT 1 FROM Accounts WHERE email = p_email) THEN
+SELECT id INTO result_id FROM Accounts WHERE email = p_email LIMIT 1;
+    IF FOUND THEN
         result_id := -1;
         error_message := 'Пользователь с таким email уже существует';
         RETURN;
     END IF;
     
     -- Проверяем, существует ли уже пользователь с такой лицензией
-    IF EXISTS (SELECT 1 FROM Accounts WHERE license_number = p_license_number) THEN
+    SELECT id INTO result_id FROM Accounts WHERE license_number = p_license_number LIMIT 1;
+    IF FOUND THEN
         result_id := -3;
         error_message := 'Пользователь с таким license_number уже существует';
+        RETURN;
+    END IF;
+
+	-- Проверяем, существует ли уже пользователь с таким телефоном
+    SELECT id INTO result_id FROM Accounts WHERE phone = p_phone LIMIT 1;
+    IF FOUND THEN
+        result_id := -4;
+        error_message := 'Пользователь с таким телефоном уже существует';
         RETURN;
     END IF;
 
@@ -267,7 +263,23 @@ EXCEPTION
 END;
 $$ LANGUAGE PLPGSQL;
 
+SELECT * FROM register_profile(
+    p_name := 'John Doe',
+    p_license_number := '011234567312',
+    p_email := 'john321@example.com',
+    p_password := 'password123',
+    p_is_organization := FALSE,
+    p_phone := '+375293418258'
+);
 
+
+
+
+
+
+
+
+	
 
 CREATE OR REPLACE FUNCTION login_admin(p_login VARCHAR, p_password VARCHAR, OUT result_id INTEGER, OUT error_message TEXT)
 AS $$

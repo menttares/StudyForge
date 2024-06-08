@@ -1,0 +1,49 @@
+@model List<CourseStatistics>
+
+<h2>Статистика курсов по секциям</h2>
+
+<div style="width: 80%; margin: auto;">
+    <canvas id="coursesChart" width="800" height="400"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+<script>
+    $(document).ready(function () {
+        var sectionData = @Html.Raw(Json.Serialize(Model.Select(s => new { s.SectionName, s.CourseCount })));
+
+        // Инициализация массивов
+        var sectionNames = [];
+        var courseCounts = [];
+
+        // Заполнение массивов данными из sectionData
+        sectionData.forEach(function (data) {
+            sectionNames.push(data.sectionName);
+            courseCounts.push(data.courseCount);
+        });
+
+        // Отображение графика
+        var ctx = document.getElementById('coursesChart').getContext('2d');
+        var myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: sectionNames,
+                datasets: [{
+                    label: 'Количество курсов',
+                    data: courseCounts,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    });
+</script>

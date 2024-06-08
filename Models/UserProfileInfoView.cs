@@ -13,7 +13,7 @@ public class UserProfileInfo
     public string Phone { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string AboutMe { get; set; } = string.Empty;
-    public int SpecializationId { get; set; }
+    public int? SpecializationId { get; set; }
     public string Specialization { get; set; } = string.Empty;
     public string LicenseNumber { get; set; } = string.Empty;
     public bool Confirmation { get; set; }

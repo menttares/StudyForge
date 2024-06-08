@@ -63,8 +63,6 @@ public class CourseEditorController : Controller
 
     public IActionResult StudyGroups(int CourseId)
     {
-        ViewData["Cities"] = _database.GetAllCities();
-        ViewData["FormsTraining"] = _database.GetAllFormsTraining();
         ViewData["CourseId"] = CourseId;
         List<StudyGroup> studyGroups = _database.GetAllStudyGroupCourse(CourseId);
 

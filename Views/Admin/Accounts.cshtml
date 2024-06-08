@@ -1,51 +1,65 @@
 @model List<UserProfileInfo>
 
-<h1>User Profiles</h1>
+<h1 class="mb-4">Профили пользователей</h1>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Фото</th>
-            <th>Почта</th>
-            <th>Телефон</th>
-            <th>Имя</th>
-            <th>Описание</th>
-            <th>Специальность</th>
-            <th>Лицензия</th>
-            <th>Подверждения</th>
-            <th>Дата создания</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var profile in Model)
-        {
-            <tr id="@profile.AccountId">
-                <td>@profile.AccountId</td>
-                <td></td>
-                <td>@profile.Email</td>
-                <td>@profile.Phone</td>
-                <td>@profile.Name</td>
-                <td>@profile.AboutMe</td>
-                <td>@profile.Specialization</td>
-                <td>@profile.LicenseNumber</td>
-                <td>
-                    <select class="form-control confirmation-select" data-account-id="@profile.AccountId">
-                        <option value="true" selected="@profile.Confirmation == true">True</option>
-                        <option value="false" selected="@profile.Confirmation == false">False</option>
-                    </select>
-                </td>
-                <td>@profile.AccountCreatedAt.ToShortDateString()</td>
+<div class="table-responsive">
+    <table class="table table-hover table-striped">
+        <thead class="thead-dark">
+            <tr>
+                <th>ID</th>
+                <th>Фото</th>
+                <th>Почта</th>
+                <th>Телефон</th>
+                <th>Имя</th>
+                <th>Описание</th>
+                <th>Специальность</th>
+                <th>Лицензия</th>
+                <th>Подтверждение</th>
+                <th>Дата создания</th>
             </tr>
-        }
-    </tbody>
-</table>
-
-<div class="alert alert-success alert-dismissible fade" id="success-alert" role="alert">
-    <strong>Успех!</strong> Изменения подверждены.
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </thead>
+        <tbody>
+            @foreach (var profile in Model)
+            {
+                <tr id="@profile.AccountId">
+                    <td>@profile.AccountId</td>
+                    <td>
+                        @if (profile.ProfileImageId != 0)
+                        {
+                            <img src="~/images/@profile.ProfileImage" alt="Profile Image" class="img-thumbnail" style="max-width: 50px;">
+                        }
+                    </td>
+                    <td>@profile.Email</td>
+                    <td>@profile.Phone</td>
+                    <td>@profile.Name</td>
+                    <td>@profile.AboutMe</td>
+                    <td>@profile.Specialization</td>
+                    <td>@profile.LicenseNumber</td>
+                    <td>
+                        <select class="form-control confirmation-select" data-account-id="@profile.AccountId">
+                            @if (profile.Confirmation)
+                            {
+                                <option value="true" selected>Да</option>
+                                <option value="false">Нет</option>
+                            }
+                            else
+                            {
+                                <option value="true">Да</option>
+                                <option value="false" selected>Нет</option>
+                            }
+                        </select>
+                    </td>
+                    <td>@profile.AccountCreatedAt.ToShortDateString()</td>
+                </tr>
+            }
+        </tbody>
+    </table>
 </div>
 
+<div class="alert alert-success alert-dismissible fade" id="success-alert" role="alert">
+    <strong>Успех!</strong> Изменения подтверждены.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
 
 <script>
     $(".confirmation-select").change(function () {

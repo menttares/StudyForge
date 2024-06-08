@@ -33,8 +33,16 @@ public class СontrolPanelController : Controller
     [HttpGet("[Controller]")]
     public IActionResult Main()
     {
+        var ClaimIdentifier = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
 
-        return View();
+        var id = int.Parse(ClaimIdentifier.Value);
+        bool Confirmation = _database.CheckAccountConfirmation(id);
+
+        if (Confirmation) {
+            return View();
+        }
+
+        return View("Block");
     }
 
     public IActionResult Home()
@@ -61,7 +69,7 @@ public class СontrolPanelController : Controller
 
         var id = int.Parse(ClaimIdentifier.Value);
 
-        List<ApplicationStatistics> data = _database.GetApplicationsByCreator(id);
+        List<ApplicationsPerCourse> data = _database.GetCourseApplicationsStatisticsByCreatorId(id);
 
         return PartialView(data);
     }

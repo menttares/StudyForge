@@ -40,23 +40,39 @@ create table applications(
 );
 
 
-CREATE VIEW CourseApplicationsStatisticsView AS
-SELECT 
+
+CREATE VIEW ApplicationsPerCourse AS
+SELECT
     c.id AS course_id,
     c.name AS course_name,
-	c.id_Account AS id_Account,
-    SUM(CASE WHEN a.id_StatusApplications = (SELECT id FROM StatusApplications WHERE name = 'принято') THEN 1 ELSE 0 END) AS total_accepted_applications
-FROM 
-    applications a
-JOIN 
-    StudyGroups sg ON a.id_StudyGroup = sg.id
-JOIN 
-    Courses c ON sg.id_course = c.id
-GROUP BY 
-    c.id, c.name, c.id_Account;
+    COUNT(a.id) AS application_count,
+	c.id_Account AS creator_id
+FROM
+    Courses c
+LEFT JOIN
+    StudyGroups sg ON c.id = sg.id_Course
+LEFT JOIN
+    Applications a ON sg.id = a.id_StudyGroup
+GROUP BY
+    c.id,
+    c.name;
 
 
-select * from CourseApplicationsStatisticsView;
+CREATE OR REPLACE FUNCTION GetCourseApplicationsStatisticsByCreatorId(p_creator_id INTEGER)
+RETURNS SETOF ApplicationsPerCourse AS
+$$
+BEGIN
+    RETURN QUERY
+    SELECT *
+    FROM ApplicationsPerCourse
+    WHERE creator_id = p_creator_id;
+END;
+$$
+LANGUAGE plpgsql;
+
+
+select * from GetCourseApplicationsStatisticsByCreatorId(1);
+
 
 CREATE OR REPLACE FUNCTION get_applications_by_creator(creator_id INT)
 RETURNS SETOF CourseApplicationsStatisticsView AS $$
