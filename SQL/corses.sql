@@ -2,13 +2,13 @@
 -- форма обучения
 CREATE TABLE FormsTraining (
   id SERIAL PRIMARY KEY,
-  name VARCHAR(255) UNIQUE NOT NULL
+  name VARCHAR(100) UNIQUE NOT NULL
 );
 
 -- города РБ и другие
 CREATE TABLE Cities (
   id SERIAL PRIMARY KEY,
-  name VARCHAR(255) UNIQUE NOT NULL
+  name VARCHAR(100) UNIQUE NOT NULL
 );
 
 select * from studygroups;
@@ -35,9 +35,11 @@ CREATE TABLE studygroups (
 	-- город 
   id_city integer REFERENCES Cities(id) ON DELETE SET NULL,
   -- длительность в часах
-  duration integer NULL check (duration > 0 and duration < 1000),
+  duration integer NULL check (duration > 0 and duration < 5000),
 
-  id_course INTEGER REFERENCES courses(id) ON DELETE CASCADE
+  id_course INTEGER REFERENCES courses(id) ON DELETE CASCADE,
+	
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- учебная группа
@@ -198,38 +200,6 @@ select * from CourseAndGroupView;
 
 
 
-CREATE OR REPLACE VIEW CourseAndGroupView AS
-SELECT
-    c.id AS course_id,
-    c.name AS course_name,
-    c.description AS course_description,
-	sec.id AS SectionId,
-	sec.name AS SectionName,
-    cr.name AS creator_name,
-    cr.email AS creator_email,
-    cr.phone AS creator_phone,
-	cr.is_organization AS creator_is_organization,
-    sg.id AS group_id,
-    sg.enrollment AS group_enrollment,
-    sg.date_start AS group_date_start,
-    sg.date_end AS group_date_end,
-    sg.price AS group_price,
-    sg.duration AS group_duration,
-	count_accepted_applications(sg.id) AS accepted_applications_count,
-    get_schedule_days(sg.id) AS schedule_days,
-	c.course_closed AS course_closed
-FROM
-    courses c
-JOIN
-    studygroups sg ON c.id = sg.id_course
-JOIN
-    accounts cr ON c.id_Account = cr.id
-JOIN 
-	Sections sec ON sec.id = c.id_Section;
-
-
-select * from CourseAndGroupView;
-
 
 CREATE OR REPLACE FUNCTION get_course_instances(p_course_id INTEGER)
 RETURNS SETOF CourseAndGroupView AS $$
@@ -328,208 +298,6 @@ SELECT * FROM filter_courses_and_groups(
 	null
 );
 
-
-
-
-
-CREATE OR REPLACE FUNCTION filter_courses_and_groups(
-    p_section_id INTEGER,
-    p_start_date DATE DEFAULT NULL,
-    p_end_date DATE DEFAULT NULL,
-    p_min_price NUMERIC(10, 2) DEFAULT NULL,
-    p_max_price NUMERIC(10, 2) DEFAULT NULL,
-    p_duration_hours INTEGER DEFAULT NULL,
-    p_organization_only BOOLEAN DEFAULT FALSE,
-    p_free_only BOOLEAN DEFAULT FALSE,
-	p_search_query VARCHAR DEFAULT NULL
-) 
-RETURNS SETOF CourseAndGroupView AS
-$$
-DECLARE
-    filter_conditions TEXT;
-BEGIN
-    -- Формируем условия для фильтрации
-    filter_conditions := ' WHERE 1 = 1';
-    
-    IF p_section_id IS NOT NULL THEN
-        filter_conditions := filter_conditions || ' AND SectionId = ' || p_section_id;
-    END IF;
-
-    IF p_start_date IS NOT NULL THEN
-        filter_conditions := filter_conditions || ' AND group_date_start >= ' || quote_literal(p_start_date);
-    END IF;
-
-    IF p_end_date IS NOT NULL THEN
-        filter_conditions := filter_conditions || ' AND group_date_end <= ' || quote_literal(p_end_date);
-    END IF;
-
-    IF p_min_price IS NOT NULL THEN
-        filter_conditions := filter_conditions || ' AND group_price >= ' || p_min_price;
-    END IF;
-
-    IF p_max_price IS NOT NULL THEN
-        filter_conditions := filter_conditions || ' AND group_price <= ' || p_max_price;
-    END IF;
-
-    IF p_duration_hours IS NOT NULL THEN
-        filter_conditions := filter_conditions || ' AND group_duration = ' || p_duration_hours;
-    END IF;
-
-    IF p_organization_only THEN
-        filter_conditions := filter_conditions || ' AND creator_is_organization = TRUE';
-    END IF;
-
-    IF p_free_only THEN
-        filter_conditions := filter_conditions || ' AND accepted_applications_count < group_enrollment';
-    END IF;
-
-    RETURN QUERY EXECUTE '
-        SELECT *
-        FROM CourseAndGroupView
-        ' || filter_conditions;
-END;
-$$
-LANGUAGE PLPGSQL;
-
-
--- измененный
-CREATE OR REPLACE FUNCTION filter_courses_and_groups(
-    p_section_id INTEGER,
-    p_start_date DATE DEFAULT NULL,
-    p_end_date DATE DEFAULT NULL,
-    p_min_price NUMERIC(10, 2) DEFAULT NULL,
-    p_max_price NUMERIC(10, 2) DEFAULT NULL,
-    p_duration_hours INTEGER DEFAULT NULL,
-    p_organization_only BOOLEAN DEFAULT FALSE,
-    p_free_only BOOLEAN DEFAULT FALSE
-) 
-RETURNS SETOF CourseAndGroupView AS
-$$
-DECLARE
-    filter_conditions TEXT;
-BEGIN
-    -- Формируем условия для фильтрации
-    filter_conditions := ' WHERE 1 = 1';
-    
-    IF p_section_id IS NOT NULL THEN
-        filter_conditions := filter_conditions || ' AND SectionId = ' || p_section_id;
-    END IF;
-
-    IF p_start_date IS NOT NULL THEN
-        filter_conditions := filter_conditions || ' AND group_date_start >= ' || quote_literal(p_start_date);
-    END IF;
-
-    IF p_end_date IS NOT NULL THEN
-        filter_conditions := filter_conditions || ' AND group_date_end <= ' || quote_literal(p_end_date);
-    END IF;
-
-    IF p_min_price IS NOT NULL THEN
-        filter_conditions := filter_conditions || ' AND group_price >= ' || p_min_price;
-    END IF;
-
-    IF p_max_price IS NOT NULL THEN
-        filter_conditions := filter_conditions || ' AND group_price <= ' || p_max_price;
-    END IF;
-
-    IF p_duration_hours IS NOT NULL THEN
-        filter_conditions := filter_conditions || ' AND group_duration = ' || p_duration_hours;
-    END IF;
-
-    IF p_organization_only THEN
-        filter_conditions := filter_conditions || ' AND creator_is_organization = TRUE';
-    END IF;
-
-    IF p_free_only THEN
-        filter_conditions := filter_conditions || ' AND accepted_applications_count < group_enrollment';
-    END IF;
-
-    RETURN QUERY EXECUTE '
-        SELECT *
-        FROM CourseAndGroupView
-        ' || filter_conditions;
-END;
-$$
-LANGUAGE PLPGSQL;
-
-
-
-SELECT * FROM filter_courses_and_groups(
-	null,
-	null,
-	null,
-	null,
-	null,
-	null,
-	null,
-	null,
-	null
-);
-
-
-CREATE OR REPLACE FUNCTION filter_courses_and_groups(
-    p_section_id INTEGER DEFAULT NULL,
-    p_start_date DATE DEFAULT NULL,
-    p_end_date DATE DEFAULT NULL,
-    p_min_price NUMERIC(10, 2) DEFAULT NULL,
-    p_max_price NUMERIC(10, 2) DEFAULT NULL,
-    p_duration_hours INTEGER DEFAULT NULL,
-    p_organization_only BOOLEAN DEFAULT FALSE,
-    p_free_only BOOLEAN DEFAULT FALSE,
-    p_search_query VARCHAR DEFAULT NULL
-) 
-RETURNS SETOF CourseAndGroupView AS
-$$
-DECLARE
-    filter_conditions TEXT;
-BEGIN
-    -- Формируем условия для фильтрации
-    filter_conditions := ' WHERE 1 = 1';
-    
-    IF p_section_id IS NOT NULL THEN
-        filter_conditions := filter_conditions || ' AND SectionId = ' || p_section_id;
-    END IF;
-
-    IF p_start_date IS NOT NULL THEN
-        filter_conditions := filter_conditions || ' AND group_date_start >= ' || quote_literal(p_start_date);
-    END IF;
-
-    IF p_end_date IS NOT NULL THEN
-        filter_conditions := filter_conditions || ' AND group_date_end <= ' || quote_literal(p_end_date);
-    END IF;
-
-    IF p_min_price IS NOT NULL THEN
-        filter_conditions := filter_conditions || ' AND group_price >= ' || p_min_price;
-    END IF;
-
-    IF p_max_price IS NOT NULL THEN
-        filter_conditions := filter_conditions || ' AND group_price <= ' || p_max_price;
-    END IF;
-
-    IF p_duration_hours IS NOT NULL THEN
-        filter_conditions := filter_conditions || ' AND group_duration = ' || p_duration_hours;
-    END IF;
-
-    IF p_organization_only THEN
-        filter_conditions := filter_conditions || ' AND creator_is_organization = TRUE';
-    END IF;
-
-    IF p_free_only THEN
-        filter_conditions := filter_conditions || ' AND accepted_applications_count < group_enrollment';
-    END IF;
-
-    IF p_search_query IS NOT NULL THEN
-        -- Добавляем условие для поиска по частичному совпадению в названии курса и имени организатора
-        filter_conditions := filter_conditions || ' AND (LOWER(course_name) LIKE LOWER(' || quote_literal('%' || p_search_query || '%') || ')' ||
-                                               ' OR LOWER(creator_name) LIKE LOWER(' || quote_literal('%' || p_search_query || '%') || '))';
-    END IF;
-
-    RETURN QUERY EXECUTE '
-        SELECT *
-        FROM CourseAndGroupView
-        ' || filter_conditions;
-END;
-$$
-LANGUAGE PLPGSQL;
 
 
 

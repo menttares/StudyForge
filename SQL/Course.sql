@@ -3,7 +3,7 @@ CREATE TABLE Сategories (
   -- ID
   id SERIAL PRIMARY KEY,
   -- Название Категории
-  name VARCHAR(255) UNIQUE NOT NULL
+  name VARCHAR(100) UNIQUE NOT NULL
 );
 
 
@@ -18,13 +18,13 @@ CREATE TABLE Sections (
   -- FK ключ к разделу, к котору относится раздел
   id_category INTEGER REFERENCES Сategories(id) ON DELETE SET NULL,
   -- Название Раздела
-  name VARCHAR(255) UNIQUE NOT NULL
+  name VARCHAR(100) UNIQUE NOT NULL
 );
 
 CREATE OR REPLACE FUNCTION get_all_sections()
 RETURNS TABLE (
     section_id INTEGER,
-    section_name VARCHAR(255)
+    section_name VARCHAR(100)
 ) AS
 $$
 BEGIN
@@ -49,7 +49,7 @@ CREATE TABLE Courses (
     and LENGTH(name) <= 60
   ),
   -- Описание курса
-  description varchar(200) NULL,
+  description varchar(1000) NULL,
   -- Дата создания (автоматически заполняется)
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   -- закрыт ли курс организатором?

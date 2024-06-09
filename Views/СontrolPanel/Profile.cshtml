@@ -3,109 +3,113 @@
 }
 @model UserProfileInfo
 
+<style>
+    .profile-info {
+        gap: 10px;
+        font-size: 0.9em;
+    }
 
-<div class="row mt-2">
-    <div class="col-2 col-image-profile">
-        @if (string.IsNullOrEmpty(Model.ProfileImage))
-        {
-            <img class="image-profile" src="~/images/ImageProfiles/default.png" alt="Изображение профиля">
+    .image-profile {
+        max-width: 100%;
+        width: 250px;
+        height: auto;
+    }
+
+    @@media(max - width: 768px) {
+        .profile-info .col-12 {
+            text-align: center;
         }
-        else
-        {
-            <img class="image-profile"
-                src="~/images/ImageProfiles/@(string.IsNullOrEmpty(Model.ProfileImage) ? "default" : Model.ProfileImage).png"
-                alt="Изображение профиля">
 
+        .image-profile {
+            width: 150px;
         }
+    }
 
+    @@media(max - width: 356px) {
+        .profile-info {
+            gap: 5px;
+            font-size: 0.2em;
+        }
+    }
+</style>
+
+
+
+<div class="container">
+    <div class="row bg-light">
+        <div class="col fs-3 p-2 fw-bold">
+            @Model.Name <spam class="btn-idit"><i class="bi bi-pencil-square"></i></spam>
+        </div>
     </div>
-    <div class="col-8">
-        <div class="d-flex flex-column mb-3">
-            <div class="p-2">
-                <span>Имя:</span>
-                <span id="name">@Model.Name</span>
-
-
-                <input type="text" class="form-control edit-input" id="nameInput" value="@Model.Name"
-                    style="display: none;">
-            </div>
-            <div class="p-2">
-                <span>Статус аккаунта:</span>
-                @if (Model.Confirmation)
+    <div class="row profile-info mt-2">
+        <div class="col-12 bg-light">
+            <div class="bg-light text-center p-3">
+                @if (string.IsNullOrEmpty(Model.ProfileImage))
                 {
-                    <span id="name">Подвержден</span>
+                    <img class="image-profile rounded-circle" src="~/images/ImageProfiles/profile.jpg"
+                        alt="Изображение профиля">
                 }
                 else
                 {
-                    <span id="name">Не подвержден</span>
+                    <img class="image-profile rounded-circle"
+                        src="~/images/ImageProfiles/@(string.IsNullOrEmpty(Model.ProfileImage) ? "default" : Model.ProfileImage).png"
+                        alt="Изображение профиля">
                 }
-            </div>
-            <div class="p-2">
-                <span>О себе:</span>
-                @if (string.IsNullOrEmpty(Model.AboutMe))
-                {
-                    <span id="aboutMeDesc">Нет данных</span>
-                }
-                else
-                {
-                    <span id="aboutMe">@Model.AboutMe</span>
-                }
-                <input type="text" class="form-control edit-input" id="aboutMeInput" value="@Model.AboutMe"
-                    style="display: none;">
-            </div>
-            <div class="p-2">
-                <span>Специализация:</span>
-                @if (string.IsNullOrEmpty(Model.Specialization))
-                {
-                    <span id="specializationDesc">Нет данных</span>
-                }
-                else
-                {
-                    <span id="specialization">@Model.Specialization</span>
-                }
-                <select class="form-control edit-input" id="specializationInput" style="display: none;">
-                    @foreach (var specialization in specializations)
-                    {
-                        if (Model.SpecializationId == specialization.Id)
-                        {
-                            <option value="@specialization.Id" selected)>@specialization.Name</option>
-                        }
-                        else
-                        {
-                            <option value="@specialization.Id">@specialization.Name</option>
-                        }
-
-                    }
-                </select>
-            </div>
-            <div class="p-2">
-                <span>Дата создания:</span>
-                <span>@Model.AccountCreatedAt</span>
-            </div>
-            <div class="p-2">
-                <button id="editButton" class="btn btn-primary">Редактировать</button>
-                <button id="saveButton" class="btn btn-success" style="display: none;">Сохранить</button>
-                <button id="cancelButton" class="btn btn-secondary" style="display: none;">Закрыть</button>
             </div>
         </div>
+        <div class="col bg-light">
+            <table class="table">
+                <tbody>
+                    <tr>
+                        <th scope="row">Email</th>
+                        <td>@Model.Email</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Телефон</th>
+                        <td>@Model.Phone</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Сфера деятельности</th>
+                        <td>@Model.Specialization</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Лицензия</th>
+                        <td>@Model.LicenseNumber</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Статус</th>
+                        <td>
+                            @if (Model.Confirmation)
+                            {
+                                <span>Подвержден</span>
+                            }
+                            else
+                            {
+                                <span>Нет подверждения</span>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Дата регистрации</th>
+                        <td>@Model.AccountCreatedAt</td>
+                    </tr>
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+    <div class="row mt-2 bg-light p-2">
+        <div class="col">
+            <div class="fs-5 fw-bold mb-2">Описание</div>
+            <div>@Model.AboutMe</div>
+        </div>
+    </div>
+    <div class="row">
+        
     </div>
 </div>
 
 
 
 
-
-<style>
-    .image-profile {
-        max-width: 100%;
-        /* Устанавливаем максимальную ширину изображения равной ширине родительского контейнера */
-        height: auto;
-        /* Автоматически подстраиваем высоту изображения */
-    }
-
-
-    .col-image-profile {
-        min-width: 60px;
-    }
-</style>
 <script src="~/js/СontrolPanel/Profile.js"></script>

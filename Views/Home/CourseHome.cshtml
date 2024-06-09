@@ -9,14 +9,17 @@
 
 
 
+
 <div class="container">
-    <div class="row">
-        <!-- 1 блок: Описание курса -->
-        <div class="col-md-6">
-            <h2>@Model.CourseName</h2>
-            <p>@Model.CourseDescription</p>
-            <p>Дата создания: @Model.CourseCreatedAt.ToShortDateString()</p>
-            <p>Подкатегория курса: @Model.SectionName</p>
+    <div class="row mt-2">
+        <div class="col">
+            <a asp-action="Search" asp-controller="Home" class="">
+                назад </a>
+            <div>
+                <h1 class="fs-1 fw-bold">@Model.CourseName</h1>
+            </div>
+            <div class="mb-5">@Model.SectionName</div>
+
             @if (isAdmin)
             {
 
@@ -29,62 +32,43 @@
                     <button class="btn btn-danger" data-toggle="modal" data-target="#banModal">Заблокировать</button>
                 }
             }
-            <div class="row mt-5">
-                <div class="col-md-12">
-                    <h2>Создатель курса</h2>
-                    <p>Имя: @userProfileInfo.Name</p>
-                    <p>Специализация: @userProfileInfo.Specialization</p>
-                    <p>Описание: @userProfileInfo.AboutMe</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- 2 блок: Учебные группы -->
-        <div class="col-md-6">
-            <h2>Учебные группы</h2>
-            <div class="d-flex flex-column">
-                @foreach (StudyGroup group in studyGroups)
-                {
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title">Учебная группа</h5>
-                            <p class="card-text">
-                                Дни: @(group.ScheduleDays == null || !group.ScheduleDays.Any() ? "Дни неопределены" :
-                               string.Join(", ", group.ScheduleDays.Select(day => day.Name)))
-                            </p>
-                            <p class="card-text">Набор: @group.AcceptedApplicationsCount / @group.Enrollment</p>
-                            <p class="card-text">Дата начала: @group.StartDate.ToShortDateString()</p>
-                            <p class="card-text">Цена: @group.Price BYN</p>
-                            <p class="card-text">Форма: @group.FormTraining</p>
-                            <p class="card-text">Количество часов: @group.Duration</p>
-                            <p class="card-text">Город: @group.СityName</p>
-                            <!-- Добавьте другие поля для описания учебной группы -->
-                            <button class="btn btn-primary btn-record trigger-modal" data-id="@group.Id" data-toggle="modal"
-                                data-target="#contactModal">Записаться</button>
-                        </div>
-                    </div>
-                }
-            </div>
+            <p class="fs-5 fw-bold">Описание</p>
+            <p class="">@Model.CourseDescription</p>
         </div>
     </div>
 
-    <div class="row mt-5 align-items-center">
-        <h2>Программы</h2>
-        <div class="col-md-6 d-flex justify-content-center">
-            <div class="accordion" id="accordionPanelsStayOpenExample">
-                @foreach (var program in programs)
+    <div class="row mt-5">
+        <!-- Учебные группы -->
+        <div class="col">
+            <p class="fs-5 fw-bold">Учебные группы</p>
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3"> <!-- Adjust number of columns as needed -->
+                @foreach (StudyGroup group in studyGroups)
                 {
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button " type="button" data-bs-toggle="collapse"
-                                data-bs-target="#panelsStayOpen-@program.Id" aria-expanded="true"
-                                aria-controls="panelsStayOpen-@program.Id">
-                                @program.Name
-                            </button>
-                        </h2>
-                        <div id="panelsStayOpen-@program.Id" class="accordion-collapse collapse show">
-                            <div class="accordion-body">
-                                @program.Description
+                    <div class="col mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Учебная группа</h5>
+                                <p class="card-text">
+                                    Дни: @(group.ScheduleDays == null || !group.ScheduleDays.Any() ? "Дни неопределены" :
+                                   string.Join(", ", group.ScheduleDays.Select(day => day.Name)))
+                                </p>
+                                <p class="card-text">Набор: @group.AcceptedApplicationsCount / @group.Enrollment</p>
+                                <p class="card-text">Дата начала: @group.StartDate.ToShortDateString()</p>
+                                <p class="card-text">Цена: @group.Price BYN</p>
+                                <p class="card-text">Форма: @group.FormTraining</p>
+                                <p class="card-text">Количество часов: @group.Duration</p>
+                                <p class="card-text">Город: @group.СityName</p>
+                                <!-- Добавьте другие поля для описания учебной группы -->
+                                @if (group.AcceptedApplicationsCount >= group.Enrollment)
+                                {
+                                    <button class="btn btn-primary btn-record trigger-modal" data-id="@group.Id"
+                                        data-toggle="modal" data-target="#contactModal" disabled>Нет мест</button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-primary btn-record trigger-modal" data-id="@group.Id"
+                                        data-toggle="modal" data-target="#contactModal">Записаться</button>
+                                }
                             </div>
                         </div>
                     </div>
@@ -92,21 +76,57 @@
             </div>
         </div>
     </div>
-    @* <div class="row mt-5">
-    <div class="col-md-6">
-    <h2>Программы</h2>
-    <div class="d-flex flex-column">
-    @foreach (var program in programs)
+    @if (programs.Count > 0)
     {
-    <div data-id="@program.CourseId">
-    <div>@program.Name</div>
-    <div>@program.Description</div>
-    </div>
+        <div class="row mt-5 align-items-center">
+            <div class="col">
+                <h2 class="fs-5 fw-bold text-center">Программы</h2>
+                <div class="d-flex justify-content-center">
+                    <div class="accordion w-100" id="accordionPanelsStayOpenExample">
+                        @foreach (var program in programs)
+                        {
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                                        data-bs-target="#panelsStayOpen-@program.Id" aria-expanded="true"
+                                        aria-controls="panelsStayOpen-@program.Id">
+                                        @program.Name
+                                    </button>
+                                </h2>
+                                <div id="panelsStayOpen-@program.Id" class="accordion-collapse collapse show">
+                                    <div class="accordion-body">
+                                        @program.Description
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
     }
-    </div>
+
+    <div class="row">
+        <!-- 1 блок: Описание курса -->
+        <div class="col">
+            <div class="row mt-5">
+                <div class="col-md-11">
+                    <p class="fs-5 fw-bold">Создатель курса</p>
+                    <div class="row align-items-center justify-content-center">
+                        <div class="col-auto">
+                            <img src="~/images/ImageProfiles/profile.jpg" style="width: 250px;">
+                        </div>
+                        <div class="col" style="min-width: 300px;">
+                            <p>Имя: @userProfileInfo.Name</p>
+                            <p>Специализация: @userProfileInfo.Specialization</p>
+                            <p class="">О себе: @userProfileInfo.AboutMe</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    </div> *@
 
 </div>
 
@@ -156,7 +176,9 @@
                         <label for="email">Email</label>
                         <input type="email" class="form-control" id="email" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Записаться</button>
+                    <div>
+                        <button type="submit" class="btn btn-primary mt-2">Записаться</button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -317,10 +339,11 @@
                     if (triggeringButton) {
                         triggeringButton.text('отправлено...').removeClass('btn-primary').addClass('btn-secondary').prop('disabled', true);
                     }
+                    Message("Успех!", "Ждите ответа от организатора");
                 },
                 error: function (xhr, status, error) {
                     console.error(xhr.responseText);
-
+                    Message("Ошибка!", "Вероятно с что-то с сервером,повторите в другой раз");
                 }
             });
 

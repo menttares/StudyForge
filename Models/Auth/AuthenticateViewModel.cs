@@ -6,11 +6,13 @@ public class AuthenticateViewModel
 {
     [Required(ErrorMessage = "Поле 'Email' обязательно для заполнения")]
     [EmailAddress(ErrorMessage = "Некорректный формат адреса электронной почты")]
+    [StringLength(50, ErrorMessage = "Email должен быть не длиннее 50 символов")]
     public string Email { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Поле Password обязательно для заполнения")]
     [DataType(DataType.Password)]
     [RegularExpression(@"^[a-zA-z\d\@\+\\#!-]{5,20}$", ErrorMessage = "Пароль должен быть от 5 до 20 символов и содержать буквы, цифры и символы @, +, \\, #, !, -")]
+    [StringLength(20, MinimumLength = 5, ErrorMessage = "Пароль должен быть от 5 до 20 символов")]
     public string Password { get; set; } = string.Empty;
     
 }

@@ -12,6 +12,7 @@ public class RegisterViewModel
 
     [Required(ErrorMessage = "Поле 'Email' обязательно для заполнения")]
     [EmailAddress(ErrorMessage = "Некорректный формат адреса электронной почты")]
+    [StringLength(100, ErrorMessage = "Email должен быть не длиннее 100 символов")]
     public string Email { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Поле пароля обязательно для заполнения")]

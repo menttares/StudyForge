@@ -1,7 +1,7 @@
 -- статус заявки 
 CREATE TABLE StatusApplications (
   id SERIAL PRIMARY KEY,
-  name VARCHAR(255) UNIQUE NOT NULL CHECK (name IN ('принято', 'отклонено', 'ожидание'))
+  name VARCHAR(100) UNIQUE NOT NULL CHECK (name IN ('принято', 'отклонено', 'ожидание'))
 );
 
 INSERT INTO StatusApplications (name) VALUES 
@@ -16,10 +16,18 @@ select * from applications;
 create table applications(
   id SERIAL PRIMARY KEY,
   id_StudyGroup INTEGER REFERENCES StudyGroups(id) ON DELETE CASCADE,
-  firstName VARCHAR(60) NOT NULL,
-  lastName VARCHAR(60) NOT NULL,
-  surname VARCHAR(60) NULL,
-  phone VARCHAR(15) NOT NULL check (
+  firstName VARCHAR(60) NOT NULL check (
+    LENGTH(firstName) >= 3
+    and LENGTH(firstName) < 60
+  ),
+  lastName VARCHAR(60) NOT NULL check (
+    LENGTH(lastName) >= 3
+    and LENGTH(lastName) < 60
+  ),
+  surname VARCHAR(60) NULL check (
+    LENGTH(lastName) < 60
+  ),
+  phone VARCHAR(60) NOT NULL check (
     phone ~ '^(\+375)(29|33|44|25|17)(\d{3})(\d{2})(\d{2})$'
   ),
   -- Проверка пользователя, что ему есть 18 и не будущая дата
@@ -34,9 +42,11 @@ create table applications(
     and birthday < CURRENT_DATE
   ),
 	
-  email VARCHAR(255) NOT NULL CHECK (email LIKE '%@%'),
+  email VARCHAR(100) NOT NULL CHECK (email LIKE '%@%'),
 	
-  id_StatusApplications INTEGER REFERENCES StatusApplications(id)
+  id_StatusApplications INTEGER REFERENCES StatusApplications(id),
+  
+   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 

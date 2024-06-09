@@ -25,7 +25,7 @@ $('#newActiveNavItem').click(function() {
 
 $(document).ready(function() {
   // Обработчик для всех элементов с классом nav-link
-  $('.nav-link').each(function() {
+  $('.btn-control').each(function() {
     $(this).click(function() {
       // Вызываем функцию для установки активного элемента
       setActiveNavItem($(this));
@@ -33,7 +33,7 @@ $(document).ready(function() {
   });
 
   // Обработчик для всех элементов с классом dropdown-item
-  $('.dropdown-item').each(function() {
+  $('.btn-control').each(function() {
     $(this).click(function() {
       // Вызываем функцию для установки активного элемента
       setActiveNavItem($(this));

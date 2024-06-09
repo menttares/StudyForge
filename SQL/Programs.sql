@@ -3,8 +3,8 @@ CREATE TABLE ProgramsСourse (
   -- ID 
   id SERIAL PRIMARY KEY,
   -- Название курса
-  name VARCHAR(255) NOT NULL check (LENGTH(name) >= 3),
-  description VARCHAR(255) NULL,
+  name VARCHAR(100) NOT NULL check (LENGTH(name) >= 3),
+  description VARCHAR(1000) NULL,
   id_course INTEGER REFERENCES Courses(id) ON DELETE CASCADE
 );
 

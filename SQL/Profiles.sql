@@ -27,6 +27,8 @@ $$ LANGUAGE PLPGSQL;
 
 select get_all_specializations();
 
+
+alter table 
 -- аккаунт организатора курса
 CREATE TABLE Accounts (
   -- ID профиля (рукописный ключ)
@@ -37,7 +39,7 @@ CREATE TABLE Accounts (
 	
 
   -- Почта (уникальная, не null, обязателен символ'@' в поле)
-  email VARCHAR(255) UNIQUE NOT NULL CHECK (email LIKE '%@%'),
+  email VARCHAR(100) UNIQUE NOT NULL CHECK (email LIKE '%@%'),
 
   -- Пароль (5-20 символов, без пробелов, только цифры, буквы, спецсимволы)
   password VARCHAR(20) NOT NULL CHECK (password ~ '^[a-zA-z\d\@\+\\#!-]{5,20}$'),
@@ -46,20 +48,20 @@ CREATE TABLE Accounts (
   is_organization BOOL NULL DEFAULT 'false',
 
   -- Телефон, но только белорусский
-  phone VARCHAR(255) UNIQUE NOT NULL check (phone ~ '^(\+375)(29|33|44|25|17)(\d{3})(\d{2})(\d{2})$'),
+  phone VARCHAR(60) UNIQUE NOT NULL check (phone ~ '^(\+375)(29|33|44|25|17)(\d{3})(\d{2})(\d{2})$'),
 
-  -- Имя человека или организации (не null, минимум 3 символа и максимум 40)
-  name VARCHAR(255) NOT NULL CHECK (LENGTH(name) >= 3 and LENGTH(name) <= 40),
+  -- Имя человека или организации (не null, минимум 3 символа и максимум 60)
+  name VARCHAR(60) NOT NULL CHECK (LENGTH(name) >= 3 and LENGTH(name) <= 60),
 
   -- О себе (необязательное поле)
-  about_me VARCHAR(200) NULL,
+  about_me VARCHAR(1000) NULL,
 
   -- Специализация, сфера работы организации (например, IT-технологии, промышленность)
   -- или специальность человека(Например, техник-программист, экономист)
   specialization INTEGER  null REFERENCES Specializations(id) ON DELETE SET NULL,
 
   -- Номер лицензии РБ (Обязательное поле)
-  license_number VARCHAR(255) UNIQUE not null check (license_number ~ '^(01|02|03|04|05|06|07|08|09|10|11|12|13|14|15|16|17|18|19|20)\d{2}\d{6}\d{2}$'),
+  license_number VARCHAR(100) UNIQUE not null check (license_number ~ '^(01|02|03|04|05|06|07|08|09|10|11|12|13|14|15|16|17|18|19|20)\d{2}\d{6}\d{2}$'),
 
 
   -- поле подтверждения профиля администратором (необязательное поле, т.к. это поле будет проверено в будущем администратором)
@@ -152,10 +154,10 @@ create table Administrators (
   id SERIAL PRIMARY KEY,
   name VARCHAR(100) check (
     LENGTH(name) >= 3
-    and LENGTH(name) < 100
+    and LENGTH(name) < 60
   ),
-  email VARCHAR(255) UNIQUE NOT NULL CHECK (email LIKE '%@%'),
-  password varchar(50) NOT NULL check (password ~ '^[a-zA-z\d\@\+\\#!-]{5,20}$')
+  email VARCHAR(100) UNIQUE NOT NULL CHECK (email LIKE '%@%'),
+  password varchar(20) NOT NULL check (password ~ '^[a-zA-z\d\@\+\\#!-]{5,20}$')
 );
 
 insert into Administrators(name, email, password ) values

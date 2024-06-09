@@ -1,21 +1,27 @@
 @model List<CategoryWithSubsections>
 
+
+<style>
+    .category-width {
+        width: 300px;
+    }
+</style>
 <div class="container">
-    <h2>Категории</h2>
+    <h2 class="fs-2 fw-bold mt-4">Обучение</h2>
 
     <div class="d-flex justify-content-center align-items-start flex-wrap">
 
         @foreach (CategoryWithSubsections category in Model)
         {
             <div class="dropdown p-2">
-                <button class="btn btn-light dropdown-toggle " type="button" id="dropdownMenuButton" data-toggle="dropdown"
+                <button class="btn btn-light dropdown-toggle category-width" type="button" id="dropdownMenuButton" data-toggle="dropdown"
                     aria-haspopup="true" aria-expanded="false">
                     @category.CategoryName
                 </button>
                 <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                     @foreach (Subsection subsection in category.Subsections)
                     {
-                        <div class="dropdown-item" data-sectionId="@subsection.Id">@subsection.Name</div>
+                        <div class="dropdown-item category-width" data-sectionId="@subsection.Id">@subsection.Name</div>
                     }
                 </div>
             </div>
@@ -26,7 +32,7 @@
 
 
 <div class="container mt-5">
-    <h2>Фильтр</h2>
+    <h2 class="fs-2 fw-bold mt-2 text-end">Фильтр</h2>
     <form id="FormSearch" name="FormSearch">
         <div class="input-group">
             <span class="input-group-text" id="basic-addon1">
@@ -78,7 +84,7 @@
 </div>
 
 <div class="container mt-5">
-    <h2>Результат</h2>
+    <h2 class="fs-2 fw-bold">Результат</h2>
     <div class="text-primary" id="StatusSearch"></div>
     <div class="row row-cols-1 row-cols-md-2" id="CardsCourses">
     </div>
@@ -91,20 +97,6 @@
 <script src="~/js/search.js" asp-append-version="true"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
 
-@* <style>
-    .btn {
-        width: 200px;
-    }
-
-    /* Дополнительные стили для примера */
-    .dropdown-menu {
-        display: none;
-    }
-
-    .show-dropdown .dropdown-menu {
-        display: block;
-    }
-</style> *@
 
 <script>
     // JavaScript для закрытия предыдущего выпадающего списка
@@ -119,4 +111,27 @@
             $('.dropdown-menu').hide(); // Скрыть выпадающие списки при клике вне области
         }
     });
+
+    $(document).ready(function(e){
+        $("#SearchButton").click();
+    });
+</script>
+
+
+<script>
+    function truncateText(selector, maxLength) {
+        const elements = document.querySelectorAll(selector);
+
+        elements.forEach(element => {
+            const text = element.textContent;
+
+            if (text.length > maxLength) {
+                const truncated = text.substring(0, maxLength) + "...";
+                element.textContent = truncated;
+            }
+        });
+    }
+
+    // Примените функцию для элемента <p> с классом "text-500" и установите максимальную длину в 100 символов
+    truncateText(".text-500", 100);
 </script>
