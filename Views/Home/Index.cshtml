@@ -2,39 +2,87 @@
     ViewData["Title"] = "Главная";
 }
 
-<div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel">
-    <ol class="carousel-indicators">
-        <li data-target="#carouselExampleIndicators" data-slide-to="0" class="active"></li>
-        <li data-target="#carouselExampleIndicators" data-slide-to="1"></li>
-        <li data-target="#carouselExampleIndicators" data-slide-to="2"></li>
-    </ol>
-    <div class="carousel-inner">
-        <div class="carousel-item active">
-            <img src="~/images/welcomeCarousel1.jpg" class="d-block w-100" style="height: 500px; object-fit: cover;" alt="...">
-        </div>
-        <div class="carousel-item">
-            <img src="~/images/welcomeCarousel2.jpg" class="d-block w-100" style="height: 500px; object-fit: cover;" alt="...">
-        </div>
-        <div class="carousel-item">
-            <img src="~/images/welcomeCarousel3.jpg" class="d-block w-100" style="height: 500px; object-fit: cover;" alt="...">
-        </div>
+<style>
+    .welcome-container {
+        max-width: 600px;
+        margin: 0 auto;
+        text-align: center;
+        padding: 20px;
+    }
+
+    .welcome-image {
+        max-width: 100%;
+        height: auto;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    .studyforge-welcome {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+    }
+
+    .btn-welcome {
+        border: 2px solid #007bff;
+        width: 300px;
+        padding: 10px;
+        border-radius: 10px;
+        cursor: pointer;
+    }
+
+    .btn-welcome:hover {
+        background-color: #007bff;
+        color: white;
+
+    }
+</style>
+
+<div class="container mb-5">
+    <div class="welcome-container p-2">
+        <img src="~/images/file.png" alt="Изображение приветствия" class="welcome-image">
+        <h2>Добро пожаловать!</h2>
+        <p>StudyForge - это платформа для обучения и сотрудничества. Присоединяйтесь к нам в своем образовательном
+            путешествии. Откройте дверь к бесконечным возможностям обучения и саморазвития с нашей платформой</p>
+        <a asp-action="Search" asp-controller="Home" class="btn btn-control btn-welcome mb-5">начать</a>
     </div>
 </div>
 
 
-<style>
-    .carousel-indicators {
-        gap: 10px;
-    }
-    .carousel-indicators li {
-        background-color: transparent; /* Прозрачный фон для неактивных точек */
-        width: 70px; /* Ширина полоски */
-        height: 100px; /* Высота полоски */
-        border-bottom: 3px solid white;
-        transition: border-color 0.3s ease; /* Анимация перехода цвета рамки */
-    }
+@*
+<div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel">
+<ol class="carousel-indicators">
+<li data-target="#carouselExampleIndicators" data-slide-to="0" class="active"></li>
+<li data-target="#carouselExampleIndicators" data-slide-to="1"></li>
+<li data-target="#carouselExampleIndicators" data-slide-to="2"></li>
+</ol>
+<div class="carousel-inner">
+<div class="carousel-item active">
+<img src="~/images/welcomeCarousel1.jpg" class="d-block w-100" style="height: 500px; object-fit: cover;" alt="...">
+</div>
+<div class="carousel-item">
+<img src="~/images/welcomeCarousel2.jpg" class="d-block w-100" style="height: 500px; object-fit: cover;" alt="...">
+</div>
+<div class="carousel-item">
+<img src="~/images/welcomeCarousel3.jpg" class="d-block w-100" style="height: 500px; object-fit: cover;" alt="...">
+</div>
+</div>
+</div>
 
-    .carousel-indicators .active {
-        border-color: #007BFF; /* Красная рамка для активной точки */
-    }
-</style>
+
+<style>
+.carousel-indicators {
+gap: 10px;
+}
+.carousel-indicators li {
+background-color: transparent; /* Прозрачный фон для неактивных точек */
+width: 70px; /* Ширина полоски */
+height: 100px; /* Высота полоски */
+border-bottom: 3px solid white;
+transition: border-color 0.3s ease; /* Анимация перехода цвета рамки */
+}
+
+.carousel-indicators .active {
+border-color: #007BFF; /* Красная рамка для активной точки */
+}
+</style> *@

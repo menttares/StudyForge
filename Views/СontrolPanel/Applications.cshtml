@@ -6,38 +6,80 @@
         padding: 10px;
         margin: 10px;
     }
+
+    .active-course {
+        color: #007BFF;
+    }
 </style>
 
 
 <div class="container">
+    <!-- Заголовок страницы -->
+    <h1 class="fs-1 fw-bold mb-2">Заявки</h1>
+
     <!-- Поле выбора статуса заявки -->
-    <div class="mb-3">
-        <label for="statusSelect" class="form-label">Статус заявки:</label>
-        <select class="form-control" id="statusSelect">
-            <option value="1">Принятно</option>
-            <option value="2">Отклонено</option>
-            <option value="4">Ожидание</option>
-            <option value="null">Все</option>
-        </select>
+    <div class="row mb-3 align-items-center">
+        <div class="col-auto">
+            <label for="statusSelect" class="form-label">Статус заявки:</label>
+        </div>
+        <div class="col-auto">
+            <select class="form-select" id="statusSelect">
+                <option value="1">Принятно</option>
+                <option value="2">Отклонено</option>
+                <option value="4">Ожидание</option>
+                <option value="null">Все</option>
+            </select>
+        </div>
     </div>
 
     <!-- Кликабельные поля с названием курсов -->
-    <div class="d-flex flex-wrap">
+    <h1 class="fs-4 fw-bold mb-2">Курсы</h1>
+    <div class="row">
         @foreach (Course course in Model)
         {
-            <div class="clickable-course border rounded mr-3 mb-3" data-course-id="@course.CourseId">@course.CourseName
-            </div>
+                                    <div class="col-auto m-2 clickable-course border rounded p-2 text-center" data-course-id="@course.CourseId">
+                                        <div class="text-truncate">@course.CourseName</div>
+                                    </div>
         }
     </div>
 
+    <!-- Контейнер для отображения заявок -->
     <div id="applicationsContainer" class="mt-5"></div>
 </div>
+@* <div class="container">
+<!-- Поле выбора статуса заявки -->
+<div class="mb-3">
+<label for="statusSelect" class="form-label">Статус заявки:</label>
+<select class="form-control" id="statusSelect">
+<option value="1">Принятно</option>
+<option value="2">Отклонено</option>
+<option value="4">Ожидание</option>
+<option value="null">Все</option>
+</select>
+</div>
+
+<!-- Кликабельные поля с названием курсов -->
+<div class="d-flex flex-wrap">
+@foreach (Course course in Model)
+{
+<div class="clickable-course border rounded mr-3 mb-3" data-course-id="@course.CourseId">@course.CourseName
+</div>
+}
+</div>
+
+<div id="applicationsContainer" class="mt-5"></div>
+</div> *@
 
 
 
 <script>
 
+
     $('.clickable-course').click(function () {
+        // Удаление класса .active у прошлых активных курсов
+        $(".active-course").removeClass("active-course");
+        // Добавление класса .active текущему курсу
+        $(this).addClass("active-course");
         var courseId = $(this).data('course-id');
         var selectedStatus = $('#statusSelect').val();
 
@@ -50,7 +92,11 @@
                 statusId: selectedStatus
             },
             success: function (response) {
-                renderApplications(response);
+                if (response.length === 0) {
+                    $('#applicationsContainer').html('<p class="text-center fs-3">Нет заявок</p>');
+                } else {
+                    renderApplications(response);
+                }
 
             },
             error: function (xhr, status, error) {
@@ -61,7 +107,7 @@
     });
 
 
-    function renderApplications(applications) {
+    @* function renderApplications(applications) {
         var container = $('#applicationsContainer');
         container.empty();
 
@@ -90,7 +136,70 @@
             </div>
         `;
             container.append(applicationElement);
-        });
+        }); *@
+
+       function renderApplications(applications) {
+    var container = $('#applicationsContainer');
+    container.empty();
+
+    applications.forEach(function (application) {
+        // Создание элемента карточки заявки
+        var card = $('<div>').addClass('card mb-3').attr('id', application.applicationId);
+        var cardBody = $('<div>').addClass('card-body');
+
+        // Заголовок карточки
+        var title = $('<h5>').addClass('fs-3 fw-bold card-title').text(`${application.firstName} ${application.lastName}`);
+        cardBody.append(title);
+
+        // Детали заявки
+        var details = $('<p>').addClass('card-text').text(`Телефон: ${application.phone}`);
+        cardBody.append(details);
+
+        details = $('<p>').addClass('card-text').text(`Дата рождения: ${new Date(application.birthday).toLocaleDateString()}`);
+        cardBody.append(details);
+
+        details = $('<p>').addClass('card-text').text(`Email: ${application.email}`);
+        cardBody.append(details);
+
+        details = $('<p>').addClass('card-text').text(`Дата подачи: ${new Date(application.created_at).toLocaleDateString()}`);
+        cardBody.append(details);
+
+        details = $('<p>').addClass('card-text').text(`Название формы обучения: ${application.formTrainingName}`);
+        cardBody.append(details);
+
+        details = $('<p>').addClass('card-text').text(`Город: ${application.cityName}`);
+        cardBody.append(details);
+
+        details = $('<p>').addClass('card-text').text(`Набор: ${application.enrollment}`);
+        cardBody.append(details);
+
+        details = $('<p>').addClass('card-text').text(`Дата начала набора: ${new Date(application.dateStart).toLocaleDateString()}`);
+        cardBody.append(details);
+
+        details = $('<p>').addClass('card-text').text(`Дата окончания набора: ${application.dateEnd ? new Date(application.dateEnd).toLocaleDateString() : '-'}`);
+        cardBody.append(details);
+
+        details = $('<p>').addClass('card-text').text(`Цена: ${application.price ? application.price.toFixed(2) : '-'}`);
+        cardBody.append(details);
+
+        details = $('<p>').addClass('card-text').text(`Длительность в часах: ${application.duration ? application.duration : '-'}`);
+        cardBody.append(details);
+
+        // Выпадающий список статусов
+        var select = $('<select>').addClass('form-control status-select').attr('data-application-id', application.applicationId);
+        select.append($('<option>').attr('value', '1').prop('selected', application.idStatusApplications === 1).text('Принято'));
+        select.append($('<option>').attr('value', '2').prop('selected', application.idStatusApplications === 2).text('Отклонено'));
+        select.append($('<option>').attr('value', '3').prop('selected', application.idStatusApplications === 3).text('Ожидание'));
+        cardBody.append(select);
+
+        // Добавление тела карточки к самой карточке
+        card.append(cardBody);
+
+        // Добавление карточки в контейнер
+        container.append(card);
+    });
+
+
 
     @* $('.status-select').change(function () {
             var applicationId = $(this).data('application-id');
@@ -135,16 +244,17 @@
                 var currentStatus = $('.status-select[data-application-id="' + applicationId + '"]').val();
 
                 // Если текущий статус заявки совпадает со статусом поиска или если поиск по статусу заявок не установлен
-                @* if (currentStatus === newStatus || $('#statusSelect').val() === null) {
+    @* if (currentStatus === newStatus || $('#statusSelect').val() === null) {
                     console.log('Статус заявки совпадает со статусом поиска или поиск по статусу заявок не установлен.');
-                } else {
+                    } else {
                     console.log('Статус заявки не совпадает со статусом поиска, удаляем элемент.');
 
                     // Удаляем элемент заявки
                     var applicationElement = document.getElementById(applicationId);
                     document.getElementById('applicationsContainer').removeChild(applicationElement);
-                } *@
+                    } *@
 
+                    Message("Успех!", "Статус заявки изменен");
             },
             error: function (xhr, status, error) {
                 console.error('Ошибка при изменении статуса заявки:', xhr.responseText);

@@ -39,25 +39,43 @@ public class CourseEditorController : Controller
     {
         Course course = _database.GetCourseInfo(CourseId);
         ViewData["Subsections"] = _database.GetSubsections();
-        return PartialView(course);
+        ViewData["User"] = course;
+        UpdateCourse updateCourse = new UpdateCourse()
+        {
+            CourseId = course.CourseId,
+            SectionId = course.SectionId,
+            CourseName = course.CourseName,
+            CourseDescription = course.CourseDescription,
+            CourseClosed = course.CourseClosed,
+        };
+
+        return PartialView(updateCourse);
     }
 
-    [HttpPut]
-    public IActionResult CoursePut([FromForm] CourseViewModel courseViewModel)
+    [HttpPost]
+    public IActionResult CoursePut(UpdateCourse courseViewModel)
     {
+
+
         bool isUpdate = _database.UpdateCourse(
             courseViewModel.CourseId,
             courseViewModel.CourseName,
             courseViewModel.SectionId,
-            courseViewModel.Description,
-            courseViewModel.Closed
+            courseViewModel.CourseDescription,
+            courseViewModel.CourseClosed
         );
 
-        if (!isUpdate)
+
+
+        if (!isUpdate || !ModelState.IsValid)
         {
-            return BadRequest();
+            ModelState.AddModelError(string.Empty, "Не удалось обновить курс.");
+            return Json(new { success = false, errors = ModelState.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()) });
         }
-        return Ok();
+
+        // Логика сохранения данных
+
+        return Json(new { success = true });
     }
 
 
@@ -116,10 +134,10 @@ public class CourseEditorController : Controller
     public IActionResult DeleteProgram(int id)
     {
         bool isDelete = _database.DeleteProgramCourse(id);
-        
+
         if (!isDelete)
             return BadRequest();
-            
+
         return Ok();
     }
 

@@ -70,8 +70,8 @@
         var name = row.find("td:eq(0)").text(); // Получаем данные из первой ячейки
         var description = row.find("td:eq(1)").text(); // Получаем данные из второй ячейки
         // Заменяем данные ячеек на поля ввода
-        row.find("td:eq(0)").html('<input type="text" class="form-control" value="' + name + '">');
-        row.find("td:eq(1)").html('<textarea class="form-control description-input" maxlength="400" rows="3">' + description + '</textarea>');
+        row.find("td:eq(0)").html('<input type="text" minlength="3" maxlength="100" pattern="^(?=.*[A-Za-zА-Яа-я])(?=.*[A-Za-zА-Яа-я]).{3,100}$" class="form-control" value="' + name + '">');
+        row.find("td:eq(1)").html('<textarea class="form-control description-input" maxlength="1000" rows="3">' + description + '</textarea>');
 
         // Заменяем кнопку "Изменить" на кнопку "Сохранить"
         $(this).removeClass("btn-warning").addClass("btn-success").text("Сохранить").removeClass("editRow").addClass("saveRow");
@@ -84,6 +84,22 @@
         var name = row.find("td:eq(0) input").val(); // Получаем значение поля ввода из первой ячейки
         var description = row.find("td:eq(1) textarea").val(); // Получаем значение поля ввода из второй ячейки
 
+        var namePattern = /^(?=.*[A-Za-zА-Яа-я])(?=.*[A-Za-zА-Яа-я]).{3,100}$/; // Регулярное выражение для проверки имени программы
+        if (!namePattern.test(name)) {
+            // Если имя программы не соответствует правилам, выполнить блок кода
+            // Например, вывести сообщение об ошибке или выполнить другие действия
+            Message("Ошибка!","Название программы должно содержать от 3 до 100 буквенных символов на латинице или кириллице.");
+            return; // Прерываем выполнение кода
+        }
+
+        // Проверка описания программы по максимальной длине
+        var maxDescriptionLength = 1000; // Максимальная длина описания программы
+        if (description.length > maxDescriptionLength) {
+            // Если длина описания программы превышает максимальное значение, выполнить блок кода
+            // Например, вывести сообщение об ошибке или выполнить другие действия
+            Message("Ошибка!","Описание программы не должно превышать 1000 символов.");
+            return; // Прерываем выполнение кода
+        }
         // Отправляем данные на сервер для обновления
         $.ajax({
             url: "/CourseEditor/UpdateProgram",

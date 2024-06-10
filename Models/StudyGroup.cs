@@ -17,5 +17,5 @@ public class StudyGroup
     public int AcceptedApplicationsCount { get; set; }
     public List<ScheduleDay> ScheduleDays { get; set; }
     public string? FormTraining {get; set;}
-    public string? СityName { get; set;}
+    public string? CityName { get; set;}
 }

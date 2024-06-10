@@ -46,25 +46,17 @@ public class PostgresDataService
                 command.Parameters.AddWithValue("p_email", email);
                 command.Parameters.AddWithValue("p_password", password);
 
-                var resultIdParameter = new NpgsqlParameter("result_id", NpgsqlDbType.Integer);
-                resultIdParameter.Direction = ParameterDirection.Output;
-                command.Parameters.Add(resultIdParameter);
-
-                var errorMessageParameter = new NpgsqlParameter("error_message", NpgsqlDbType.Text);
-                errorMessageParameter.Direction = ParameterDirection.Output;
-                command.Parameters.Add(errorMessageParameter);
 
                 command.ExecuteNonQuery();
 
-                int resultId = Convert.ToInt32(command.Parameters["result_id"].Value);
-                string errorMessage = command.Parameters["error_message"].Value.ToString();
+                int resultId = Convert.ToInt32(command.ExecuteScalar());
 
                 switch (resultId)
                 {
                     case > 0:
-                        return new ResultPostgresData(ResultPostgresStatus.Ok, resultId, errorMessage);
+                        return new ResultPostgresData(ResultPostgresStatus.Ok, resultId, "");
                     default:
-                        return new ResultPostgresData(ResultPostgresStatus.ValidDataError, resultId, errorMessage);
+                        return new ResultPostgresData(ResultPostgresStatus.ValidDataError, resultId, "Внутренния ошибка БД");
                 }
             }
         }
@@ -74,6 +66,7 @@ public class PostgresDataService
         //     return new ResultPostgresData(ResultPostgresStatus.Exception, 0, ex.Message);
         // }
     }
+
 
     public ResultPostgresData register_profile(
         string name,
@@ -98,26 +91,17 @@ public class PostgresDataService
                 command.Parameters.AddWithValue("p_is_organization", isOrganization);
                 command.Parameters.AddWithValue("p_phone", phone);
 
-                var resultIdParameter = new NpgsqlParameter("result_id", NpgsqlDbType.Integer);
-                resultIdParameter.Direction = ParameterDirection.Output;
-                command.Parameters.Add(resultIdParameter);
-
-                var errorMessageParameter = new NpgsqlParameter("error_message", NpgsqlDbType.Text);
-                errorMessageParameter.Direction = ParameterDirection.Output;
-                command.Parameters.Add(errorMessageParameter);
 
                 command.ExecuteNonQuery();
-                Console.WriteLine(command.Parameters["result_id"].Value);
-                int resultId = Convert.ToInt32(command.Parameters["result_id"].Value);
 
-                string errorMessage = command.Parameters["error_message"].Value.ToString();
+                int resultId = Convert.ToInt32(command.ExecuteScalar());
 
                 switch (resultId)
                 {
                     case > 0:
-                        return new ResultPostgresData(ResultPostgresStatus.Ok, resultId, errorMessage);
+                        return new ResultPostgresData(ResultPostgresStatus.Ok, resultId, "");
                     default:
-                        return new ResultPostgresData(ResultPostgresStatus.ValidDataError, resultId, errorMessage);
+                        return new ResultPostgresData(ResultPostgresStatus.ValidDataError, resultId, "Внутренния ошибка БД");
                 }
 
             }
@@ -293,19 +277,21 @@ public class PostgresDataService
         return specializations;
     }
 
-    public bool UpdateUserProfile(int userId, string name, string aboutMe, int specializationId)
+    public bool UpdateUserProfile(int userId, string name, string aboutMe, int? specializationId, string email, string phone)
     {
         try
         {
             using (var connection = new NpgsqlConnection(_connectionString))
             {
                 connection.Open();
-                using (var command = new NpgsqlCommand("SELECT update_user_profile(@p_user_id, @p_name, @p_about_me, @p_specialization)", connection))
+                using (var command = new NpgsqlCommand("SELECT update_user_profile(@p_user_id, @p_name, @p_about_me, @p_specialization, @p_email, @p_phone)", connection))
                 {
                     command.Parameters.AddWithValue("p_user_id", userId);
                     command.Parameters.AddWithValue("p_name", name);
-                    command.Parameters.AddWithValue("p_about_me", aboutMe);
-                    command.Parameters.AddWithValue("p_specialization", specializationId);
+                    command.Parameters.AddWithValue("p_about_me",NpgsqlDbType.Varchar, !string.IsNullOrEmpty(aboutMe) ? aboutMe : DBNull.Value);
+                    command.Parameters.AddWithValue("p_specialization", specializationId.HasValue ? specializationId : DBNull.Value);
+                    command.Parameters.AddWithValue("p_email", email);
+                    command.Parameters.AddWithValue("p_phone", phone);
 
                     var result = (bool)command.ExecuteScalar();
                     return result;
@@ -318,6 +304,33 @@ public class PostgresDataService
             return false;
         }
     }
+
+
+    // public bool UpdateUserProfile(int userId, string name, string aboutMe, int specializationId)
+    // {
+    //     try
+    //     {
+    //         using (var connection = new NpgsqlConnection(_connectionString))
+    //         {
+    //             connection.Open();
+    //             using (var command = new NpgsqlCommand("SELECT update_user_profile(@p_user_id, @p_name, @p_about_me, @p_specialization)", connection))
+    //             {
+    //                 command.Parameters.AddWithValue("p_user_id", userId);
+    //                 command.Parameters.AddWithValue("p_name", name);
+    //                 command.Parameters.AddWithValue("p_about_me", aboutMe);
+    //                 command.Parameters.AddWithValue("p_specialization", specializationId);
+
+    //                 var result = (bool)command.ExecuteScalar();
+    //                 return result;
+    //             }
+    //         }
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         // Обработка исключения
+    //         return false;
+    //     }
+    // }
 
 
     public List<Course> GetCoursesByProfile(int profileId)
@@ -552,7 +565,7 @@ public class PostgresDataService
                             CourseId = reader.GetInt32(8),
                             AcceptedApplicationsCount = reader.GetInt32(9),
                             FormTraining = reader.IsDBNull(11) ? null : reader.GetString(11),
-                            СityName = reader.IsDBNull(12) ? null : reader.GetString(12)
+                            CityName = reader.IsDBNull(12) ? null : reader.GetString(12)
 
                         };
                         List<ScheduleDay> scheduleDays = JsonConvert.DeserializeObject<List<ScheduleDay>>(reader.GetString(10));
@@ -564,6 +577,49 @@ public class PostgresDataService
         }
 
         return groupList;
+    }
+
+
+    public StudyGroup GetStudyGroupCourseViewById(int createrId)
+    {
+        StudyGroup result = new();
+
+        using (NpgsqlConnection connection = new NpgsqlConnection(_connectionString))
+        {
+            connection.Open();
+
+            using (NpgsqlCommand command = new NpgsqlCommand("SELECT * FROM get_study_groups_by_creater_id(@p_creater_id)", connection))
+            {
+                command.Parameters.AddWithValue("@p_creater_id", createrId);
+
+                using (NpgsqlDataReader reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        result = new StudyGroup
+                        {
+                            Id = reader.GetInt32(0),
+                            Enrollment = reader.GetInt32(1),
+                            StartDate = reader.GetDateTime(2),
+                            EndDate = reader.IsDBNull(3) ? null : reader.GetDateTime(3),
+                            Price = reader.GetDecimal(4),
+                            FormsTrainingId = reader.GetInt32(5),
+                            CityId = reader.GetInt32(6),
+                            Duration = reader.GetInt32(7),
+                            CourseId = reader.GetInt32(8),
+                            AcceptedApplicationsCount = reader.GetInt32(9),
+                            FormTraining = reader.IsDBNull(11) ? null : reader.GetString(11),
+                            CityName = reader.IsDBNull(12) ? null : reader.GetString(12)
+
+                        };
+                        List<ScheduleDay> scheduleDays = JsonConvert.DeserializeObject<List<ScheduleDay>>(reader.GetString(10));
+                        result.ScheduleDays = scheduleDays;
+                    }
+                }
+            }
+        }
+
+        return result;
     }
 
 
@@ -651,7 +707,7 @@ public class PostgresDataService
 
 
     public bool UpdateStudyGroup(int id, int enrollment, DateTime startDate, DateTime? endDate, decimal price,
-        int formsTrainingId, int cityId, int duration)
+        int? formsTrainingId, int? cityId, int duration)
     {
         using (var connection = new NpgsqlConnection(_connectionString))
         {
@@ -665,8 +721,8 @@ public class PostgresDataService
                 command.Parameters.AddWithValue("p_date_start", NpgsqlDbType.Date, startDate);
                 command.Parameters.AddWithValue("p_date_end", NpgsqlDbType.Date, endDate.HasValue ? (object)endDate.Value : DBNull.Value);
                 command.Parameters.AddWithValue("p_price", price);
-                command.Parameters.AddWithValue("p_id_forms_training", formsTrainingId);
-                command.Parameters.AddWithValue("p_id_city", cityId);
+                command.Parameters.AddWithValue("p_id_forms_training", formsTrainingId.HasValue ? formsTrainingId : DBNull.Value);
+                command.Parameters.AddWithValue("p_id_city", cityId.HasValue ? cityId : DBNull.Value);
                 command.Parameters.AddWithValue("p_duration", duration);
 
                 var result = (bool)command.ExecuteScalar();
@@ -821,7 +877,7 @@ public class PostgresDataService
                             Birthday = reader.GetDateTime(reader.GetOrdinal("birthday")),
                             Email = reader.GetString(reader.GetOrdinal("email")),
                             IdStatusApplications = reader.GetInt32(reader.GetOrdinal("id_statusapplications")),
-                            SubmissionDate = reader.GetDateTime(reader.GetOrdinal("submission_date")),
+                            created_at = reader.GetDateTime(reader.GetOrdinal("created_at")),
                             StudyGroupId = reader.GetInt32(reader.GetOrdinal("studygroup_id")),
                             Enrollment = reader.GetInt32(reader.GetOrdinal("enrollment")),
                             DateStart = reader.GetDateTime(reader.GetOrdinal("date_start")),
@@ -1028,27 +1084,20 @@ public class PostgresDataService
                 command.Parameters.AddWithValue("p_login", login);
                 command.Parameters.AddWithValue("p_password", password);
 
-                using (var reader = command.ExecuteReader())
-                {
-                    if (reader.Read())
-                    {
-                        int resultId = Convert.ToInt32(reader["result_id"]);
-                        string errorMessage = reader["error_message"].ToString();
 
-                        switch (resultId)
-                        {
-                            case > 0:
-                                return new ResultPostgresData(ResultPostgresStatus.Ok, resultId, errorMessage);
-                            default:
-                                return new ResultPostgresData(ResultPostgresStatus.ValidDataError, resultId, errorMessage);
-                        }
-                    }
-                    else
-                    {
-                        // Если нет результатов запроса
-                        return new ResultPostgresData(ResultPostgresStatus.ValidDataError, 0, "No data found");
-                    }
+                command.ExecuteNonQuery();
+
+                int resultId = Convert.ToInt32(command.ExecuteScalar());
+
+                switch (resultId)
+                {
+                    case > 0:
+                        return new ResultPostgresData(ResultPostgresStatus.Ok, resultId, "");
+                    default:
+                        return new ResultPostgresData(ResultPostgresStatus.ValidDataError, resultId, "Внутренния ошибка Б");
                 }
+
+
             }
         }
     }

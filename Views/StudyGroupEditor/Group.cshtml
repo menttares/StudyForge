@@ -4,10 +4,108 @@
     List<CityData> cities = ViewData["Cities"] as List<CityData>;
     List<FormData> formDatas = ViewData["FormsTraining"] as List<FormData>;
 }
-@model StudyGroup
+@model UpdateGroup
 
 
+<div class="container mt-2">
+    <div class="row">
+    <div class="col-12">
+        <a type="button" asp-action="Course" asp-controller="CourseEditor" asp-route-CourseId="@Model.CourseId" class="btn btn-secondary mb-3">Назад</a>
+    </div>
+</div>
+</div>
 
+@using (Html.BeginForm("UpdateGroup", "StudyGroupEditor", FormMethod.Post, new { id = "updateGroupForm" }))
+{
+
+    <div class="container mt-2">
+        <h2>Редактирование учебной группы</h2>
+        <input type="number" name="Id" hidden value="@Model.Id" />
+
+        <div class="form-group">
+            <label for="enrollment">Набор:</label>
+            @Html.TextBoxFor(m => m.Enrollment, new { @class = "form-control", id = "enrollment" })
+            @Html.ValidationMessageFor(m => m.Enrollment, "", new { @class = "text-danger" })
+        </div>
+        <div class="form-group">
+            <label for="startDate">Дата начала:</label>
+            @Html.TextBoxFor(m => m.StartDate, "{0:yyyy-MM-dd}", new { @class = "form-control", id = "startDate", type = "date" })
+            @Html.ValidationMessageFor(m => m.StartDate, "", new { @class = "text-danger" })
+        </div>
+        <div class="form-group">
+            <label for="endDate">Дата конца:</label>
+            @Html.TextBoxFor(m => m.EndDate, "{0:yyyy-MM-dd}", new { @class = "form-control", id = "endDate", type = "date" })
+            @Html.ValidationMessageFor(m => m.EndDate, "", new { @class = "text-danger" })
+        </div>
+        <div class="form-group">
+            <label for="price">Цена:</label>
+            @Html.TextBoxFor(m => m.Price, "{0:F2}", new { @class = "form-control", id = "price", pattern = @"\d+,\d{2}" })
+            @Html.ValidationMessageFor(m => m.Price, "", new { @class = "text-danger" })
+        </div>
+        <div class="form-group">
+            <label for="formsTrainingId">Форма обучения:</label>
+            @Html.DropDownListFor(m => m.FormsTrainingId, new SelectList(formDatas, "Id", "Name"), "Выберите", new { @class = "form-control", id = "formsTrainingId" })
+            @Html.ValidationMessageFor(m => m.FormsTrainingId, "", new { @class = "text-danger" })
+        </div>
+        <div class="form-group">
+            <label for="cityId">Город:</label>
+            @Html.DropDownListFor(m => m.CityId, new SelectList(cities, "Id", "Name"), "Выберите", new { @class = "form-control", id = "cityId" })
+            @Html.ValidationMessageFor(m => m.CityId, "", new { @class = "text-danger" })
+        </div>
+        <div class="form-group">
+            <label for="duration">Количество часов:</label>
+            @Html.TextBoxFor(m => m.Duration, new { @class = "form-control", id = "duration" })
+            @Html.ValidationMessageFor(m => m.Duration, "", new { @class = "text-danger" })
+        </div>
+
+        <div class="form-group">
+            <label for="ScheduleDays">Дни недели:</label>
+            @Html.ListBoxFor(m => m.ScheduleDays, new SelectList(days, "Id", "Name"), new { @class = "form-control", id = "ScheduleDays" })
+            @Html.ValidationMessageFor(m => m.ScheduleDays, "", new { @class = "text-danger" })
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-3">Сохранить</button>
+    </div>
+}
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+
+<script>
+
+$('#updateGroupForm').submit(function (event) {
+    event.preventDefault(); // Предотвращаем отправку формы по умолчанию
+
+    var formData = $(this).serialize(); // Получаем данные формы в формате строки
+
+    $.ajax({
+        url: "/StudyGroupEditor/UpdateGroup", // Адрес для отправки запроса
+        method: "POST", // Метод запроса
+        data: formData, // Данные для отправки
+        success: function (response) { // Обработка успешного ответа
+            // Проверка наличия ошибок
+            if (response.success) {
+                // Если ошибок нет, выводим сообщение об успешном обновлении
+                Message("Успех!","Учебная группа успешно обновлена!");
+            } else {
+                // Если есть ошибки, выводим их
+                var errorMessage = "Произошла ошибка при обновлении учебной группы:\n";
+                for (var key in response.errors) {
+                    errorMessage += response.errors[key].join('\n');
+                }
+                Message("Ошибка!",errorMessage);
+            }
+        },
+        error: function (xhr, status, error) { // Обработка ошибки
+            console.error("Произошла ошибка:", error);
+            Message("Ошибка!","Произошла ошибка при обновлении учебной группы. Пожалуйста, попробуйте снова.");
+        }
+    });
+});
+
+    
+</script>
+
+@* 
 <div class="container mt-5">
     <h2>Редактирование учебной группы</h2>
     <form method="post">
@@ -143,4 +241,4 @@
             });
         });
     });
-</script>
+</script> *@

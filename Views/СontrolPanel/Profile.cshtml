@@ -1,7 +1,7 @@
+@model UpdateUserProfileModel
 @{
-    List<Specialization> specializations = ViewData["Specializations"] as List<Specialization>;
+    UserProfileInfo user = ViewData["User"] as UserProfileInfo;
 }
-@model UserProfileInfo
 
 <style>
     .profile-info {
@@ -13,10 +13,11 @@
         max-width: 100%;
         width: 250px;
         height: auto;
+        min-width: 80px;
     }
 
     @@media(max - width: 768px) {
-        .profile-info .col-12 {
+        .profile-info  {
             text-align: center;
         }
 
@@ -38,13 +39,18 @@
 <div class="container">
     <div class="row bg-light">
         <div class="col fs-3 p-2 fw-bold">
-            @Model.Name <spam class="btn-idit"><i class="bi bi-pencil-square"></i></spam>
+            @user.Name <spam class="btn-idit">
+        </div>
+    </div>
+    <div class="row bg-light mt-2">
+        <div class="p-2">
+            <a asp-action="EditProfile" asp-controller="СontrolPanel" class="btn btn-warning">Редактировать</a>
         </div>
     </div>
     <div class="row profile-info mt-2">
-        <div class="col-12 bg-light">
+        <div class="col bg-light">
             <div class="bg-light text-center p-3">
-                @if (string.IsNullOrEmpty(Model.ProfileImage))
+                @if (string.IsNullOrEmpty(user.ProfileImage))
                 {
                     <img class="image-profile rounded-circle" src="~/images/ImageProfiles/profile.jpg"
                         alt="Изображение профиля">
@@ -52,7 +58,7 @@
                 else
                 {
                     <img class="image-profile rounded-circle"
-                        src="~/images/ImageProfiles/@(string.IsNullOrEmpty(Model.ProfileImage) ? "default" : Model.ProfileImage).png"
+                        src="~/images/ImageProfiles/@(string.IsNullOrEmpty(user.ProfileImage) ? "default" : user.ProfileImage).png"
                         alt="Изображение профиля">
                 }
             </div>
@@ -62,24 +68,35 @@
                 <tbody>
                     <tr>
                         <th scope="row">Email</th>
-                        <td>@Model.Email</td>
+                        <td>@user.Email</td>
                     </tr>
                     <tr>
                         <th scope="row">Телефон</th>
-                        <td>@Model.Phone</td>
+                        <td>@user.Phone</td>
                     </tr>
                     <tr>
                         <th scope="row">Сфера деятельности</th>
-                        <td>@Model.Specialization</td>
+                        <td>
+                            @if (string.IsNullOrEmpty(user.Specialization))
+                            {
+                                <text>Не определена</text>
+                            }
+                            else
+                            {
+                                <text>@user.Specialization</text>
+                            }
+
+
+                        </td>
                     </tr>
                     <tr>
                         <th scope="row">Лицензия</th>
-                        <td>@Model.LicenseNumber</td>
+                        <td>@user.LicenseNumber</td>
                     </tr>
                     <tr>
                         <th scope="row">Статус</th>
                         <td>
-                            @if (Model.Confirmation)
+                            @if (user.Confirmation)
                             {
                                 <span>Подвержден</span>
                             }
@@ -91,7 +108,7 @@
                     </tr>
                     <tr>
                         <th scope="row">Дата регистрации</th>
-                        <td>@Model.AccountCreatedAt</td>
+                        <td>@user.AccountCreatedAt</td>
                     </tr>
                 </tbody>
 
@@ -101,11 +118,20 @@
     <div class="row mt-2 bg-light p-2">
         <div class="col">
             <div class="fs-5 fw-bold mb-2">Описание</div>
-            <div>@Model.AboutMe</div>
+            <div>
+                @if (string.IsNullOrEmpty(user.AboutMe))
+                {
+                    <text>Нет описания</text>
+                }
+                else
+                {
+                    <text>@user.AboutMe</text>
+                }
+            </div>
         </div>
     </div>
     <div class="row">
-        
+
     </div>
 </div>
 

@@ -38,7 +38,8 @@ public class СontrolPanelController : Controller
         var id = int.Parse(ClaimIdentifier.Value);
         bool Confirmation = _database.CheckAccountConfirmation(id);
 
-        if (Confirmation) {
+        if (Confirmation)
+        {
             return View();
         }
 
@@ -159,14 +160,36 @@ public class СontrolPanelController : Controller
 
         var id = int.Parse(ClaimIdentifier.Value);
 
-        UserProfileInfo profileInfo = _database.GetUserProfileInfo(id);
         ViewData["Specializations"] = _database.GetAllSpecializations();
+        ViewData["User"] = _database.GetUserProfileInfo(id);
 
-        return PartialView(profileInfo);
+        return PartialView();
     }
 
-    [HttpPut]
-    public IActionResult Profile(UpdateUserProfileModel data)
+
+    public IActionResult EditProfile()
+    {
+        var ClaimIdentifier = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+
+        var id = int.Parse(ClaimIdentifier.Value);
+
+        ViewData["Specializations"] = _database.GetAllSpecializations();
+        UserProfileInfo user = _database.GetUserProfileInfo(id);
+        // ViewData["User"] = user;
+
+        UpdateUserProfileModel model = new()
+        {
+            name = user.Name,
+            aboutMe = user.AboutMe,
+            specializationId = user.SpecializationId,
+            email = user.Email,
+            phone = user.Phone
+
+        };
+        return View(model);
+    }
+    [HttpPost]
+    public IActionResult EditProfile(UpdateUserProfileModel data)
     {
         var ClaimIdentifier = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
 
@@ -176,15 +199,24 @@ public class СontrolPanelController : Controller
             id,
             data.name,
             data.aboutMe,
-            data.specializationId
+            data.specializationId,
+            data.email,
+            data.phone
         );
 
         if (!isUpdate)
         {
-            return BadRequest();
+            var errors = ModelState.ToDictionary(
+                kvp => kvp.Key,
+                kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+            );
+            return Json(new { success = false, errors });
         }
 
-        return Ok();
+        // UserProfileInfo user = _database.GetUserProfileInfo(id);
+        // ViewData["Specializations"] = _database.GetAllSpecializations();
+        // ViewData["User"] = user;
+        return Json(new { success = true });
     }
 
 
@@ -212,8 +244,9 @@ public class СontrolPanelController : Controller
             1,
             "описание"
             );
+        Course course = _database.GetCourseInfo(insertedId);
 
-        return Ok(insertedId);
+        return Ok(course);
     }
 
 

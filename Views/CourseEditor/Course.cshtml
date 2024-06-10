@@ -3,22 +3,30 @@
 }
 
 
-<div class="btn-group" role="group" aria-label="Basic outlined example">
-    <button type="button" class="btn btn-outline-primary course-button" data-page="Main">Курс</button>
-    <button type="button" class="btn btn-outline-primary course-button" data-page="StudyGroups">Учебные группы</button>
-    <button type="button" class="btn btn-outline-primary course-button" data-page="Programs">Программа</button>
-    @* <button type="button" class="btn btn-outline-primary course-button" data-page="Teachers">Преподаватели</button> *@
+<div class="container mt-2">
+    <div class="row">
+        <div class="col-md-6">
+            <a type="button" asp-action="Main" asp-controller="СontrolPanel" class="btn btn-secondary mb-3">Назад</a>
+        </div>
+    </div>
 </div>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="d-flex justify-content-center">
+            <div class="btn-group" role="group" aria-label="Basic outlined example">
+                <button type="button" class="btn btn-dark course-button" data-page="Main">Курс</button>
+                <button type="button" class="btn btn-dark course-button" data-page="StudyGroups">Учебные
+                    группы</button>
+                <button type="button" class="btn btn-dark course-button" data-page="Programs">Программа</button>
+            </div>
+        </div>
+    </div>
 
-
-    
+</div>
 
 <div class="container mt-4" id="Course-Main">
-    
+
 </div>
-
-
-
 
 
 
@@ -44,7 +52,7 @@
                     url: "/CourseEditor/" + page,
                     method: "GET",
                     data: {
-                        CourseId : IdCourse
+                        CourseId: IdCourse
                     },
                     success: function (data) {
                         // Загрузить полученные данные в элемент с id Course-Main

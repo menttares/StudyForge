@@ -1,108 +1,325 @@
+@model UpdateCourse
+
 @{
     List<Subsection> Subsections = ViewData["Subsections"] as List<Subsection>;
+    Course course = ViewData["User"] as Course;
 }
-@model Course
 
+@* <table class="table" id="courseTable">
+<tbody>
+<tr>
+<td>Имя курса:</td>
+<td id="courseNameCell">@course.CourseName</td>
+</tr>
+<tr>
+<td>Секция:</td>
+<td id="sectionCell">@course.SectionName</td>
+</tr>
+<tr>
+<td>Описание курса:</td>
+<td id="descriptionCell">@course.CourseDescription</td>
+</tr>
+<tr>
+<td>Закрыт курс:</td>
+<td id="closedCell">@(course.CourseClosed ? "Да" : "Нет")</td>
+</tr>
+</tbody>
+</table> *@
+<div class="row">
+    <div class="d-flex p-2">
+        <button id="editButton" class="btn btn-warning">Редактировать</button>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <table class="table table-striped" id="courseTable">
+            <tbody>
+                <tr>
+                    <th scope="row">Имя курса:</th>
+                    <td id="courseNameCell">@course.CourseName</td>
+                </tr>
+                <tr>
+                    <th scope="row">Секция:</th>
+                    <td id="sectionCell">@course.SectionName</td>
+                </tr>
+                <tr>
+                    <th scope="row">Описание курса:</th>
+                    <td id="descriptionCell">@course.CourseDescription</td>
+                </tr>
+                <tr>
+                    <th scope="row">Закрыт курс:</th>
+                    <td id="closedCell">@(course.CourseClosed ? "Да" : "Нет")</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<div id="editForm" style="display: none;">
+    @using (Html.BeginForm("CoursePut", "CourseEditor", FormMethod.Post, new { id = "editCourseForm" }))
+    {
+        @Html.HiddenFor(m => m.CourseId)
+
+        <div class="form-group">
+            @Html.LabelFor(m => m.CourseName, "Имя курса:")
+            @Html.TextBoxFor(m => m.CourseName, new { @class = "form-control", @id = "courseName" })
+            <span>@Html.ValidationMessageFor(m => m.CourseName, "", new { @class = "text-danger" })</span>
+        </div>
+        <div class="form-group">
+            @Html.LabelFor(m => m.SectionId, "Секция:")
+            @Html.DropDownListFor(m => m.SectionId, new SelectList(Subsections, "Id", "Name"), new
+                {
+                    @class =
+                     "form-control",
+                    @id = "section"
+                })
+            <span>@Html.ValidationMessageFor(m => m.SectionId, "", new { @class = "text-danger" })</span>
+        </div>
+        <div class="form-group">
+            @Html.LabelFor(m => m.CourseDescription, "Описание курса:")
+            @Html.TextAreaFor(m => m.CourseDescription, new { @class = "form-control", @id = "description", rows = 3 })
+            <span>@Html.ValidationMessageFor(m => m.CourseDescription, "", new { @class = "text-danger" })</span>
+        </div>
+        <div class="form-check">
+            @Html.CheckBoxFor(m => m.CourseClosed, new { @class = "form-check-input", @id = "closed" })
+            <span>Закрыт курс</span>
+        </div>
+        <button type="submit" class="btn btn-success">Сохранить</button>
+    }
+</div>
+
+<script>
+    $(document).ready(function () {
+        $("#editButton").click(function () {
+            $("#courseTable").toggle();
+            $("#editForm").toggle();
+        });
+
+        $("#editCourseForm").submit(function (event) {
+            // Удаляем event.preventDefault() для стандартной отправки формы
+            var form = $(this);
+            var formData = form.serialize();
+
+            $.ajax({
+                url: form.attr("action"),
+                method: form.attr("method"),
+                data: formData,
+                success: function (response) {
+                    if (response.success) {
+                        // Обновление значений в таблице
+                        $("#courseNameCell").text($("#courseName").val());
+                        $("#sectionCell").text($("#section option:selected").text());
+                        $("#descriptionCell").text($("#description").val());
+                        $("#closedCell").text($("#closed").is(":checked") ? "Да" : "Нет");
+
+                        // Скрытие формы и показ таблицы
+                        $("#editForm").hide();
+                        $("#courseTable").show();
+                    } else {
+                        // Очистка старых сообщений об ошибках
+                        $(".text-danger").text("");
+
+                        // Показ новых сообщений об ошибках
+                        $.each(response.errors, function (key, messages) {
+                            var input = $("[name='" + key + "']");
+                            var errorSpan = input.next("span");
+                            if (errorSpan.length > 0) {
+                                errorSpan.text(messages.join(", "));
+                            }
+                        });
+
+
+                    }
+                    Message("Успех!", "Данные курса обновлены");
+                },
+                error: function (xhr, status, error) {
+                    console.error(xhr.responseText);
+                }
+            });
+
+            return false; // Предотвращает стандартное поведение отправки формы
+        });
+    });
+</script>
+
+
+
+@* <script>
+$(document).ready(function () {
+$("#editButton").click(function () {
+$("#courseTable").toggle();
+$("#editForm").toggle();
+});
+
+@* $("form").submit(function (event) {
+event.preventDefault();
+var form = $(this);
+var formData = form.serialize();
+
+$.ajax({
+url: form.attr("action"),
+method: form.attr("method"),
+data: formData,
+success: function (response) {
+// Обновление значений в таблице
+$("#courseNameCell").text($("#courseName").val());
+$("#sectionCell").text($("#section option:selected").text());
+$("#descriptionCell").text($("#description").val());
+$("#closedCell").text($("#closed").is(":checked") ? "Да" : "Нет");
+
+// Скрытие формы и показ таблицы
+$("#editForm").hide();
+$("#courseTable").show();
+
+Message("Успех!", "Изменения информации приняты")
+},
+error: function (xhr, status, error) {
+console.error(xhr.responseText);
+}
+});
+});
+});
+</script> *@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@* @{
+List<Subsection> Subsections = ViewData["Subsections"] as List<Subsection>;
+}
+@model Course *@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@*
 <table class="table">
-    <tbody>
-        <tr>
-            <td>Имя курса:</td>
-            <td id="courseNameCell">@Model.CourseName</td>
-        </tr>
-        <tr>
-            <td>Секция:</td>
-            <td id="sectionCell">@Model.SectionName</td>
-        </tr>
-        <tr>
-            <td>Описание курса:</td>
-            <td id="descriptionCell">@Model.CourseDescription</td>
-        </tr>
-        <tr>
-            <td>Закрыт курс:</td>
-            <td id="closedCell">@(Model.CourseClosed ? "Да" : "Нет")</td>
-        </tr>
-    </tbody>
+<tbody>
+<tr>
+<td>Имя курса:</td>
+<td id="courseNameCell">@Model.CourseName</td>
+</tr>
+<tr>
+<td>Секция:</td>
+<td id="sectionCell">@Model.SectionName</td>
+</tr>
+<tr>
+<td>Описание курса:</td>
+<td id="descriptionCell">@Model.CourseDescription</td>
+</tr>
+<tr>
+<td>Закрыт курс:</td>
+<td id="closedCell">@(Model.CourseClosed ? "Да" : "Нет")</td>
+</tr>
+</tbody>
 </table>
 
 <button id="editButton" class="btn btn-primary">Редактировать</button>
 
 <div id="editForm" style="display: none;">
-    <form>
-        <div class="form-group">
-            <label for="courseName">Имя курса:</label>
-            <input type="text" class="form-control" id="courseName" value="@Model.CourseName">
-        </div>
-        <div class="form-group">
-            <label for="section">Секция:</label>
-            <select class="form-control" id="section">
-                @foreach (var subsection in Subsections)
-                {
-                    @if (subsection.Id == Model.SectionId)
-                    {
-                        <option value="@subsection.Id" selected>@subsection.Name</option>
-                    }
-                    else
-                    {
-                        <option value="@subsection.Id">@subsection.Name</option>
-                    }
+<form>
+<div class="form-group">
+<label for="courseName">Имя курса:</label>
+<input type="text" class="form-control" id="courseName" value="@Model.CourseName">
+</div>
+<div class="form-group">
+<label for="section">Секция:</label>
+<select class="form-control" id="section">
+@foreach (var subsection in Subsections)
+{
+@if (subsection.Id == Model.SectionId)
+{
+<option value="@subsection.Id" selected>@subsection.Name</option>
+}
+else
+{
+<option value="@subsection.Id">@subsection.Name</option>
+}
 
-                }
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="description">Описание курса:</label>
-            <textarea class="form-control" id="description" rows="3">@Model.CourseDescription</textarea>
-        </div>
-        <div class="form-check">
-            <input type="checkbox" value="true" class="form-check-input" id="closed" @(Model.CourseClosed ? "checked" :
-                "")>
-            <label class="form-check-label" for="closed">Закрыт курс</label>
-        </div>
-        <button id="saveButton" class="btn btn-success">Сохранить</button>
-    </form>
+}
+</select>
+</div>
+<div class="form-group">
+<label for="description">Описание курса:</label>
+<textarea class="form-control" id="description" rows="3">@Model.CourseDescription</textarea>
+</div>
+<div class="form-check">
+<input type="checkbox" value="true" class="form-check-input" id="closed" @(Model.CourseClosed ? "checked" :
+"")>
+<label class="form-check-label" for="closed">Закрыт курс</label>
+</div>
+<button id="saveButton" class="btn btn-success">Сохранить</button>
+</form>
 </div>
 
 
 <script>
-    $(document).ready(function () {
-        $("#editButton").click(function () {
-            $("#editForm").toggle();
-        });
+$(document).ready(function () {
+$("#editButton").click(function () {
+$("#editForm").toggle();
+});
 
-        $("#saveButton").click(function (event) {
+$("#saveButton").click(function (event) {
 
-            event.preventDefault();
-            var courseName = $("#courseName").val();
-            var section = $("#section").val();
-            var description = $("#description").val();
-            var closed = $("#closed").is(":checked");
+event.preventDefault();
+var courseName = $("#courseName").val();
+var section = $("#section").val();
+var description = $("#description").val();
+var closed = $("#closed").is(":checked");
 
-            // Отправка AJAX-запроса для сохранения данных
-            $.ajax({
-                url: "/CourseEditor/CoursePut",
-                method: "PUT",
-                data: {
-                    CourseId: @Model.CourseId,
-                    CourseName: courseName,
-                    SectionId: section,
-                    Description: description,
-                    Closed: closed
-                },
-                success: function (response) {
-                    $("#courseNameCell").text(courseName);
-                    $("#sectionCell").text($("#section option:selected").text());
-                    $("#descriptionCell").text(description);
-                    $("#closedCell").text(closed ? "Да" : "Нет");
+// Отправка AJAX-запроса для сохранения данных
+$.ajax({
+url: "/CourseEditor/CoursePut",
+method: "PUT",
+data: {
+CourseId: @Model.CourseId,
+CourseName: courseName,
+SectionId: section,
+Description: description,
+Closed: closed
+},
+success: function (response) {
+$("#courseNameCell").text(courseName);
+$("#sectionCell").text($("#section option:selected").text());
+$("#descriptionCell").text(description);
+$("#closedCell").text(closed ? "Да" : "Нет");
 
 
-                    // Закрываем форму редактирования
-                    $("#editForm").hide();
-                },
-                error: function (xhr, status, error) {
-                    // Обработка ошибки
-                    console.error(xhr.responseText);
-                }
-            });
-        });
-    });
-</script>
+// Закрываем форму редактирования
+$("#editForm").hide();
+},
+error: function (xhr, status, error) {
+// Обработка ошибки
+console.error(xhr.responseText);
+}
+});
+});
+});
+</script> *@

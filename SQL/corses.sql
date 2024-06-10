@@ -237,7 +237,7 @@ BEGIN
     -- Формируем условия для фильтрации
 
     IF p_section_id IS NOT NULL THEN
-        filter_conditions := filter_conditions || ' AND SectionId = ' || p_section_id;
+        filter_conditions := filter_conditions || ' AND section_id = ' || p_section_id;
     END IF;
 
     IF p_start_date IS NOT NULL THEN
@@ -342,8 +342,18 @@ BEGIN
 END;
 $$ LANGUAGE PLPGSQL;
 
-select * from get_study_groups_by_course_id(4);
 
+CREATE OR REPLACE FUNCTION get_study_groups_by_creater_id(p_creater_id INTEGER)
+RETURNS SETOF StudyGroupsView AS $$
+BEGIN
+    RETURN QUERY SELECT *
+                 FROM StudyGroupsView
+                 WHERE id = p_creater_id;
+END;
+$$ LANGUAGE PLPGSQL;
+
+select * from get_study_groups_by_course_id(34);
+select * from get_study_groups_by_course_id(34);
 
 CREATE OR REPLACE FUNCTION get_study_group_by_id(p_group_id INTEGER)
 RETURNS SETOF StudyGroupsView AS $$

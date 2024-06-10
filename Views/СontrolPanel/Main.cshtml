@@ -1,5 +1,26 @@
 <div class="container-fluid" style="padding: 0%;">
-    <div class="d-flex">
+
+    <div class="d-md-none text-center"> <!-- Этот блок будет виден только на мобильных устройствах -->
+        <div class="col-md-3 d-md-none text-center mt-3">
+            <!-- Этот блок будет виден только на мобильных устройствах -->
+            <div class="dropdown">
+                <button class="btn btn-dark btn-lg btn-block dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                    Кнопка выпадающего списка
+                </button>
+                <div class="dropdown-menu">
+                    <button type="button" class="btn btn-lg btn-control" data-page="Profile">Профиль</button>
+                    <button type="button" class="btn btn-lg btn-control" data-page="Home">Главная</button>
+                    <button type="button" class="btn btn-lg btn-control" data-page="Statistics">Статистика</button>
+                    <button type="button" class="btn btn-lg btn-control" data-page="Courses">Курсы</button>
+                    <button type="button" class="btn btn-lg btn-control" data-page="Applications">Заявки</button>
+                    <a asp-action="LogOut" asp-controller="СontrolPanel"  class="btn btn-control text-light"
+                        data-page="LogOut">Выйти</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="d-flex flex-fill content-main">
 
 
         <style>
@@ -10,6 +31,11 @@
                 background-color: rgb(33, 37, 41);
             }
 
+            .container-fluid,
+            .d-flex.flex-fill {
+                height: 100%;
+            }
+
             .line {
                 color: white;
                 margin-top: 10px;
@@ -18,7 +44,8 @@
             }
         </style>
 
-        <div class="d-none d-md-block text-center" style="padding: 0px;">
+        @* d-none d-md-block text-center *@
+        <div class="d-none d-md-block text-center" style="padding: 0px; height: 100%;">
             <div class=" side-panel">
                 <div class="text-light p-2 fs-4 fw-bold">
                     Боковая панель
@@ -39,36 +66,16 @@
                 <button type="button" class="btn btn-dark btn-control w-100" data-page="Applications">
                     <i class="bi bi-file-earmark"></i> Заявки
                 </button>
-                <button type="button" class="btn btn-dark btn-control w-100" data-page="LogOut">
+                @* <button type="button" class="btn btn-dark btn-control w-100" data-page="LogOut">
                     <i class="bi bi-box-arrow-right"></i> Выйти
-                </button>
+                </button> *@
+                <a asp-action="LogOut" asp-controller="СontrolPanel"  class="btn btn-control text-light"
+                    data-page="LogOut"><i class="bi bi-box-arrow-right"></i>Выйти</a>
 
             </div>
         </div>
 
-        @* <div class="col-lg-6 mt-2 mb-2 mx-auto">
-        <div class="d-md-none text-center"> <!-- Этот блок будет виден только на мобильных устройствах -->
-        <div class="col-md-3 d-md-none text-center">
-        <!-- Этот блок будет виден только на мобильных устройствах -->
-        <div class="dropdown">
-        <button class="btn btn-dark btn-lg btn-block dropdown-toggle" type="button"
-        data-bs-toggle="dropdown" aria-expanded="false">
-        Кнопка выпадающего списка
-        </button>
-        <div class="dropdown-menu">
-        <button type="button" class="btn btn-lg btn-control" data-page="Profile">Профиль</button>
-        <button type="button" class="btn btn-lg btn-control" data-page="Home">Главная</button>
-        <button type="button" class="btn btn-lg btn-control"
-        data-page="Statistics">Статистика</button>
-        <button type="button" class="btn btn-lg btn-control" data-page="Courses">Курсы</button>
-        <button type="button" class="btn btn-lg btn-control" data-page="Applications">Заявки</button>
-        <button type="button" class="btn btn-lg btn-control" data-page="LogOut">Выйти</button>
-        </div>
-        </div>
-        </div>
-        </div>
-        <div class="d-none d-md-block text-center">
-        <!-- Этот блок будет виден только на устройствах с шириной экрана больше md (medium) -->
+        @*<!-- Этот блок будет виден только на устройствах с шириной экрана больше md (medium) -->
         <div class="btn-group d-flex" role="group" aria-label="Простой пример">
         <button type="button" class="btn btn-dark btn-control w-100" data-page="Profile">
         <i class="bi bi-person"></i> Профиль
@@ -91,10 +98,12 @@
         </div>
         </div>
         </div> *@
+        <div class="col">
+            <div class="container-fluid mt-5" id="container-main-content">
 
-    <div class="container-fluid mt-5" id="container-main-content">
+            </div>
+        </div>
 
-    </div>
     </div>
 </div>
 

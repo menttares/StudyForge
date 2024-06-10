@@ -2,7 +2,7 @@ CREATE TABLE ImagesProfile (
 	-- ID ключ
     id SERIAL PRIMARY KEY,
 	-- Имя файла
-    filename TEXT UNIQUE not null
+    filename varchar(100) UNIQUE not null
 );
 
 -- специализация профиля/преподавателя
@@ -27,8 +27,7 @@ $$ LANGUAGE PLPGSQL;
 
 select get_all_specializations();
 
-
-alter table 
+select * from Accounts;
 -- аккаунт организатора курса
 CREATE TABLE Accounts (
   -- ID профиля (рукописный ключ)
@@ -51,7 +50,7 @@ CREATE TABLE Accounts (
   phone VARCHAR(60) UNIQUE NOT NULL check (phone ~ '^(\+375)(29|33|44|25|17)(\d{3})(\d{2})(\d{2})$'),
 
   -- Имя человека или организации (не null, минимум 3 символа и максимум 60)
-  name VARCHAR(60) NOT NULL CHECK (LENGTH(name) >= 3 and LENGTH(name) <= 60),
+  name VARCHAR(100) NOT NULL CHECK (LENGTH(name) >= 3 and LENGTH(name) <= 100),
 
   -- О себе (необязательное поле)
   about_me VARCHAR(1000) NULL,
@@ -171,7 +170,9 @@ select * from Administrators;
 -- ===================================================================================================
 -- ===================================================================================================
 
-CREATE OR REPLACE FUNCTION login_user(p_email VARCHAR, p_password VARCHAR, OUT result_id INTEGER, OUT error_message TEXT) 
+
+CREATE OR REPLACE FUNCTION login_user(p_email VARCHAR, p_password VARCHAR) 
+RETURNS INTEGER
 AS $$
 DECLARE
     user_id INTEGER;
@@ -182,31 +183,25 @@ BEGIN
 
     -- Если email не найден, возвращаем -1
     IF user_id IS NULL THEN
-        result_id := -1;
-        error_message := 'Пользователь с таким email не существует';
-        RETURN;
+        RETURN -1;
     END IF;
 
     -- Проверяем совпадение паролей
     IF stored_password <> p_password THEN
-        result_id := -2;
-        error_message := 'Пароли не совпадают';
-        RETURN;
+        RETURN -2;
     ELSE
-        -- Если все проверки пройдены успешно, возвращаем id
-        result_id := user_id;
-        error_message := 'Вход выполнен успешно';
-        RETURN;
+        -- Если все проверки пройдены успешно, возвращаем id пользователя
+        RETURN user_id;
     END IF;
 
 EXCEPTION
     -- Ловим исключения (например, ошибки в запросе или другие ошибки выполнения)
     WHEN OTHERS THEN
         -- Если произошла ошибка, возвращаем 0
-        result_id := 0;
-        error_message := 'Произошла ошибка при входе пользователя: ' || SQLERRM;
+        RETURN 0;
 END;
 $$ LANGUAGE PLPGSQL;
+
 
 
 
@@ -216,62 +211,55 @@ CREATE OR REPLACE FUNCTION register_profile(
     p_email VARCHAR,
     p_password VARCHAR,
     p_is_organization BOOL,
-    p_phone VARCHAR,
-    OUT result_id INTEGER,
-    OUT error_message TEXT
+    p_phone VARCHAR
 ) 
+RETURNS INTEGER
 AS $$
 DECLARE
-    inserted_id INTEGER;
+    result_id INTEGER;
 BEGIN
     -- Проверяем, существует ли уже пользователь с таким email
-SELECT id INTO result_id FROM Accounts WHERE email = p_email LIMIT 1;
+    SELECT id INTO result_id FROM Accounts WHERE email = p_email LIMIT 1;
     IF FOUND THEN
-        result_id := -1;
-        error_message := 'Пользователь с таким email уже существует';
-        RETURN;
+        RETURN -1;
     END IF;
     
     -- Проверяем, существует ли уже пользователь с такой лицензией
     SELECT id INTO result_id FROM Accounts WHERE license_number = p_license_number LIMIT 1;
     IF FOUND THEN
-        result_id := -3;
-        error_message := 'Пользователь с таким license_number уже существует';
-        RETURN;
+        RETURN -2;
     END IF;
 
-	-- Проверяем, существует ли уже пользователь с таким телефоном
+    -- Проверяем, существует ли уже пользователь с таким телефоном
     SELECT id INTO result_id FROM Accounts WHERE phone = p_phone LIMIT 1;
     IF FOUND THEN
-        result_id := -4;
-        error_message := 'Пользователь с таким телефоном уже существует';
-        RETURN;
+        RETURN -3;
     END IF;
 
     -- Добавляем новый профиль
     INSERT INTO Accounts (name, license_number, email, password, is_organization, phone)
     VALUES (p_name, p_license_number, p_email, p_password, p_is_organization, p_phone)
-    RETURNING id INTO inserted_id;
+    RETURNING id INTO result_id;
 
-    -- Возврат сообщения об успешной регистрации
-    result_id := inserted_id;
-    error_message := 'Регистрация успешна';
+    -- Возвращаем id нового пользователя
+    RETURN result_id;
     
 EXCEPTION
     WHEN OTHERS THEN
-        -- Возвращаем сообщение об ошибке
-        result_id := 0;
-        error_message := 'Произошла ошибка при регистрации пользователя: ' || SQLERRM;
+        -- Возвращаем код ошибки
+        RETURN 0;
 END;
 $$ LANGUAGE PLPGSQL;
 
+
+
 SELECT * FROM register_profile(
-    p_name := 'John Doe',
-    p_license_number := '011234567312',
-    p_email := 'john321@example.com',
+    p_name := 'Виталий',
+    p_license_number := '012300410124',
+    p_email := 'zimin123@gmail.com',
     p_password := 'password123',
     p_is_organization := FALSE,
-    p_phone := '+375293418258'
+    p_phone := '+375297418352'
 );
 
 
@@ -281,9 +269,7 @@ SELECT * FROM register_profile(
 
 
 
-	
-
-CREATE OR REPLACE FUNCTION login_admin(p_login VARCHAR, p_password VARCHAR, OUT result_id INTEGER, OUT error_message TEXT)
+CREATE OR REPLACE FUNCTION login_admin(p_login VARCHAR, p_password VARCHAR, OUT result_id INTEGER)
 AS $$
 DECLARE
     admin_id INTEGER;
@@ -295,19 +281,16 @@ BEGIN
     -- Если администратор не найден, возвращаем -1
     IF admin_id IS NULL THEN
         result_id := -1;
-        error_message := 'Администратор с указанным email не найден';
         RETURN;
     END IF;
 
     -- Проверяем совпадение паролей
     IF stored_password <> p_password THEN
         result_id := -2;
-        error_message := 'Неверный пароль';
         RETURN;
     ELSE
         -- Если все проверки пройдены успешно, возвращаем id
         result_id := admin_id;
-        error_message := 'Аутентификация успешна';
         RETURN;
     END IF;
 
@@ -316,7 +299,6 @@ EXCEPTION
     WHEN OTHERS THEN
         -- Если произошла ошибка, возвращаем 0
         result_id := 0;
-        error_message := 'Произошла ошибка: ' || SQLERRM;
         RETURN;
 END;
 $$ LANGUAGE PLPGSQL;
@@ -325,6 +307,45 @@ $$ LANGUAGE PLPGSQL;
 select * from login_admin('menttare.h@gmail.com','admin@542');
 
 -- функция для смены информации о профиле
+
+CREATE OR REPLACE FUNCTION update_user_profile(
+    p_user_id INTEGER,
+    p_name VARCHAR,
+    p_about_me VARCHAR,
+    p_specialization INTEGER,
+    p_email VARCHAR,
+    p_phone VARCHAR
+) 
+RETURNS BOOLEAN AS
+$$
+BEGIN
+    -- Обновляем информацию о пользователе
+    UPDATE Accounts
+    SET 
+        name = p_name,
+        about_me = p_about_me,
+        specialization = p_specialization,
+        email = p_email,
+        phone = p_phone
+    WHERE
+        id = p_user_id;
+
+    -- Проверяем, было ли выполнено успешное обновление
+    IF FOUND THEN
+        RETURN TRUE;
+    ELSE
+        RETURN FALSE;
+    END IF;
+EXCEPTION
+    WHEN others THEN
+        -- Обработка исключения: возвращаем FALSE в случае ошибки
+        RETURN FALSE;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+
+
 CREATE OR REPLACE FUNCTION update_user_profile(
     p_user_id INTEGER,
     p_name VARCHAR,

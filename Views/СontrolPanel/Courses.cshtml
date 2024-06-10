@@ -3,7 +3,7 @@
 <div class="container">
     <div class="row justify-content-between align-items-center mb-3">
         <div class="col-auto">
-            <h2>Все курсы</h2>
+            <h2 class="fs-1 fw-bold">Все курсы</h2>
         </div>
         <div class="col-auto">
             <button id="addCourseButton" class="btn btn-primary">Добавить курс</button>
@@ -11,78 +11,173 @@
     </div>
     <div class="row">
         <div class="col">
-            <div class="list-group">
+            @* <div class="list-group">
+            @foreach (var course in Model)
+            {
+            <div class="list-group-item" id="group-@course.CourseId">
+            <h3 class="mb-1">
+            <a asp-controller="CourseEditor" asp-action="Course" asp-route-CourseId="@course.CourseId">
+            @course.CourseName
+            </a>
+
+            </h3>
+            <p class="mb-1">Описание: @course.CourseDescription</p>
+            <p class="mb-1">Категория: @course.CategoryName</p>
+            <p class="mb-1">Дата создания: @course.CourseCreatedAt.ToShortDateString()</p>
+            @if (course.CourseClosed)
+            {
+            <p class="mb-1">Статус: Закрыт</p>
+            }
+            else
+            {
+            <p class="mb-1">Статус: Открыт</p>
+            }
+            <div class="btn-group" role="group" aria-label="Basic example">
+            <button type="button" class="btn btn-danger delete-course"
+            data-course-id="@course.CourseId"><i class="bi bi-trash-fill"></i></button>
+            </div>
+            </div>
+            }
+            </div> *@
+            <div id="Course-main" class="list-group">
                 @foreach (var course in Model)
                 {
                     <div class="list-group-item" id="group-@course.CourseId">
-                        <h3 class="mb-1">
-                            <a asp-controller="CourseEditor" asp-action="Course" asp-route-CourseId="@course.CourseId">
-                                @course.CourseName
-                            </a>
-
-                        </h3>
-                        <p class="mb-1">Описание: @course.CourseDescription</p>
-                        <p class="mb-1">Категория: @course.CategoryName</p>
-                        <p class="mb-1">Дата создания: @course.CourseCreatedAt.ToShortDateString()</p>
-                        @if (course.CourseClosed)
-                        {
-                            <p class="mb-1">Статус: Закрыт</p>
-                        }
-                        else
-                        {
-                            <p class="mb-1">Статус: Открыт</p>
-                        }
-                        <div class="btn-group" role="group" aria-label="Basic example">
-                            <button type="button" class="btn btn-danger delete-course"
-                                data-course-id="@course.CourseId">Удалить</button>
-                            <button type="button" class="btn btn-primary edit-course"
-                                data-course-id="@course.CourseId">Изменить</button>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3 class="text-dark mb-0">
+                                <a asp-controller="CourseEditor" asp-action="Course" asp-route-CourseId="@course.CourseId"
+                                    class="text-dark text-decoration-none">
+                                    @course.CourseName
+                                </a>
+                            </h3>
+                            <div class="btn-group" role="group" aria-label="Basic example">
+                                <button type="button" class="btn btn-danger delete-course"
+                                    data-course-id="@course.CourseId">
+                                    <i class="bi bi-trash-fill"></i>
+                                </button>
+                            </div>
                         </div>
+                        <table class="table table-borderless mb-0">
+                            <tbody>
+                                <tr>
+                                    <th scope="row" class="text-muted" style="width: 150px;">Описание:</th>
+                                    <td>@course.CourseDescription</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row" class="text-muted">Категория:</th>
+                                    <td>@course.CategoryName</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row" class="text-muted">Дата создания:</th>
+                                    <td>@course.CourseCreatedAt.ToShortDateString()</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row" class="text-muted">Статус:</th>
+                                    <td>@(course.CourseClosed ? "Закрыт" : "Открыт")</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 }
             </div>
+
         </div>
     </div>
 </div>
 
-<script src="~/lib/jquery/dist/jquery.min.js"></script>
-
 <script>
-    $(document).ready(function () {
-        $("#addCourseButton").click(function (e) {
-            $.ajax({
-                url: "/СontrolPanel/CreateCourses", // Укажите URL для обработчика сохранения профиля
-                method: "POST",
-                success: function (response) {
-                    // Обработка успешного ответа
-                },
-                error: function (xhr, status, error) {
-                    // Обработка ошибки
-                    console.error(xhr.responseText);
-                },
-            });
-        });
-
-        $(".delete-course").on("click", function (e) {
-            var courseId = $(this).data("course-id"); // Получаем ID курса из атрибута data-course-id кнопки
-            // Отправляем AJAX-запрос на сервер для удаления курса с указанным ID
-            console.log(courseId);
-            $.ajax({
-                url: `/ControlPanel/DeleteCourse/${courseId}`, // Укажите URL для обработчика удаления курса
-                method: "Delete",
-                success: function (response) {
-                    // Обработка успешного ответа
-                    $("#group-" + courseId).hide();
-                },
-                error: function (xhr, status, error) {
-                    // Обработка ошибки
-                    console.error(xhr.responseText);
-                },
-            });
-
-
+    $("#addCourseButton").click(function (e) {
+        $.ajax({
+            url: "/СontrolPanel/CreateCourses", // Укажите URL для обработчика сохранения профиля
+            method: "POST",
+            success: function (response) {
+                const courseElement = createCourseElement(response);
+                $("#Course-main").append(courseElement);
+            },
+            error: function (xhr, status, error) {
+                // Обработка ошибки
+                console.error(xhr.responseText);
+            },
         });
     });
+
+    $(".delete-course").on("click", function (e) {
+        var courseId = $(this).data("course-id"); // Получаем ID курса из атрибута data-course-id кнопки
+        // Отправляем AJAX-запрос на сервер для удаления курса с указанным ID
+        console.log(courseId);
+        $.ajax({
+            url: `/ControlPanel/DeleteCourse/${courseId}`, // Укажите URL для обработчика удаления курса
+            method: "Delete",
+            success: function (response) {
+                // Обработка успешного ответа
+                $("#group-" + courseId).hide();
+            },
+            error: function (xhr, status, error) {
+                // Обработка ошибки
+                console.error(xhr.responseText);
+            },
+        });
+
+
+    });
+
+    $("#Course-main").on("click", ".delete-course", function (e) {
+        var courseId = $(this).data("course-id"); // Получаем ID курса из атрибута data-course-id кнопки
+        // Отправляем AJAX-запрос на сервер для удаления курса с указанным ID
+        console.log(courseId);
+        $.ajax({
+            url: `/ControlPanel/DeleteCourse/${courseId}`, // Укажите URL для обработчика удаления курса
+            method: "DELETE",
+            success: function (response) {
+                // Обработка успешного ответа
+                $("#group-" + courseId).remove();
+            },
+            error: function (xhr, status, error) {
+                // Обработка ошибки
+                console.error(xhr.responseText);
+            },
+        });
+    });
+
+    function createCourseElement(course) {
+        return `
+            <div class="list-group-item" id="group-${course.courseId}">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="text-dark mb-0">
+                        <a href="/CourseEditor/Course?CourseId=${course.courseId}" class="text-dark text-decoration-none">
+                            ${course.courseName}
+                        </a>
+                    </h3>
+                    <div class="btn-group" role="group" aria-label="Basic example">
+                        <button type="button" class="btn btn-danger delete-course" data-course-id="${course.courseId}">
+                            <i class="bi bi-trash-fill"></i>
+                        </button>
+                    </div>
+                </div>
+                <table class="table table-borderless mb-0">
+                    <tbody>
+                        <tr>
+                            <th scope="row" class="text-muted" style="width: 150px;">Описание:</th>
+                            <td>${course.courseDescription}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row" class="text-muted">Категория:</th>
+                            <td>${course.categoryName}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row" class="text-muted">Дата создания:</th>
+                            <td>${new Date(course.courseCreatedAt).toLocaleDateString()}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row" class="text-muted">Статус:</th>
+                            <td>${course.courseClosed ? "Закрыт" : "Открыт"}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
 </script>
 
 <!--script src="~/js/СontrolPanel/Courses.js"></script-->

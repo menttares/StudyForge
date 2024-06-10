@@ -44,9 +44,9 @@ CREATE TABLE Courses (
   -- создатель курса
   id_Account INTEGER REFERENCES Accounts(id) ON DELETE CASCADE,
   -- Название курса
-  name VARCHAR(60) NOT NULL check(
+  name VARCHAR(100) NOT NULL check(
     LENGTH(name) >= 3
-    and LENGTH(name) <= 60
+    and LENGTH(name) <= 100
   ),
   -- Описание курса
   description varchar(1000) NULL,
@@ -114,6 +114,8 @@ CREATE TABLE BannedCourses (
   id_Course INTEGER REFERENCES Courses(id) ON DELETE CASCADE,
   -- ID администратора, который забанил курс
   id_Administrator INTEGER REFERENCES Accounts(id) ON DELETE SET NULL,
+
+  cause VARCHAR(500) not NULL CHECK (LENGTH(cause) >= 3 and LENGTH(cause) <= 500),
   -- Дата и время забана курса
   banned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

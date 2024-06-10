@@ -207,7 +207,7 @@ SELECT
     a.birthday,
     a.email,
     a.id_StatusApplications,
-    a.submission_date,
+    a.created_at,
     sg.id AS studygroup_id,
     sg.enrollment,
     sg.date_start,
@@ -256,4 +256,53 @@ select * from get_applications(28, 3);
 
 select * from applications;
 delete 
+
+
+
+CREATE OR REPLACE VIEW application_details_view AS
+SELECT 
+    a.id AS ApplicationId,
+    a.id_StudyGroup AS GroupId,
+    sg.id_Course AS CourseId,
+    c.name AS CourseName,
+    sg.id_FormsTraining AS TrainingFormId,
+    tf.name AS TrainingFormName,
+    sg.id_City AS CityId,
+    ct.name AS CityName,
+    a.id_StatusApplications AS ApplicationStatusId,
+    sa.name AS ApplicationStatusName,
+    a.email AS ApplicantEmail,
+    u.id AS CreatorProfileId,
+    u.email AS CreatorEmail,
+    u.phone AS CreatorPhone
+FROM 
+    applications a
+JOIN 
+    StudyGroups sg ON a.id_StudyGroup = sg.id
+JOIN 
+    Courses c ON sg.id_Course = c.id
+JOIN 
+    FormsTraining tf ON sg.id_FormsTraining = tf.id
+JOIN 
+    Cities ct ON sg.id_City = ct.id
+JOIN 
+    StatusApplications sa ON a.id_StatusApplications = sa.id
+JOIN 
+    Accounts u ON c.id_Account = u.id;
+
+select * from application_details_view;
+
+
+CREATE OR REPLACE FUNCTION getapplicationdetails(application_id INTEGER)
+RETURNS setof application_details_view AS $$
+BEGIN
+    RETURN QUERY 
+    SELECT 
+		*
+    FROM 
+        application_details_view
+    WHERE 
+        ApplicationId = application_id;
+END;
+$$ LANGUAGE plpgsql;
 

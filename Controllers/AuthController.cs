@@ -53,15 +53,20 @@ public class AuthController : Controller
 
             return RedirectToAction("Index", "Home");
         }
-        else if (resutlData.Result == -1)
-        {
-            ModelState.AddModelError("Email", "Пользователь с такой почтой не существует");
-        }
-        else if (resutlData.Result == -2)
-        {
-            ModelState.AddModelError("Password", "Неверный пароль");
-        }
 
+        int result = resutlData.Result;
+        switch (result)
+        {
+            case -1:
+                ModelState.AddModelError("Email", "Пользователь с такой почтой не существует");
+                break;
+            case -2:
+                ModelState.AddModelError("Password", "Неверный пароль");
+                break;
+            default:
+                ModelState.AddModelError(string.Empty, "Извините, походу проблемы с сайтом, сообщете на почту studyforgeadm@gmail.com");
+                break;
+        }
 
         return View(data);
     }
@@ -98,17 +103,22 @@ public class AuthController : Controller
 
             await HttpContext.SignInAsync(claimsPrincipal);
         }
-        else if (resutlData.Result == -1)
+
+        int result = resutlData.Result;
+        switch (result)
         {
-            ModelState.AddModelError("Email", "Пользователь с таким email уже существует");
-        }
-        else if (resutlData.Result == -2)
-        {
-            ModelState.AddModelError("LicenseNumber", "Пользователь с таким license_number уже существует");
-        }
-        else if (resutlData.Result == -4)
-        {
-            ModelState.AddModelError("Phone", "Пользователь с таким телефоном уже существует");
+            case -1:
+                ModelState.AddModelError("Email", "Пользователь с таким email уже существует");
+                break;
+            case -2:
+                ModelState.AddModelError("LicenseNumber", "Пользователь с таким лицензией уже существует");
+                break;
+            case -3:
+                ModelState.AddModelError("Phone", "Пользователь с таким телефоном уже существует");
+                break;
+            default:
+                ModelState.AddModelError(string.Empty, "Извините, походу проблемы с сайтом, сообщете на почту studyforgeadm@gmail.com");
+                break;
         }
 
         return View(data);
@@ -144,13 +154,19 @@ public class AuthController : Controller
 
             return RedirectToAction("Index", "Home");
         }
-        else if (resutlData.Result == -1)
+        
+        int result = resutlData.Result;
+        switch (result)
         {
-            ModelState.AddModelError("Email", "Пользователь с такой почтой не существует");
-        }
-        else if (resutlData.Result == -2)
-        {
-            ModelState.AddModelError("Password", "Неверный пароль");
+            case -1:
+                ModelState.AddModelError("Email", "Пользователь с такой почтой не существует");
+                break;
+            case -2:
+                ModelState.AddModelError("Password", "Неверный пароль");
+                break;
+            default:
+                ModelState.AddModelError(string.Empty, "Извините, походу проблемы с сайтом, сообщете на почту studyforgeadm@gmail.com");
+                break;
         }
 
         return View(data);

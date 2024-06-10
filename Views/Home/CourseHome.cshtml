@@ -57,7 +57,7 @@
                                 <p class="card-text">Цена: @group.Price BYN</p>
                                 <p class="card-text">Форма: @group.FormTraining</p>
                                 <p class="card-text">Количество часов: @group.Duration</p>
-                                <p class="card-text">Город: @group.СityName</p>
+                                <p class="card-text">Город: @group.CityName</p>
                                 <!-- Добавьте другие поля для описания учебной группы -->
                                 @if (group.AcceptedApplicationsCount >= group.Enrollment)
                                 {
@@ -261,7 +261,7 @@
                 button.attr('data-target', '#unbanModal');
             },
             error: function (xhr, status, error) {
-                alert('Ошибка при блокировке курса: ' + error);
+                
             }
         });
         $('#banModal').modal('hide');

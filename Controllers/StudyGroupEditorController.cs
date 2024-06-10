@@ -40,7 +40,9 @@ public class StudyGroupEditorController : Controller
             1,
             1,
             10);
-        return Ok(NewGroupId);
+
+        StudyGroup NewstudyGroup = _database.GetStudyGroupCourseViewById(NewGroupId);
+        return Json(NewstudyGroup);
     }
 
     [HttpDelete("/StudyGroupEditor/Delete/{GroupId}")]
@@ -53,36 +55,62 @@ public class StudyGroupEditorController : Controller
 
     public IActionResult Group(int GroupId)
     {
+
         var group = _database.GetStudyGroupById(GroupId);
         ViewData["GroupId"] = GroupId;
         ViewData["Days"] = _database.GetAllDays();
         ViewData["Cities"] = _database.GetAllCities();
         ViewData["FormsTraining"] = _database.GetAllFormsTraining();
-        return View(group);
+
+        UpdateGroup model = new UpdateGroup
+        {
+            Id = group.Id,
+            Enrollment = group.Enrollment,
+            StartDate = group.StartDate,
+            EndDate = group.EndDate,
+            Price = group.Price.ToString(),
+            FormsTrainingId = group.FormsTrainingId,
+            CityId = group.CityId,
+            Duration = group.Duration,
+            CourseId = group.CourseId,
+            ScheduleDays = group.ScheduleDays.Select(sd => sd.Id).ToList()
+        };
+
+        return View(model);
     }
 
     [HttpPost]
-    public IActionResult UpdateGroup(Group studyGroup, List<int> ScheduleDays)
+    public IActionResult UpdateGroup(UpdateGroup model)
     {
         bool isUpdateStudyGroup = _database.UpdateStudyGroup(
-            studyGroup.Id,
-            studyGroup.Enrollment,
-            studyGroup.StartDate,
-            studyGroup.EndDate,
-            studyGroup.Price,
-            studyGroup.FormsTrainingId,
-            studyGroup.CityId,
-            studyGroup.Duration
+            model.Id,
+            model.Enrollment,
+            model.StartDate,
+            model.EndDate,
+            Convert.ToDecimal(model.Price),
+            model.FormsTrainingId,
+            model.CityId,
+            model.Duration
         );
 
-        bool isUpdateScheduleDays = _database.UpdateScheduleDays(studyGroup.Id, ScheduleDays.ToArray());
+        int[] array = model.ScheduleDays.ToArray();
+        bool isUpdateScheduleDays = _database.UpdateScheduleDays(model.Id, array);
 
-        if (isUpdateStudyGroup && isUpdateScheduleDays)
+        StudyGroup NewstudyGroup = _database.GetStudyGroupById(model.Id);
+
+        if (!isUpdateStudyGroup || !isUpdateScheduleDays || !ModelState.IsValid)
         {
-            return Ok();
+            ModelState.AddModelError(string.Empty, "Не удалось обновить курс.");
+            var errors = ModelState.ToDictionary(
+                kvp => kvp.Key,
+                kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+            );
+            return Json(new { success = false, errors });
         }
 
-        return BadRequest();
+        // Логика сохранения данных
+
+        return Json(new { success = true });
     }
 
 
@@ -93,17 +121,3 @@ public class StudyGroupEditorController : Controller
     }
 }
 
-
-public record Group
-{
-    public int Id { get; set; }
-    public int Enrollment { get; set; }
-    public DateTime StartDate { get; set; }
-    public DateTime? EndDate { get; set; }
-    public decimal Price { get; set; }
-    public int FormsTrainingId { get; set; }
-    public int CityId { get; set; }
-    public int Duration { get; set; }
-    public int CourseId { get; set; }
-
-};

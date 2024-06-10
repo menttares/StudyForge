@@ -14,7 +14,7 @@ public class ApplicationDetails
     public DateTime Birthday { get; set; }
     public string Email { get; set; }
     public int IdStatusApplications { get; set; }
-    public DateTime SubmissionDate { get; set; }
+    public DateTime created_at { get; set; }
 
     // Поля учебной группы
     public int StudyGroupId { get; set; }
@@ -28,4 +28,5 @@ public class ApplicationDetails
 
     // Поле курса
     public int CourseId { get; set; }
+
 }
