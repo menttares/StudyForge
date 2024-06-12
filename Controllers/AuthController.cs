@@ -102,6 +102,8 @@ public class AuthController : Controller
             var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
 
             await HttpContext.SignInAsync(claimsPrincipal);
+
+            return RedirectToAction("Index", "Home");
         }
 
         int result = resutlData.Result;

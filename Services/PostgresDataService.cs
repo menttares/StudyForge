@@ -91,10 +91,17 @@ public class PostgresDataService
                 command.Parameters.AddWithValue("p_is_organization", isOrganization);
                 command.Parameters.AddWithValue("p_phone", phone);
 
+                int resultId = 0;
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        resultId = reader.GetInt32(0);
+                    }
+                }
+                // command.ExecuteNonQuery();
 
-                command.ExecuteNonQuery();
-
-                int resultId = Convert.ToInt32(command.ExecuteScalar());
+                // int resultId = Convert.ToInt32(command.ExecuteScalar());
 
                 switch (resultId)
                 {

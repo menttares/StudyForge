@@ -76,7 +76,7 @@ function createCourseCards(data) {
       <div class="col mb-4">
         <div class="card h-100">
           <div class="card-body">
-            <a  class="card-title fs-2 link-dark text-break fw-bold" href="/Home/CourseHome/${
+            <a  class="card-title fs-2 link-dark text-break text-decoration: none; fw-bold text-100" style="" href="/Home/CourseHome/${
               course.courseId
             }">${course.courseName}</a>
             <p class="card-text text-break text-100">${
