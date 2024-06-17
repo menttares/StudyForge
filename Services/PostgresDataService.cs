@@ -155,8 +155,18 @@ public class PostgresDataService
         return categoriesWithSubsections;
     }
 
-    public List<CourseAndGroupView> FilterCoursesAndGroups(int? sectionId = null, DateTime? startDate = null, DateTime? endDate = null, decimal? minPrice = null, decimal? maxPrice = null,
-         int? durationHours = null, bool organizationOnly = false, bool freeOnly = false, string? searchQuery = null)
+    // метод, вызываемый при поиске учебных группы
+    public List<CourseAndGroupView> FilterCoursesAndGroups(
+        int? sectionId = null, // Id раздела, по которому ищем курс
+        DateTime? startDate = null, // Дата старта набора
+        DateTime? endDate = null, // Дата окончания набора
+        decimal? minPrice = null, // Цена минимульная
+        decimal? maxPrice = null, // Цена максимальная
+        int? durationHours = null, // Продолжительность часов
+        bool organizationOnly = false, // Является ли курс от организации?
+        bool freeOnly = false, // Есть ли свободные места в организации?
+        string? searchQuery = null // Строка для поиска по частичному совпадению
+        )
     {
         List<CourseAndGroupView> coursesAndGroups = new List<CourseAndGroupView>();
 
@@ -180,6 +190,7 @@ public class PostgresDataService
 
                 using (NpgsqlDataReader reader = command.ExecuteReader())
                 {
+                    // Считываем все найденные учебные группы
                     while (reader.Read())
                     {
                         CourseAndGroupView courseAndGroup = new CourseAndGroupView();
@@ -211,7 +222,7 @@ public class PostgresDataService
             }
         }
 
-
+        
         return coursesAndGroups;
     }
 

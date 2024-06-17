@@ -12,7 +12,6 @@ public class UpdateUserProfileModel
     public string name { get; set; }
 
     [StringLength(1000, ErrorMessage = "Описание должен быть не длиннее 1000 символов")]
-    [AllowNull]
     public string aboutMe { get; set; } = "";
 
     public int? specializationId { get; set; }

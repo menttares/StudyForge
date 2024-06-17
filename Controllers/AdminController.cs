@@ -15,7 +15,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 namespace StudyForge.Controllers;
 
 
-
+[Authorize(Roles = "admin")]
 public class AdminController : Controller
 {
     private readonly ILogger<HomeController> _logger;

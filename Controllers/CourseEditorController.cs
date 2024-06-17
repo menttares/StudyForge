@@ -17,23 +17,35 @@ namespace StudyForge.Controllers;
 public class CourseEditorController : Controller
 {
     private readonly ILogger<CourseEditorController> _logger;
-
     private PostgresDataService _database;
 
-
+    /// <summary>
+    /// Конструктор контроллера CourseEditorController.
+    /// </summary>
+    /// <param name="logger">Интерфейс логгера.</param>
+    /// <param name="database">Сервис работы с базой данных PostgreSQL.</param>
     public CourseEditorController(ILogger<CourseEditorController> logger, PostgresDataService database)
     {
         _logger = logger;
         _database = database;
     }
 
-
+    /// <summary>
+    /// Просмотр курса.
+    /// </summary>
+    /// <param name="CourseId">Идентификатор курса.</param>
+    /// <returns>Результат действия, возвращающий представление для просмотра курса.</returns>
     public IActionResult Course(int CourseId)
     {
         ViewData["CourseId"] = CourseId;
         return View();
     }
 
+    /// <summary>
+    /// Главная информация о курсе (GET).
+    /// </summary>
+    /// <param name="CourseId">Идентификатор курса.</param>
+    /// <returns>Результат действия, возвращающий частичное представление с основной информацией о курсе.</returns>
     [HttpGet]
     public IActionResult Main(int CourseId)
     {
@@ -52,11 +64,14 @@ public class CourseEditorController : Controller
         return PartialView(updateCourse);
     }
 
+    /// <summary>
+    /// Обновление информации о курсе (POST).
+    /// </summary>
+    /// <param name="courseViewModel">Модель данных для обновления курса.</param>
+    /// <returns>Результат действия, возвращающий JSON с результатом операции.</returns>
     [HttpPost]
     public IActionResult CoursePut(UpdateCourse courseViewModel)
     {
-
-
         bool isUpdate = _database.UpdateCourse(
             courseViewModel.CourseId,
             courseViewModel.CourseName,
@@ -64,8 +79,6 @@ public class CourseEditorController : Controller
             courseViewModel.CourseDescription,
             courseViewModel.CourseClosed
         );
-
-
 
         if (!isUpdate || !ModelState.IsValid)
         {
@@ -78,7 +91,11 @@ public class CourseEditorController : Controller
         return Json(new { success = true });
     }
 
-
+    /// <summary>
+    /// Получение групп обучения для курса.
+    /// </summary>
+    /// <param name="CourseId">Идентификатор курса.</param>
+    /// <returns>Результат действия, возвращающий частичное представление с группами обучения для курса.</returns>
     public IActionResult StudyGroups(int CourseId)
     {
         ViewData["CourseId"] = CourseId;
@@ -87,7 +104,11 @@ public class CourseEditorController : Controller
         return PartialView(studyGroups);
     }
 
-
+    /// <summary>
+    /// Получение программ для курса.
+    /// </summary>
+    /// <param name="CourseId">Идентификатор курса.</param>
+    /// <returns>Результат действия, возвращающий частичное представление с программами для курса.</returns>
     public IActionResult Programs(int CourseId)
     {
         List<ProgramCourse> programs = _database.GetProgramsByCourseId(CourseId);
@@ -95,6 +116,11 @@ public class CourseEditorController : Controller
         return PartialView(programs);
     }
 
+    /// <summary>
+    /// Создание новой программы для курса (POST).
+    /// </summary>
+    /// <param name="CourseId">Идентификатор курса.</param>
+    /// <returns>Результат действия, возвращающий JSON с созданной программой курса.</returns>
     [HttpPost]
     public IActionResult CreateProgram(int CourseId)
     {
@@ -103,7 +129,6 @@ public class CourseEditorController : Controller
             null,
             CourseId
         );
-
 
         ProgramCourse newProgramCourse = new ProgramCourse();
         newProgramCourse.Id = ProgramID;
@@ -114,6 +139,11 @@ public class CourseEditorController : Controller
         return Ok(newProgramCourse);
     }
 
+    /// <summary>
+    /// Обновление программы курса (PUT).
+    /// </summary>
+    /// <param name="program">Модель данных для обновления программы курса.</param>
+    /// <returns>Результат действия, возвращающий успешный статус или ошибку.</returns>
     [HttpPut]
     public IActionResult UpdateProgram(ProgramCourse program)
     {
@@ -129,7 +159,11 @@ public class CourseEditorController : Controller
         return Ok();
     }
 
-
+    /// <summary>
+    /// Удаление программы курса (DELETE).
+    /// </summary>
+    /// <param name="id">Идентификатор программы курса.</param>
+    /// <returns>Результат действия, возвращающий успешный статус или ошибку.</returns>
     [HttpDelete]
     public IActionResult DeleteProgram(int id)
     {
@@ -141,7 +175,10 @@ public class CourseEditorController : Controller
         return Ok();
     }
 
-
+    /// <summary>
+    /// Обработчик ошибок.
+    /// </summary>
+    /// <returns>Результат действия, возвращающий представление с информацией об ошибке.</returns>
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {

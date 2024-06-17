@@ -17,17 +17,24 @@ namespace StudyForge.Controllers;
 public class StudyGroupEditorController : Controller
 {
     private readonly ILogger<StudyGroupEditorController> _logger;
-
     private PostgresDataService _database;
 
-
+    /// <summary>
+    /// Конструктор контроллера StudyGroupEditorController.
+    /// </summary>
+    /// <param name="logger">Интерфейс логгера.</param>
+    /// <param name="database">Сервис работы с базой данных PostgreSQL.</param>
     public StudyGroupEditorController(ILogger<StudyGroupEditorController> logger, PostgresDataService database)
     {
         _logger = logger;
         _database = database;
     }
 
-
+    /// <summary>
+    /// Создание новой учебной группы для курса (POST).
+    /// </summary>
+    /// <param name="CourseId">Идентификатор курса.</param>
+    /// <returns>Результат действия, возвращающий JSON с созданной учебной группой.</returns>
     [HttpPost("/StudyGroupEditor/New/{CourseId}")]
     public IActionResult New(int CourseId)
     {
@@ -45,6 +52,11 @@ public class StudyGroupEditorController : Controller
         return Json(NewstudyGroup);
     }
 
+    /// <summary>
+    /// Удаление учебной группы по идентификатору (DELETE).
+    /// </summary>
+    /// <param name="GroupId">Идентификатор учебной группы.</param>
+    /// <returns>Результат действия, возвращающий успешный статус или ошибку.</returns>
     [HttpDelete("/StudyGroupEditor/Delete/{GroupId}")]
     public IActionResult Delete(int GroupId)
     {
@@ -52,10 +64,14 @@ public class StudyGroupEditorController : Controller
         return Ok(result);
     }
 
-
+    /// <summary>
+    /// Просмотр учебной группы по идентификатору (GET).
+    /// </summary>
+    /// <param name="GroupId">Идентификатор учебной группы.</param>
+    /// <returns>Результат действия, возвращающий представление с информацией о учебной группе.</returns>
+    [HttpGet("/StudyGroupEditor/Group/{GroupId}")]
     public IActionResult Group(int GroupId)
     {
-
         var group = _database.GetStudyGroupById(GroupId);
         ViewData["GroupId"] = GroupId;
         ViewData["Days"] = _database.GetAllDays();
@@ -79,6 +95,11 @@ public class StudyGroupEditorController : Controller
         return View(model);
     }
 
+    /// <summary>
+    /// Обновление информации о учебной группе (POST).
+    /// </summary>
+    /// <param name="model">Модель данных для обновления учебной группы.</param>
+    /// <returns>Результат действия, возвращающий JSON с результатом операции.</returns>
     [HttpPost]
     public IActionResult UpdateGroup(UpdateGroup model)
     {
@@ -113,11 +134,13 @@ public class StudyGroupEditorController : Controller
         return Json(new { success = true });
     }
 
-
+    /// <summary>
+    /// Обработчик ошибок.
+    /// </summary>
+    /// <returns>Результат действия, возвращающий представление с информацией об ошибке.</returns>
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 }
-

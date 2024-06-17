@@ -44,15 +44,23 @@ public class HomeController : Controller
         return View(categories);
     }
 
+    // Устанавливаем URL для метода котроллера
     [HttpGet("/[controller]/CourseHome/{CourseId}")]
     public IActionResult CourseHome(int CourseId)
     {
+        // Получаем сам курс по ID
         Course course = _database.GetCourseInfo(CourseId);
+        // Получаем все учебные группы связанные с ID курсом
         List<StudyGroup> studyGroups = _database.GetAllStudyGroupCourse(CourseId);
+        // Получаем информацию о создателе курса
         UserProfileInfo userProfileInfo = _database.GetUserProfileInfo(course.AccountId);
+        // Получаем все данные о программах курса
         List<ProgramCourse> programCourses = _database.GetProgramsByCourseId(CourseId);
 
-        ViewData["isBannedCourse"] = _database.IsCourseBanned(CourseId);
+
+        // Устанавливаем данные в данные представления
+ 
+        ViewData["isBannedCourse"] = _database.IsCourseBanned(CourseId); // Проверяем на бан курса
         ViewData["studyGroups"] = studyGroups;
         ViewData["userProfileInfo"] = userProfileInfo;
         ViewData["program"] = programCourses;
@@ -123,5 +131,11 @@ public class HomeController : Controller
     public IActionResult Error()
     {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+    }
+
+
+    public ActionResult Noaccess()
+    {
+        return View();
     }
 }

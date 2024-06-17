@@ -70,10 +70,7 @@
                 confirmation: confirmation
             },
             success: function () {
-                $("#success-alert").addClass("show");
-                setTimeout(function () {
-                    $("#success-alert").removeClass("show");
-                }, 3000);
+                Message("Успех!", "Данные приняты");
             },
             error: function (xhr, status, error) {
                 console.error("Error:", error);
