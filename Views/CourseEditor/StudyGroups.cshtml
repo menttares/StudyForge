@@ -34,9 +34,7 @@
                         }
                         @Html.Raw(Days)
                     </p>
-                    <p class="card-text">Дата начала: @studyGroup.StartDate.ToShortDateString()</p>
-                    <p class="card-text">Дата окончания: @(studyGroup.EndDate != null ?
-                    studyGroup.EndDate.Value.ToShortDateString() : "Не указана")</p>
+                    <p class="card-text">Дата начала обучения: @studyGroup.StartDate.ToShortDateString()</p>
                     <p class="card-text">Цена: @studyGroup.Price BYN</p>
                     <p class="card-text">Длительность: @studyGroup.Duration</p>
                     <p class="card-text">Город: @studyGroup.CityName</p>
@@ -142,8 +140,7 @@
                     <h5 class="card-title fs-3 fw-bold">Группа №${group.id}</h5>
                     <p class="card-text">Набор: ${group.enrollment}</p>
                     <p class="card-text">Дни: ${group.days ? group.days : 'Дни неопределены'}</p>
-                    <p class="card-text">Дата начала: ${formatDate(group.startDate)}</p>
-                    <p class="card-text">Дата окончания: ${group.endDate ? formatDate(group.endDate) : 'Не указана'}</p>
+                    <p class="card-text">Дата начала обучения: ${formatDate(group.startDate)}</p>
                     <p class="card-text">Цена: ${group.price} BYN</p>
                     <p class="card-text">Длительность: ${group.duration}</p>
                     <p class="card-text">Город: ${group.cityName}</p>
@@ -163,42 +160,3 @@
 
 </script>
 
-
-
-
-@* <div class="d-flex flex-wrap">
-@foreach (StudyGroup studyGroup in Model)
-{
-<div class="card m-2" style="width: 18rem;" id="@studyGroup.Id">
-<div class="card-body">
-<h5 class="card-title">Группа №@studyGroup.Id</h5>
-<p class="card-text">Набор: @studyGroup.Enrollment</p>
-<p class="card-text">Дни:
-@{
-string Days = "";
-foreach (ScheduleDay scheduleDay in studyGroup.ScheduleDays)
-{
-Days += scheduleDay.Name + " ";
-}
-
-if (string.IsNullOrEmpty(Days))
-{
-Days = "Дни неопределены";
-}
-}
-@Html.Raw(Days)
-</p>
-<p class="card-text">Дата начала: @studyGroup.StartDate.ToShortDateString()</p>
-<p class="card-text">Дата окончания: @(studyGroup.EndDate != null ?
-studyGroup.EndDate.Value.ToShortDateString() : "Не указана")</p>
-<p class="card-text">Цена: @studyGroup.Price</p>
-<p class="card-text">Длительность: @studyGroup.Duration</p>
-<p class="card-text">Город: @studyGroup.СityName</p>
-<p class="card-text">Форма обучения: @studyGroup.FormTraining</p>
-<button class="btn btn-danger delete-group" data-id="@studyGroup.Id">Удалить</button>
-<a class="btn btn-primary edit-group" asp-controller="StudyGroupEditor" asp-action="Group"
-asp-route-GroupId="@studyGroup.Id">Изменить</a>
-</div>
-</div>
-}
-</div> *@

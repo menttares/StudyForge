@@ -17,7 +17,7 @@ public class RegisterViewModel
 
     [Required(ErrorMessage = "Поле пароля обязательно для заполнения")]
     [DataType(DataType.Password)]
-    [RegularExpression(@"^[a-zA-z\d\@\+\\#!-]{5,20}$", ErrorMessage = "Пароль должен быть от 5 до 20 символов и содержать буквы, цифры и символы @, +, \\, #, !, -")]
+    [RegularExpression(@"^[a-zA-Z\d@+#\\!]{5,20}$", ErrorMessage = "Пароль должен быть от 5 до 20 символов и содержать буквы, цифры и символы @, +, \\, #, !, -")]
     public string Password { get; set; } = string.Empty;
     
     [Required(ErrorMessage = "Поле телефона обязательно для заполнения")]
@@ -29,7 +29,7 @@ public class RegisterViewModel
 
     // Номер лицензии
     [Required(ErrorMessage = "Поле номера лицензии обязательно для заполнения")]
-    [RegularExpression(@"^(01|02|03|04|05|06|07|08|09|10|11|12|13|14|15|16|17|18|19|20)\d{2}\d{6}\d{2}$", ErrorMessage = "Некорректный формат номера лицензии")]
+    [RegularExpression(@"^\d{2}\d{5,}$", ErrorMessage = "Некорректный формат номера лицензии")]
     public string LicenseNumber {get; set;} = string.Empty;
 
 }

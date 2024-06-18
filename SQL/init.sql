@@ -5,10 +5,10 @@ CREATE TYPE STATUS_ENUM AS ENUM('принято', 'отклонено', 'ожи�
 CREATE TABLE ACCOUNTS (
 	ID SERIAL PRIMARY KEY, -- ID профиля (рукописный ключ)
 	EMAIL VARCHAR(100) UNIQUE NOT NULL CHECK (EMAIL LIKE '%@%'), -- Почта (уникальная, не null, обязателен символ'@' в поле)
-	PASSWORD VARCHAR(20) NOT NULL CHECK (PASSWORD ~ '^[a-zA-Z\\d@+#\\!]{5,20}$'), -- Пароль (5-20 символов, без пробелов, только цифры, буквы, спецсимволы)
-	IS_ORGANIZATION BOOL DEFAULT False, -- Организация, true - является юридическим лицом, иначе физическое - false
+	PASSWORD VARCHAR(20) NOT NULL CHECK (PASSWORD ~ '^[a-zA-Z\d@+#\\!]{5,20}$'), -- Пароль (5-20 символов, без пробелов, только цифры, буквы, спецсимволы)
+	IS_ORGANIZATION BOOL DEFAULT FALSE, -- Организация, true - является юридическим лицом, иначе физическое - false
 	PHONE VARCHAR(60) UNIQUE NOT NULL CHECK (
-		PHONE ~ '^\\+375(29|33|44|25|17)\\d{3}\\d{2}\\d{2}$'
+		PHONE ~ '^(\+375)(29|33|44|25|17)(\d{3})(\d{2})(\d{2})$'
 	), -- Телефон, но только белорусский
 	NAME VARCHAR(100) NOT NULL CHECK (
 		LENGTH(NAME) >= 3
@@ -16,7 +16,7 @@ CREATE TABLE ACCOUNTS (
 	), -- Имя человека или организации (не null, минимум 3 символа и максимум 60)
 	ABOUT_ME VARCHAR(1000), -- О себе (необязательное поле)
 	LICENSE_NUMBER VARCHAR(100) UNIQUE NOT NULL CHECK (
-		LICENSE_NUMBER ~ '^(01|02|03|04|05|06|07|08|09|10|11|12|13|14|15|16|17|18|19|20)\\d{2}\\d{6}\\d{2}$'
+		LICENSE_NUMBER ~ '^\d{2}\d{5,}$'
 	), -- Номер лицензии РБ (Обязательное поле)
 	CONFIRMATION BOOL DEFAULT FALSE, -- Поле подтверждения профиля администратором (необязательное поле, т.к. это поле будет проверено в будущем администратором)
 	CREATED_AT TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Дата создания профиля (автоматически заполняется)
@@ -30,7 +30,9 @@ CREATE TABLE ADMINISTRATORS (
 		AND LENGTH(NAME) < 60
 	),
 	EMAIL VARCHAR(100) UNIQUE NOT NULL CHECK (EMAIL LIKE '%@%'),
-	PASSWORD VARCHAR(20) NOT NULL CHECK (PASSWORD ~ '^(?=.*[0-9])(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z!@#$%^&*]{6,20}$')
+	PASSWORD VARCHAR(20) NOT NULL CHECK (
+		PASSWORD ~ '^(?=.*[0-9])(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z!@#$%^&*]{6,20}$'
+	)
 );
 
 -- Вставка данных в таблицу Administrators
@@ -60,7 +62,7 @@ VALUES
 	('Музыка'),
 	('Здоровье и фитнес'),
 	('Стиль жизни'),
-	('Учебные и академические дисциплины');
+	('дисциплины');
 
 -- Таблица Sections
 CREATE TABLE SECTIONS (
@@ -137,10 +139,22 @@ CREATE TABLE COURSES (
 	DESCRIPTION VARCHAR(1000), -- Описание курса
 	CREATED_AT TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Дата создания (автоматически заполняется)
 	COURSE_CLOSED BOOL DEFAULT FALSE, -- Закрыт ли курс организатором?
-	TARGET_AUDIENCE VARCHAR(500), -- Для кого этот курс
-	PREREQUISITES VARCHAR(500), -- Требования набора
-	LEARNING_OUTCOMES VARCHAR(1000), -- На курсе вы научитесь
 	DURATION_HOURS INTEGER CHECK (DURATION_HOURS >= 0) -- Длительность в часах
+);
+
+CREATE TABLE BANNEDCOURSES (
+	-- ID записи о забаненном курсе
+	ID SERIAL PRIMARY KEY,
+	-- ID забаненного курса
+	ID_COURSE INTEGER REFERENCES COURSES (ID) ON DELETE CASCADE,
+	-- ID администратора, который забанил курс
+	ID_ADMINISTRATOR INTEGER REFERENCES ACCOUNTS (ID) ON DELETE SET NULL,
+	CAUSE VARCHAR(500) NOT NULL CHECK (
+		LENGTH(CAUSE) >= 3
+		AND LENGTH(CAUSE) <= 500
+	),
+	-- Дата и время забана курса
+	BANNED_AT TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Таблица FormsTraining
@@ -163,7 +177,7 @@ VALUES
 -- Таблица Cities
 CREATE TABLE CITIES (
 	ID SERIAL PRIMARY KEY,
-	NAME VARCHAR(100)  UNIQUE NOT NULL CHECK (
+	NAME VARCHAR(100) UNIQUE NOT NULL CHECK (
 		LENGTH(NAME) >= 3
 		AND LENGTH(NAME) < 60
 	)
@@ -233,7 +247,7 @@ CREATE TABLE APPLICATIONS (
 	), -- Фамилия
 	SURNAME VARCHAR(60) NULL CHECK (LENGTH(SURNAME) < 60), -- Отчество
 	PHONE VARCHAR(60) NOT NULL CHECK (
-		PHONE ~ '^\\+375(29|33|44|25|17)\\d{3}\\d{2}\\d{2}$'
+		PHONE ~ '^(\+375)(29|33|44|25|17)(\d{3})(\d{2})(\d{2})$'
 	), -- Телефон
 	BIRTHDAY DATE NOT NULL CHECK (
 		EXTRACT(
@@ -255,7 +269,10 @@ CREATE TABLE APPLICATIONS (
 -- Таблица ProgramsCourse
 CREATE TABLE PROGRAMSCOURSE (
 	ID SERIAL PRIMARY KEY, -- ID 
-	NAME VARCHAR(100) NOT NULL CHECK (LENGTH(NAME) >= 3 and LENGTH(NAME) <= 100), -- Название курса
+	NAME VARCHAR(100) NOT NULL CHECK (
+		LENGTH(NAME) >= 3
+		AND LENGTH(NAME) <= 100
+	), -- Название курса
 	DESCRIPTION VARCHAR(1000), -- Описание курса
 	ID_COURSE INTEGER REFERENCES COURSES (ID) ON DELETE CASCADE -- ID курса
 );
@@ -287,22 +304,16 @@ CREATE TABLE TIMESLOT_STUDYGROUPS (
 	ID_STUDYGROUP INTEGER REFERENCES STUDYGROUPS (ID) ON DELETE CASCADE -- Группа обучения
 );
 
-
-
 -- функции
-
-CREATE OR REPLACE FUNCTION GetAllDays()
-RETURNS SETOF Days
-AS $$
+CREATE
+OR REPLACE FUNCTION GETALLDAYS () RETURNS SETOF DAYS AS $$
 BEGIN
     RETURN QUERY SELECT * FROM Days;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE PLPGSQL;
 
-
-CREATE OR REPLACE FUNCTION update_schedule_days(group_id INTEGER, day_ids INTEGER[])
-RETURNS BOOLEAN AS
-$$
+CREATE
+OR REPLACE FUNCTION UPDATE_SCHEDULE_DAYS (GROUP_ID INTEGER, DAY_IDS INTEGER[]) RETURNS BOOLEAN AS $$
 DECLARE
     i INTEGER;
 BEGIN
@@ -330,12 +341,10 @@ EXCEPTION
     WHEN others THEN
         RETURN FALSE; -- Возвращаем false при ошибке
 END;
-$$
-LANGUAGE PLPGSQL;
+$$ LANGUAGE PLPGSQL;
 
-CREATE OR REPLACE FUNCTION get_schedule_days(group_id INTEGER)
-RETURNS JSON AS
-$$
+CREATE
+OR REPLACE FUNCTION GET_SCHEDULE_DAYS (GROUP_ID INTEGER) RETURNS JSON AS $$
 DECLARE
     schedule_days JSON := '[]'::JSON;
 BEGIN
@@ -353,13 +362,10 @@ EXCEPTION
     WHEN others THEN
         RETURN '[]'::JSON;
 END;
-$$
-LANGUAGE PLPGSQL;
+$$ LANGUAGE PLPGSQL;
 
-
-CREATE OR REPLACE FUNCTION count_accepted_applications(p_group_id INTEGER)
-RETURNS INTEGER AS
-$$
+CREATE
+OR REPLACE FUNCTION COUNT_ACCEPTED_APPLICATIONS (P_GROUP_ID INTEGER) RETURNS INTEGER AS $$
 DECLARE
     accepted_count INTEGER;
 BEGIN
@@ -375,273 +381,239 @@ EXCEPTION
     WHEN others THEN
         RETURN -1;
 END;
-$$
-LANGUAGE PLPGSQL;
-
+$$ LANGUAGE PLPGSQL;
 
 -- представления
-CREATE VIEW AccountDetails AS
-SELECT 
-    a.id AS account_id,
-    a.email,
-    a.password,
-    a.is_organization,
-    a.phone,
-    a.name,
-    a.about_me,
-    a.license_number,
-    a.confirmation,
-    a.created_at,
-    CASE 
-        WHEN a.is_organization THEN 'Организация' 
-        ELSE 'Физическое лицо' 
-    END AS account_type,
-    (
-        SELECT COUNT(*)
-        FROM Courses c
-        WHERE c.id_account = a.id
-    ) AS course_count
-FROM 
-    Accounts a;
-
-
-CREATE VIEW ApplicationsPerCourse AS
+CREATE VIEW ACCOUNTDETAILS AS
 SELECT
-    c.id AS course_id,
-    c.name AS course_name,
-    COUNT(a.id) AS application_count,
-	c.id_Account AS creator_id
+	A.ID AS ACCOUNT_ID,
+	A.EMAIL,
+	A.PASSWORD,
+	A.IS_ORGANIZATION,
+	A.PHONE,
+	A.NAME,
+	A.ABOUT_ME,
+	A.LICENSE_NUMBER,
+	A.CONFIRMATION,
+	A.CREATED_AT,
+	CASE
+		WHEN A.IS_ORGANIZATION THEN 'Организация'
+		ELSE 'Физическое лицо'
+	END AS ACCOUNT_TYPE,
+	(
+		SELECT
+			COUNT(*)
+		FROM
+			COURSES C
+		WHERE
+			C.ID_ACCOUNT = A.ID
+	) AS COURSE_COUNT
 FROM
-    Courses c
-LEFT JOIN
-    StudyGroups sg ON c.id = sg.id_Course
-LEFT JOIN
-    Applications a ON sg.id = a.id_StudyGroup
+	ACCOUNTS A;
+
+CREATE VIEW APPLICATIONSPERCOURSE AS
+SELECT
+	C.ID AS COURSE_ID,
+	C.NAME AS COURSE_NAME,
+	COUNT(A.ID) AS APPLICATION_COUNT,
+	C.ID_ACCOUNT AS CREATOR_ID
+FROM
+	COURSES C
+	LEFT JOIN STUDYGROUPS SG ON C.ID = SG.ID_COURSE
+	LEFT JOIN APPLICATIONS A ON SG.ID = A.ID_STUDYGROUP
 GROUP BY
-    c.id,
-    c.name;
+	C.ID,
+	C.NAME;
 
-CREATE VIEW ApplicationDetailsView AS
-SELECT 
-    a.id AS application_id,
-    sg.id AS group_id,
-    c.id AS course_id,
-    c.name AS course_name,
-    ft.id AS training_form_id,
-    ft.name AS training_form_name,
-    city.id AS city_id,
-    city.name AS city_name,
-    sa.id AS application_status_id,
-    sa.name AS application_status_name,
-    a.email AS applicant_email,
-    acc.id AS creator_profile_id,
-    acc.email AS creator_email,
-    acc.phone AS creator_phone
-FROM 
-    applications a
-JOIN 
-    StudyGroups sg ON a.id_StudyGroup = sg.id
-JOIN 
-    Courses c ON sg.id_course = c.id
-JOIN 
-    FormsTraining ft ON sg.id_FormsTraining = ft.id
-JOIN 
-    Cities city ON sg.id_city = city.id
-JOIN 
-    StatusApplications sa ON a.id_StatusApplications = sa.id
-JOIN 
-    Accounts acc ON c.id_Account = acc.id;
-
-CREATE VIEW v_applications_details AS
+CREATE VIEW APPLICATIONDETAILSVIEW AS
 SELECT
-    a.id AS application_id,
-    a.firstName,
-    a.lastName,
-    a.surname,
-    a.phone,
-    a.birthday,
-    a.email,
-    a.id_StatusApplications,
-    a.created_at,
-    sg.id AS studygroup_id,
-    sg.enrollment,
-    sg.date_start,
-    sg.price,
-    sg.duration,
-    ft.name AS form_training_name,
-    c.name AS city_name,
-	co.id AS course_id,
-	co.name
+	A.ID AS APPLICATION_ID,
+	SG.ID AS GROUP_ID,
+	C.ID AS COURSE_ID,
+	C.NAME AS COURSE_NAME,
+	FT.ID AS TRAINING_FORM_ID,
+	FT.NAME AS TRAINING_FORM_NAME,
+	CITY.ID AS CITY_ID,
+	CITY.NAME AS CITY_NAME,
+	SA.ID AS APPLICATION_STATUS_ID,
+	SA.NAME AS APPLICATION_STATUS_NAME,
+	A.EMAIL AS APPLICANT_EMAIL,
+	ACC.ID AS CREATOR_PROFILE_ID,
+	ACC.EMAIL AS CREATOR_EMAIL,
+	ACC.PHONE AS CREATOR_PHONE
 FROM
-    applications a
-JOIN
-    studygroups sg ON a.id_StudyGroup = sg.id
-LEFT JOIN
-    FormsTraining ft ON sg.id_FormsTraining = ft.id
-LEFT JOIN
-    Cities c ON sg.id_city = c.id
-JOIN
-    courses co ON sg.id_course = co.id;
+	APPLICATIONS A
+	JOIN STUDYGROUPS SG ON A.ID_STUDYGROUP = SG.ID
+	JOIN COURSES C ON SG.ID_COURSE = C.ID
+	JOIN FORMSTRAINING FT ON SG.ID_FORMSTRAINING = FT.ID
+	JOIN CITIES CITY ON SG.ID_CITY = CITY.ID
+	JOIN STATUSAPPLICATIONS SA ON A.ID_STATUSAPPLICATIONS = SA.ID
+	JOIN ACCOUNTS ACC ON C.ID_ACCOUNT = ACC.ID;
 
-
-CREATE OR REPLACE VIEW CourseAndGroupView AS
+CREATE VIEW V_APPLICATIONS_DETAILS AS
 SELECT
-    c.id AS course_id,
-    c.name AS course_name,
-    c.description AS course_description,
-    sec.id AS section_id,
-    sec.name AS section_name,
-    cr.name AS creator_name,
-    cr.email AS creator_email,
-    cr.phone AS creator_phone,
-    cr.is_organization AS creator_is_organization,
-    sg.id AS group_id,
-    sg.enrollment AS group_enrollment,
-    sg.date_start AS group_date_start,
-    sg.price AS group_price,
-    sg.duration AS group_duration,
-    count_accepted_applications(sg.id) AS accepted_applications_count,
-    get_schedule_days(sg.id) AS schedule_days,
-    c.course_closed AS course_closed,
-    ft.name AS form_training_name,
-    city.name AS city_name
+	A.ID AS APPLICATION_ID,
+	A.FIRSTNAME,
+	A.LASTNAME,
+	A.SURNAME,
+	A.PHONE,
+	A.BIRTHDAY,
+	A.EMAIL,
+	A.ID_STATUSAPPLICATIONS,
+	A.CREATED_AT,
+	SG.ID AS STUDYGROUP_ID,
+	SG.ENROLLMENT,
+	SG.DATE_START,
+	SG.PRICE,
+	SG.DURATION,
+	FT.NAME AS FORM_TRAINING_NAME,
+	C.NAME AS CITY_NAME,
+	CO.ID AS COURSE_ID,
+	CO.NAME
 FROM
-    courses c
-JOIN
-    studygroups sg ON c.id = sg.id_course
-JOIN
-    accounts cr ON c.id_Account = cr.id
-JOIN 
-    Sections sec ON sec.id = c.id_Section
-JOIN
-    FormsTraining ft ON sg.id_FormsTraining = ft.id
-JOIN
-    Cities city ON sg.id_city = city.id;
+	APPLICATIONS A
+	JOIN STUDYGROUPS SG ON A.ID_STUDYGROUP = SG.ID
+	LEFT JOIN FORMSTRAINING FT ON SG.ID_FORMSTRAINING = FT.ID
+	LEFT JOIN CITIES C ON SG.ID_CITY = C.ID
+	JOIN COURSES CO ON SG.ID_COURSE = CO.ID;
 
-CREATE VIEW CoursesPerSection AS
+CREATE OR REPLACE VIEW COURSEANDGROUPVIEW AS
 SELECT
-    s.name AS section_name,
-    COUNT(c.id) AS course_count
+	C.ID AS COURSE_ID,
+	C.NAME AS COURSE_NAME,
+	C.DESCRIPTION AS COURSE_DESCRIPTION,
+	SEC.ID AS SECTION_ID,
+	SEC.NAME AS SECTION_NAME,
+	CR.NAME AS CREATOR_NAME,
+	CR.EMAIL AS CREATOR_EMAIL,
+	CR.PHONE AS CREATOR_PHONE,
+	CR.IS_ORGANIZATION AS CREATOR_IS_ORGANIZATION,
+	SG.ID AS GROUP_ID,
+	SG.ENROLLMENT AS GROUP_ENROLLMENT,
+	SG.DATE_START AS GROUP_DATE_START,
+	SG.PRICE AS GROUP_PRICE,
+	SG.DURATION AS GROUP_DURATION,
+	COUNT_ACCEPTED_APPLICATIONS (SG.ID) AS ACCEPTED_APPLICATIONS_COUNT,
+	GET_SCHEDULE_DAYS (SG.ID) AS SCHEDULE_DAYS,
+	C.COURSE_CLOSED AS COURSE_CLOSED,
+	FT.NAME AS FORM_TRAINING_NAME,
+	CITY.NAME AS CITY_NAME
 FROM
-    Sections s
-LEFT JOIN
-    Courses c ON s.id = c.id_Section
+	COURSES C
+	JOIN STUDYGROUPS SG ON C.ID = SG.ID_COURSE
+	JOIN ACCOUNTS CR ON C.ID_ACCOUNT = CR.ID
+	JOIN SECTIONS SEC ON SEC.ID = C.ID_SECTION
+	JOIN FORMSTRAINING FT ON SG.ID_FORMSTRAINING = FT.ID
+	JOIN CITIES CITY ON SG.ID_CITY = CITY.ID;
+
+CREATE VIEW COURSESPERSECTION AS
+SELECT
+	S.NAME AS SECTION_NAME,
+	COUNT(C.ID) AS COURSE_COUNT
+FROM
+	SECTIONS S
+	LEFT JOIN COURSES C ON S.ID = C.ID_SECTION
 GROUP BY
-    s.name;
+	S.NAME;
 
-
-CREATE OR REPLACE VIEW application_details_view AS
-SELECT 
-    a.id AS ApplicationId,
-    a.id_StudyGroup AS GroupId,
-    sg.id_Course AS CourseId,
-    c.name AS CourseName,
-    sg.id_FormsTraining AS TrainingFormId,
-    tf.name AS TrainingFormName,
-    sg.id_City AS CityId,
-    ct.name AS CityName,
-    a.id_StatusApplications AS ApplicationStatusId,
-    sa.name AS ApplicationStatusName,
-    a.email AS ApplicantEmail,
-    u.id AS CreatorProfileId,
-    u.email AS CreatorEmail,
-    u.phone AS CreatorPhone
-FROM 
-    applications a
-JOIN 
-    StudyGroups sg ON a.id_StudyGroup = sg.id
-JOIN 
-    Courses c ON sg.id_Course = c.id
-JOIN 
-    FormsTraining tf ON sg.id_FormsTraining = tf.id
-JOIN 
-    Cities ct ON sg.id_City = ct.id
-JOIN 
-    StatusApplications sa ON a.id_StatusApplications = sa.id
-JOIN 
-    Accounts u ON c.id_Account = u.id;
-
-select * from application_details_view;
-
-CREATE OR REPLACE VIEW StudyGroupsView AS
+CREATE OR REPLACE VIEW APPLICATION_DETAILS_VIEW AS
 SELECT
-    sg.id,
-    sg.enrollment,
-    sg.date_start,
-    sg.price,
-    sg.id_FormsTraining,
-    sg.id_city,
-    sg.duration,
-    sg.id_course,
-    count_accepted_applications(sg.id) AS accepted_applications_count,
-    get_schedule_days(sg.id) AS schedule_days,
-	ft.name AS form_training_name,
-	city.name AS city_name
+	A.ID AS APPLICATIONID,
+	A.ID_STUDYGROUP AS GROUPID,
+	SG.ID_COURSE AS COURSEID,
+	C.NAME AS COURSENAME,
+	SG.ID_FORMSTRAINING AS TRAININGFORMID,
+	TF.NAME AS TRAININGFORMNAME,
+	SG.ID_CITY AS CITYID,
+	CT.NAME AS CITYNAME,
+	A.ID_STATUSAPPLICATIONS AS APPLICATIONSTATUSID,
+	SA.NAME AS APPLICATIONSTATUSNAME,
+	A.EMAIL AS APPLICANTEMAIL,
+	U.ID AS CREATORPROFILEID,
+	U.EMAIL AS CREATOREMAIL,
+	U.PHONE AS CREATORPHONE
 FROM
-    studygroups sg
-JOIN
-    FormsTraining ft ON sg.id_FormsTraining = ft.id
-JOIN
-    Cities city ON sg.id_city = city.id
-JOIN
-    courses c ON sg.id_course = c.id;
+	APPLICATIONS A
+	JOIN STUDYGROUPS SG ON A.ID_STUDYGROUP = SG.ID
+	JOIN COURSES C ON SG.ID_COURSE = C.ID
+	JOIN FORMSTRAINING TF ON SG.ID_FORMSTRAINING = TF.ID
+	JOIN CITIES CT ON SG.ID_CITY = CT.ID
+	JOIN STATUSAPPLICATIONS SA ON A.ID_STATUSAPPLICATIONS = SA.ID
+	JOIN ACCOUNTS U ON C.ID_ACCOUNT = U.ID;
 
-
-
-CREATE VIEW CategorySections AS
 SELECT
-    c.id AS categoryId,
-    c.name AS category,
-    s.id AS sectionId,
-    s.name AS subsection
+	*
 FROM
-    CATEGORIES c
-JOIN
-    Sections s ON c.id = s.id_category;
+	APPLICATION_DETAILS_VIEW;
 
-select * from CategorySections;
-
-
-CREATE OR REPLACE VIEW CourseView AS
+CREATE OR REPLACE VIEW STUDYGROUPSVIEW AS
 SELECT
-    c.id AS categoryId,
-    c.name AS categoryName,
-    s.id AS sectionId,
-    s.name AS sectionName,
-    cr.id AS courseId,
-    cr.name AS courseName,
-    cr.description AS courseDescription,
-    cr.created_at AS courseCreatedAt,
-    cr.course_closed AS courseClosed,
-	ac.id AS accountId
+	SG.ID,
+	SG.ENROLLMENT,
+	SG.DATE_START,
+	SG.PRICE,
+	SG.ID_FORMSTRAINING,
+	SG.ID_CITY,
+	SG.DURATION,
+	SG.ID_COURSE,
+	COUNT_ACCEPTED_APPLICATIONS (SG.ID) AS ACCEPTED_APPLICATIONS_COUNT,
+	GET_SCHEDULE_DAYS (SG.ID) AS SCHEDULE_DAYS,
+	FT.NAME AS FORM_TRAINING_NAME,
+	CITY.NAME AS CITY_NAME
 FROM
-    CATEGORIES c
-JOIN
-    Sections s ON c.id = s.id_Category
-JOIN
-    Courses cr ON s.id = cr.id_Section
-JOIN
-    Accounts ac ON ac.id = cr.id_Account;
+	STUDYGROUPS SG
+	JOIN FORMSTRAINING FT ON SG.ID_FORMSTRAINING = FT.ID
+	JOIN CITIES CITY ON SG.ID_CITY = CITY.ID
+	JOIN COURSES C ON SG.ID_COURSE = C.ID;
 
-
-CREATE VIEW UserProfileInfo AS
+CREATE VIEW CATEGORYSECTIONS AS
 SELECT
-    a.id AS account_id,
-    a.email,
-    a.phone,
-    a.name,
-    a.about_me,
-    a.license_number,
-    a.confirmation,
-    a.created_at AS account_created_at
+	C.ID AS CATEGORYID,
+	C.NAME AS CATEGORY,
+	S.ID AS SECTIONID,
+	S.NAME AS SUBSECTION
 FROM
-    Accounts a;
+	CATEGORIES C
+	JOIN SECTIONS S ON C.ID = S.ID_CATEGORY;
 
+SELECT
+	*
+FROM
+	CATEGORYSECTIONS;
 
+CREATE OR REPLACE VIEW COURSEVIEW AS
+SELECT
+	C.ID AS CATEGORYID,
+	C.NAME AS CATEGORYNAME,
+	S.ID AS SECTIONID,
+	S.NAME AS SECTIONNAME,
+	CR.ID AS COURSEID,
+	CR.NAME AS COURSENAME,
+	CR.DESCRIPTION AS COURSEDESCRIPTION,
+	CR.CREATED_AT AS COURSECREATEDAT,
+	CR.COURSE_CLOSED AS COURSECLOSED,
+	AC.ID AS ACCOUNTID
+FROM
+	CATEGORIES C
+	JOIN SECTIONS S ON C.ID = S.ID_CATEGORY
+	JOIN COURSES CR ON S.ID = CR.ID_SECTION
+	JOIN ACCOUNTS AC ON AC.ID = CR.ID_ACCOUNT;
 
-CREATE OR REPLACE FUNCTION get_user_profile_info(p_profile_id INTEGER)
-RETURNS UserProfileInfo AS
-$$
+CREATE VIEW USERPROFILEINFO AS
+SELECT
+	A.ID AS ACCOUNT_ID,
+	A.EMAIL,
+	A.PHONE,
+	A.NAME,
+	A.ABOUT_ME,
+	A.LICENSE_NUMBER,
+	A.CONFIRMATION,
+	A.CREATED_AT AS ACCOUNT_CREATED_AT
+FROM
+	ACCOUNTS A;
+
+CREATE
+OR REPLACE FUNCTION GET_USER_PROFILE_INFO (P_PROFILE_ID INTEGER) RETURNS USERPROFILEINFO AS $$
 DECLARE
     user_profile UserProfileInfo;
 BEGIN
@@ -651,19 +623,16 @@ BEGIN
 
     RETURN user_profile;
 END;
-$$
-LANGUAGE PLPGSQL;
+$$ LANGUAGE PLPGSQL;
 
-
-CREATE OR REPLACE FUNCTION update_user_profile(
-    p_user_id INTEGER,
-    p_name VARCHAR,
-    p_about_me VARCHAR,
-    p_email VARCHAR,
-    p_phone VARCHAR
-) 
-RETURNS BOOLEAN AS
-$$
+CREATE
+OR REPLACE FUNCTION UPDATE_USER_PROFILE (
+	P_USER_ID INTEGER,
+	P_NAME VARCHAR,
+	P_ABOUT_ME VARCHAR,
+	P_EMAIL VARCHAR,
+	P_PHONE VARCHAR
+) RETURNS BOOLEAN AS $$
 BEGIN
     -- Обновляем информацию о пользователе
     UPDATE Accounts
@@ -686,12 +655,14 @@ EXCEPTION
         -- Обработка исключения: возвращаем FALSE в случае ошибки
         RETURN FALSE;
 END;
-$$
-LANGUAGE PLPGSQL;
+$$ LANGUAGE PLPGSQL;
 
-
-CREATE OR REPLACE FUNCTION login_admin(p_login VARCHAR, p_password VARCHAR, OUT result_id INTEGER)
-AS $$
+CREATE
+OR REPLACE FUNCTION LOGIN_ADMIN (
+	P_LOGIN VARCHAR,
+	P_PASSWORD VARCHAR,
+	OUT RESULT_ID INTEGER
+) AS $$
 DECLARE
     admin_id INTEGER;
     stored_password VARCHAR;
@@ -724,17 +695,15 @@ EXCEPTION
 END;
 $$ LANGUAGE PLPGSQL;
 
-
-CREATE OR REPLACE FUNCTION register_profile(
-    p_name VARCHAR,
-    p_license_number VARCHAR,
-    p_email VARCHAR,
-    p_password VARCHAR,
-    p_is_organization BOOL,
-    p_phone VARCHAR
-) 
-RETURNS INTEGER
-AS $$
+CREATE
+OR REPLACE FUNCTION REGISTER_PROFILE (
+	P_NAME VARCHAR,
+	P_LICENSE_NUMBER VARCHAR,
+	P_EMAIL VARCHAR,
+	P_PASSWORD VARCHAR,
+	P_IS_ORGANIZATION BOOL,
+	P_PHONE VARCHAR
+) RETURNS INTEGER AS $$
 DECLARE
     result_id INTEGER;
 BEGIN
@@ -764,17 +733,15 @@ BEGIN
     -- Возвращаем id нового пользователя
     RETURN result_id;
     
-EXCEPTION
-    WHEN OTHERS THEN
+--EXCEPTION
+    --WHEN OTHERS THEN
         -- Возвращаем код ошибки
-        RETURN 0;
+        --RETURN 0;
 END;
 $$ LANGUAGE PLPGSQL;
 
-
-CREATE OR REPLACE FUNCTION login_user(p_email VARCHAR, p_password VARCHAR) 
-RETURNS INTEGER
-AS $$
+CREATE
+OR REPLACE FUNCTION LOGIN_USER (P_EMAIL VARCHAR, P_PASSWORD VARCHAR) RETURNS INTEGER AS $$
 DECLARE
     user_id INTEGER;
     stored_password VARCHAR;
@@ -803,10 +770,8 @@ EXCEPTION
 END;
 $$ LANGUAGE PLPGSQL;
 
-
-CREATE OR REPLACE FUNCTION GetApplicationDetails(applicationId INT)
-RETURNS setof ApplicationDetailsView
-AS $$
+CREATE
+OR REPLACE FUNCTION GETAPPLICATIONDETAILS (APPLICATIONID INT) RETURNS SETOF APPLICATIONDETAILSVIEW AS $$
 BEGIN
     RETURN QUERY 
     SELECT *
@@ -815,12 +780,10 @@ BEGIN
     WHERE 
         ad.application_id = applicationId;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE PLPGSQL;
 
-CREATE OR REPLACE FUNCTION check_account_confirmation(
-    p_user_id INTEGER
-) 
-RETURNS BOOLEAN AS $$
+CREATE
+OR REPLACE FUNCTION CHECK_ACCOUNT_CONFIRMATION (P_USER_ID INTEGER) RETURNS BOOLEAN AS $$
 DECLARE
     is_confirmed BOOLEAN;
 BEGIN
@@ -840,9 +803,8 @@ EXCEPTION
 END;
 $$ LANGUAGE PLPGSQL;
 
-
-CREATE OR REPLACE FUNCTION Get_Courses_PerSection()
-RETURNS setof CoursesPerSection AS $$
+CREATE
+OR REPLACE FUNCTION GET_COURSES_PERSECTION () RETURNS SETOF COURSESPERSECTION AS $$
 BEGIN
     RETURN QUERY
     SELECT
@@ -850,11 +812,10 @@ BEGIN
     FROM
         CoursesPerSection;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE PLPGSQL;
 
-
-CREATE OR REPLACE FUNCTION is_course_banned(p_course_id INTEGER)
-RETURNS BOOLEAN AS $$
+CREATE
+OR REPLACE FUNCTION IS_COURSE_BANNED (P_COURSE_ID INTEGER) RETURNS BOOLEAN AS $$
 DECLARE
     v_exists BOOLEAN;
 BEGIN
@@ -868,19 +829,19 @@ BEGIN
     -- Возвращаем результат
     RETURN v_exists;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE PLPGSQL;
 
-CREATE OR REPLACE FUNCTION add_ban(
-    p_course_id INTEGER,
-    p_admin_id INTEGER,
-    p_reason TEXT
-)
-RETURNS INTEGER AS $$
+CREATE
+OR REPLACE FUNCTION ADD_BAN (
+	P_COURSE_ID INTEGER,
+	P_ADMIN_ID INTEGER,
+	P_REASON TEXT
+) RETURNS INTEGER AS $$
 DECLARE
     v_ban_id INTEGER;
 BEGIN
     -- Вставляем новую запись в таблицу BannedCourses
-    INSERT INTO BannedCourses (id_Course, id_Administrator, cause)
+    INSERT INTO BANNEDCOURSES (id_Course, id_Administrator, cause)
     VALUES (p_course_id, p_admin_id, p_reason)
     RETURNING id INTO v_ban_id;
 
@@ -891,28 +852,25 @@ EXCEPTION
         -- В случае ошибки возвращаем 0
         RETURN 0;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE PLPGSQL;
 
-
-CREATE OR REPLACE FUNCTION delete_ban_by_course_id(p_course_id INTEGER)
-RETURNS BOOLEAN AS $$
+CREATE
+OR REPLACE FUNCTION DELETE_BAN_BY_COURSE_ID (P_COURSE_ID INTEGER) RETURNS BOOLEAN AS $$
 BEGIN
-    DELETE FROM BannedCourses WHERE id_Course = p_course_id;
+    DELETE FROM BANNEDCOURSES WHERE id_Course = p_course_id;
     IF FOUND THEN
         RETURN TRUE;
     ELSE
         RETURN FALSE;
     END IF;
-EXCEPTION
-    WHEN OTHERS THEN
-        RETURN FALSE;
+--EXCEPTION
+    --WHEN OTHERS THEN
+        --RETURN FALSE;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE PLPGSQL;
 
-
-CREATE OR REPLACE FUNCTION can_edit_course(profile_id INTEGER, course_id INTEGER)
-RETURNS BOOLEAN AS
-$$
+CREATE
+OR REPLACE FUNCTION CAN_EDIT_COURSE (PROFILE_ID INTEGER, COURSE_ID INTEGER) RETURNS BOOLEAN AS $$
 DECLARE
     is_creator BOOLEAN := FALSE;
 BEGIN
@@ -929,38 +887,31 @@ BEGIN
     -- Возвращаем результат проверки
     RETURN is_creator;
 END;
-$$
-LANGUAGE PLPGSQL;
+$$ LANGUAGE PLPGSQL;
 
-
-
-CREATE OR REPLACE FUNCTION get_categories_with_subsections()
-RETURNS TABLE (category_name VARCHAR, subsections JSONB) AS
-$$
+CREATE
+OR REPLACE FUNCTION GET_CATEGORIES_WITH_SUBSECTIONS () RETURNS TABLE (CATEGORY_NAME VARCHAR, SUBSECTIONS JSONB) AS $$
 BEGIN
     RETURN QUERY
     SELECT
         c.name AS category_name,
         jsonb_agg(jsonb_build_object('id', s.id, 'name', s.name)) AS subsections
     FROM
-        Сategories c
+        categories c
     LEFT JOIN
         Sections s ON c.id = s.id_category
     GROUP BY
         c.id, c.name;
 END;
-$$
-LANGUAGE PLPGSQL;
+$$ LANGUAGE PLPGSQL;
 
-
-CREATE OR REPLACE FUNCTION create_course(
-    p_profile_id INTEGER,
-    p_course_name VARCHAR,
-    p_section_id INTEGER,
-    p_description VARCHAR
-)
-RETURNS INTEGER AS
-$$
+CREATE
+OR REPLACE FUNCTION CREATE_COURSE (
+	P_PROFILE_ID INTEGER,
+	P_COURSE_NAME VARCHAR,
+	P_SECTION_ID INTEGER,
+	P_DESCRIPTION VARCHAR
+) RETURNS INTEGER AS $$
 DECLARE
     inserted_id INTEGER;
 BEGIN
@@ -987,19 +938,16 @@ EXCEPTION
         -- Если произошла ошибка, возвращаем 0
         RETURN 0;
 END;
-$$
-LANGUAGE PLPGSQL;
+$$ LANGUAGE PLPGSQL;
 
-
-CREATE OR REPLACE FUNCTION update_course(
-    p_course_id INTEGER,
-    p_course_name VARCHAR,
-    p_section_id INTEGER,
-    p_description VARCHAR,
-    p_course_closed BOOLEAN
-)
-RETURNS BOOLEAN AS
-$$
+CREATE
+OR REPLACE FUNCTION UPDATE_COURSE (
+	P_COURSE_ID INTEGER,
+	P_COURSE_NAME VARCHAR,
+	P_SECTION_ID INTEGER,
+	P_DESCRIPTION VARCHAR,
+	P_COURSE_CLOSED BOOLEAN
+) RETURNS BOOLEAN AS $$
 BEGIN
     -- Проверяем, существует ли курс с указанным ID
     IF NOT EXISTS (SELECT 1 FROM Courses WHERE id = p_course_id) THEN
@@ -1029,28 +977,30 @@ EXCEPTION
         -- Если произошла ошибка, возвращаем FALSE
         RETURN FALSE;
 END;
-$$
-LANGUAGE PLPGSQL;
+$$ LANGUAGE PLPGSQL;
 
-
-CREATE OR REPLACE FUNCTION get_course_info(course_id INTEGER)
-RETURNS CourseView AS
-$$
+CREATE
+OR REPLACE FUNCTION GET_COURSE_INFO (COURSE_ID INTEGER) RETURNS COURSEVIEW AS $$
 DECLARE
     course_info CourseView;
 BEGIN
     SELECT * INTO course_info FROM CourseView WHERE courseid = get_course_info.course_id;
     RETURN course_info;
 END;
-$$
-LANGUAGE PLPGSQL;
+$$ LANGUAGE PLPGSQL;
 
-select * from CourseView;
-select * from get_course_info(10);
+SELECT
+	*
+FROM
+	COURSEVIEW;
 
-CREATE OR REPLACE FUNCTION get_courses_by_profile(profile_id INTEGER)
-RETURNS SETOF CourseView AS
-$$
+SELECT
+	*
+FROM
+	GET_COURSE_INFO (10);
+
+CREATE
+OR REPLACE FUNCTION GET_COURSES_BY_PROFILE (PROFILE_ID INTEGER) RETURNS SETOF COURSEVIEW AS $$
 DECLARE
     profile_courses CourseView;
 BEGIN
@@ -1061,38 +1011,31 @@ BEGIN
     END LOOP;
     RETURN;
 END;
-$$
-LANGUAGE PLPGSQL;
+$$ LANGUAGE PLPGSQL;
 
-
-CREATE OR REPLACE PROCEDURE DeleteCourse(courseId INT)
-AS $$
+CREATE
+OR REPLACE PROCEDURE DELETECOURSE (COURSEID INT) AS $$
 BEGIN
     DELETE FROM Courses WHERE id = courseId;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE PLPGSQL;
 
-
-
-
-CREATE OR REPLACE FUNCTION create_study_group(
-    p_enrollment INTEGER,
-    p_date_start DATE,
-    p_date_end DATE,
-    p_price NUMERIC(10, 2),
-    p_id_FormsTraining INTEGER,
-    p_id_city INTEGER,
-    p_duration INTEGER,
-    p_id_course INTEGER
-) 
-RETURNS INTEGER AS
-$$
+CREATE
+OR REPLACE FUNCTION CREATE_STUDY_GROUP (
+	P_ENROLLMENT INTEGER,
+	P_DATE_START DATE,
+	P_PRICE NUMERIC(10, 2),
+	P_ID_FORMSTRAINING INTEGER,
+	P_ID_CITY INTEGER,
+	P_DURATION INTEGER,
+	P_ID_COURSE INTEGER
+) RETURNS INTEGER AS $$
 DECLARE
     new_group_id INTEGER;
 BEGIN
     BEGIN
-        INSERT INTO studygroups (enrollment, date_start, date_end, price, id_FormsTraining, id_city, duration, id_course)
-        VALUES (p_enrollment, p_date_start, p_date_end, p_price, p_id_FormsTraining, p_id_city, p_duration, p_id_course)
+        INSERT INTO studygroups (enrollment, date_start, price, id_FormsTraining, id_city, duration, id_course)
+        VALUES (p_enrollment, p_date_start, p_price, p_id_FormsTraining, p_id_city, p_duration, p_id_course)
         RETURNING id INTO new_group_id;
     EXCEPTION
         WHEN others THEN
@@ -1105,29 +1048,23 @@ BEGIN
         RETURN 0;
     END IF;
 END;
-$$
-LANGUAGE PLPGSQL;
+$$ LANGUAGE PLPGSQL;
 
-
-
-CREATE OR REPLACE FUNCTION update_study_group(
-    p_id INTEGER,
-    p_enrollment INTEGER,
-    p_date_start DATE,
-    p_date_end DATE,
-    p_price NUMERIC(10, 2),
-    p_id_forms_training INTEGER,
-    p_id_city INTEGER,
-    p_duration INTEGER
-) 
-RETURNS BOOLEAN AS
-$$
+CREATE
+OR REPLACE FUNCTION UPDATE_STUDY_GROUP (
+	P_ID INTEGER,
+	P_ENROLLMENT INTEGER,
+	P_DATE_START DATE,
+	P_PRICE NUMERIC(10, 2),
+	P_ID_FORMS_TRAINING INTEGER,
+	P_ID_CITY INTEGER,
+	P_DURATION INTEGER
+) RETURNS BOOLEAN AS $$
 BEGIN
     UPDATE studygroups
     SET 
         enrollment = p_enrollment,
         date_start = p_date_start,
-        date_end = p_date_end,
         price = p_price,
         id_FormsTraining = p_id_forms_training,
         id_city = p_id_city,
@@ -1144,12 +1081,10 @@ EXCEPTION
     WHEN others THEN
         RETURN FALSE;
 END;
-$$
-LANGUAGE PLPGSQL;
+$$ LANGUAGE PLPGSQL;
 
-
-CREATE OR REPLACE FUNCTION get_course_instances(p_course_id INTEGER)
-RETURNS SETOF CourseAndGroupView AS $$
+CREATE
+OR REPLACE FUNCTION GET_COURSE_INSTANCES (P_COURSE_ID INTEGER) RETURNS SETOF COURSEANDGROUPVIEW AS $$
 BEGIN
   RETURN QUERY
   SELECT
@@ -1159,24 +1094,18 @@ BEGIN
   WHERE
     c.course_id = p_course_id;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE PLPGSQL;
 
-select * from get_course_instances(17);
-
-
-CREATE OR REPLACE FUNCTION filter_courses_and_groups(
-    p_section_id INTEGER,
-    p_start_date DATE DEFAULT NULL,
-    p_end_date DATE DEFAULT NULL,
-    p_min_price NUMERIC(10, 2) DEFAULT NULL,
-    p_max_price NUMERIC(10, 2) DEFAULT NULL,
-    p_duration_hours INTEGER DEFAULT NULL,
-    p_organization_only BOOLEAN DEFAULT FALSE,
-    p_free_only BOOLEAN DEFAULT FALSE,
-	p_search_query VARCHAR DEFAULT NULL
-) 
-RETURNS SETOF CourseAndGroupView AS
-$$
+CREATE
+OR REPLACE FUNCTION FILTER_COURSES_AND_GROUPS (
+	P_SECTION_ID INTEGER,
+	P_START_DATE DATE DEFAULT NULL,
+	P_MIN_PRICE NUMERIC(10, 2) DEFAULT NULL,
+	P_MAX_PRICE NUMERIC(10, 2) DEFAULT NULL,
+	P_ORGANIZATION_ONLY BOOLEAN DEFAULT FALSE,
+	P_FREE_ONLY BOOLEAN DEFAULT FALSE,
+	P_SEARCH_QUERY VARCHAR DEFAULT NULL
+) RETURNS SETOF COURSEANDGROUPVIEW AS $$
 DECLARE
     filter_conditions TEXT := ' WHERE course_closed = FALSE';
 BEGIN
@@ -1190,9 +1119,6 @@ BEGIN
         filter_conditions := filter_conditions || ' AND group_date_start >= ' || quote_literal(p_start_date);
     END IF;
 
-    IF p_end_date IS NOT NULL THEN
-        filter_conditions := filter_conditions || ' AND group_date_end <= ' || quote_literal(p_end_date);
-    END IF;
 
     IF p_min_price IS NOT NULL THEN
         filter_conditions := filter_conditions || ' AND group_price >= ' || p_min_price;
@@ -1202,9 +1128,6 @@ BEGIN
         filter_conditions := filter_conditions || ' AND group_price <= ' || p_max_price;
     END IF;
 
-    IF p_duration_hours IS NOT NULL THEN
-        filter_conditions := filter_conditions || ' AND group_duration = ' || p_duration_hours;
-    END IF;
 
     IF p_organization_only THEN
         filter_conditions := filter_conditions || ' AND creator_is_organization = TRUE';
@@ -1228,32 +1151,25 @@ BEGIN
         FROM CourseAndGroupView
         ' || filter_conditions;
 END;
-$$
-LANGUAGE PLPGSQL;
+$$ LANGUAGE PLPGSQL;
 
-CREATE OR REPLACE FUNCTION get_all_forms_training()
-RETURNS TABLE (
-    form_id INT,
-    form_name VARCHAR(255)
-) AS $$
+CREATE
+OR REPLACE FUNCTION GET_ALL_FORMS_TRAINING () RETURNS TABLE (FORM_ID INT, FORM_NAME VARCHAR(255)) AS $$
 BEGIN
     RETURN QUERY SELECT id AS form_id, name AS form_name FROM FormsTraining;
 END;
 $$ LANGUAGE PLPGSQL;
 
 -- Функция для вывода всех данных из таблицы Cities
-CREATE OR REPLACE FUNCTION get_all_cities()
-RETURNS TABLE (
-    city_id INT,
-    city_name VARCHAR(255)
-) AS $$
+CREATE
+OR REPLACE FUNCTION GET_ALL_CITIES () RETURNS TABLE (CITY_ID INT, CITY_NAME VARCHAR(255)) AS $$
 BEGIN
     RETURN QUERY SELECT id AS city_id, name AS city_name FROM Cities;
 END;
 $$ LANGUAGE PLPGSQL;
 
-CREATE OR REPLACE FUNCTION get_study_groups_by_course_id(p_course_id INTEGER)
-RETURNS SETOF StudyGroupsView AS $$
+CREATE
+OR REPLACE FUNCTION GET_STUDY_GROUPS_BY_COURSE_ID (P_COURSE_ID INTEGER) RETURNS SETOF STUDYGROUPSVIEW AS $$
 BEGIN
     RETURN QUERY SELECT *
                  FROM StudyGroupsView
@@ -1261,9 +1177,8 @@ BEGIN
 END;
 $$ LANGUAGE PLPGSQL;
 
-
-CREATE OR REPLACE FUNCTION get_study_groups_by_creater_id(p_creater_id INTEGER)
-RETURNS SETOF StudyGroupsView AS $$
+CREATE
+OR REPLACE FUNCTION GET_STUDY_GROUPS_BY_CREATER_ID (P_CREATER_ID INTEGER) RETURNS SETOF STUDYGROUPSVIEW AS $$
 BEGIN
     RETURN QUERY SELECT *
                  FROM StudyGroupsView
@@ -1271,8 +1186,8 @@ BEGIN
 END;
 $$ LANGUAGE PLPGSQL;
 
-CREATE OR REPLACE FUNCTION get_study_group_by_id(p_group_id INTEGER)
-RETURNS SETOF StudyGroupsView AS $$
+CREATE
+OR REPLACE FUNCTION GET_STUDY_GROUP_BY_ID (P_GROUP_ID INTEGER) RETURNS SETOF STUDYGROUPSVIEW AS $$
 BEGIN
     RETURN QUERY SELECT *
                  FROM StudyGroupsView
@@ -1280,8 +1195,8 @@ BEGIN
 END;
 $$ LANGUAGE PLPGSQL;
 
-CREATE OR REPLACE FUNCTION delete_study_group_by_id(p_group_id INTEGER)
-RETURNS INTEGER AS $$
+CREATE
+OR REPLACE FUNCTION DELETE_STUDY_GROUP_BY_ID (P_GROUP_ID INTEGER) RETURNS INTEGER AS $$
 BEGIN
     DELETE FROM studygroups WHERE id = p_group_id;
 
@@ -1297,33 +1212,26 @@ EXCEPTION
 END;
 $$ LANGUAGE PLPGSQL;
 
-
-CREATE OR REPLACE FUNCTION GetCourseApplicationsStatisticsByCreatorId(p_creator_id INTEGER)
-RETURNS SETOF ApplicationsPerCourse AS
-$$
+CREATE
+OR REPLACE FUNCTION GETCOURSEAPPLICATIONSSTATISTICSBYCREATORID (P_CREATOR_ID INTEGER) RETURNS SETOF APPLICATIONSPERCOURSE AS $$
 BEGIN
     RETURN QUERY
     SELECT *
     FROM ApplicationsPerCourse
     WHERE creator_id = p_creator_id;
 END;
-$$
-LANGUAGE plpgsql;
+$$ LANGUAGE PLPGSQL;
 
-
-
-
-CREATE OR REPLACE FUNCTION create_application(
-	p_id_StudyGroup INTEGER,
-    p_firstName VARCHAR(60),
-    p_lastName VARCHAR(60),
-    p_surname VARCHAR(60),
-    p_phone VARCHAR(15),
-    p_birthday DATE,
-	p_email VARCHAR(255)
-) 
-RETURNS INTEGER AS
-$$
+CREATE
+OR REPLACE FUNCTION CREATE_APPLICATION (
+	P_ID_STUDYGROUP INTEGER,
+	P_FIRSTNAME VARCHAR(60),
+	P_LASTNAME VARCHAR(60),
+	P_SURNAME VARCHAR(60),
+	P_PHONE VARCHAR(15),
+	P_BIRTHDAY DATE,
+	P_EMAIL VARCHAR(255)
+) RETURNS INTEGER AS $$
 DECLARE
     new_id INTEGER;
     status_id INTEGER;
@@ -1337,19 +1245,14 @@ BEGIN
     RETURNING id INTO new_id;
 
     RETURN new_id;
-EXCEPTION
-    WHEN others THEN
-        RETURN 0;
+--EXCEPTION
+    --WHEN others THEN
+       -- RETURN 0;
 END;
-$$
-LANGUAGE PLPGSQL;
+$$ LANGUAGE PLPGSQL;
 
-CREATE OR REPLACE FUNCTION update_application_status(
-    p_application_id INTEGER,
-    p_new_status_id INTEGER
-) 
-RETURNS BOOLEAN AS
-$$
+CREATE
+OR REPLACE FUNCTION UPDATE_APPLICATION_STATUS (P_APPLICATION_ID INTEGER, P_NEW_STATUS_ID INTEGER) RETURNS BOOLEAN AS $$
 BEGIN
     -- Обновляем статус заявки
     UPDATE applications
@@ -1369,16 +1272,13 @@ BEGIN
     WHEN others THEN
         RETURN FALSE;
 END;
-$$
-LANGUAGE PLPGSQL;
+$$ LANGUAGE PLPGSQL;
 
-
-
-CREATE OR REPLACE FUNCTION get_applications(
-    p_id_course INTEGER,
-    p_id_status INTEGER DEFAULT NULL
-)
-RETURNS SETOF v_applications_details AS $$
+CREATE
+OR REPLACE FUNCTION GET_APPLICATIONS (
+	P_ID_COURSE INTEGER,
+	P_ID_STATUS INTEGER DEFAULT NULL
+) RETURNS SETOF V_APPLICATIONS_DETAILS AS $$
 BEGIN
     RETURN QUERY
     SELECT 
@@ -1389,16 +1289,14 @@ BEGIN
         v.course_id = p_id_course
         AND (v.id_StatusApplications = p_id_status OR p_id_status IS NULL);
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE PLPGSQL;
 
-
-CREATE OR REPLACE FUNCTION create_program_course(
-    p_name VARCHAR,
-    p_description VARCHAR,
-    p_id_course INTEGER
-)
-RETURNS INTEGER AS
-$$
+CREATE
+OR REPLACE FUNCTION CREATE_PROGRAM_COURSE (
+	P_NAME VARCHAR,
+	P_DESCRIPTION VARCHAR,
+	P_ID_COURSE INTEGER
+) RETURNS INTEGER AS $$
 DECLARE
     new_id INTEGER;
 BEGIN
@@ -1408,7 +1306,7 @@ BEGIN
     END IF;
 
     -- Вставляем новую запись в таблицу ProgramsCourse
-    INSERT INTO ProgramsСourse (name, description, id_course)
+    INSERT INTO PROGRAMSCOURSE (name, description, id_course)
     VALUES (p_name, p_description, p_id_course)
     RETURNING id INTO new_id;
 
@@ -1418,45 +1316,31 @@ EXCEPTION
     WHEN others THEN
         RETURN 0; -- Произошла ошибка
 END;
-$$
-LANGUAGE PLPGSQL;
+$$ LANGUAGE PLPGSQL;
 
-
-CREATE OR REPLACE FUNCTION get_programs_by_course_id(p_course_id INTEGER)
-RETURNS TABLE (
-    id INTEGER,
-    name VARCHAR,
-    description VARCHAR,
-    id_course INTEGER
-) AS $$
+CREATE
+OR REPLACE FUNCTION GET_PROGRAMS_BY_COURSE_ID (P_COURSE_ID INTEGER) RETURNS SETOF PROGRAMSCOURSE AS $$
 BEGIN
     RETURN QUERY
-    SELECT 
-        pg.id,
-        pg.name,
-        pg.description,
-        pg.id_course
+    SELECT *
     FROM 
-        ProgramsСourse pg
+        PROGRAMSCOURSE pg
     WHERE 
         pg.id_course = p_course_id;
 END;
 $$ LANGUAGE PLPGSQL;
 
-
-
-CREATE OR REPLACE FUNCTION update_program_course(
-    p_id INTEGER,
-    p_name VARCHAR(255),
-    p_description VARCHAR(255)
-) 
-RETURNS BOOLEAN AS
-$$
+CREATE
+OR REPLACE FUNCTION UPDATE_PROGRAM_COURSE (
+	P_ID INTEGER,
+	P_NAME VARCHAR(255),
+	P_DESCRIPTION VARCHAR(255)
+) RETURNS BOOLEAN AS $$
 DECLARE
     success BOOLEAN := FALSE;
 BEGIN
     BEGIN
-        UPDATE ProgramsСourse
+        UPDATE PROGRAMSCOURSE
         SET 
             name = p_name,
             description = p_description
@@ -1471,8 +1355,68 @@ BEGIN
 
     RETURN success;
 END;
-$$
-LANGUAGE PLPGSQL;
+$$ LANGUAGE PLPGSQL;
+
+CREATE
+OR REPLACE FUNCTION GET_USER_PROFILES_INFO () RETURNS SETOF USERPROFILEINFO AS $$
+BEGIN
+    RETURN QUERY
+    SELECT *
+    FROM
+        UserProfileInfo;
+END;
+$$ LANGUAGE PLPGSQL;
 
 
+CREATE
+OR REPLACE FUNCTION GET_ALL_BANNED_COURSES () RETURNS TABLE (
+	ID INTEGER,
+	CAUSE VARCHAR,
+	ID_COURSE INTEGER,
+	COURSE_NAME VARCHAR,
+	ID_ADMINISTRATOR INTEGER,
+	ADMIN_NAME VARCHAR,
+	BANNED_AT TIMESTAMP
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    bc.id,
+    bc.cause,
+    bc.id_course,
+    c.name,
+    bc.id,
+    a.name,
+    bc.banned_at
+  FROM 
+    BannedCourses bc
+  LEFT JOIN
+    Courses c ON bc.id_course = c.id
+  LEFT JOIN
+    Accounts a ON bc.id_administrator = a.id;
+END;
+$$ LANGUAGE PLPGSQL;
 
+CREATE
+OR REPLACE FUNCTION UPDATE_ACCOUNT_CONFIRMATION (P_ACCOUNT_ID INTEGER, P_NEW_CONFIRMATION BOOLEAN) RETURNS BOOLEAN AS $$
+DECLARE
+    updated_rows INTEGER;
+BEGIN
+    -- Пытаемся обновить подтверждение профиля
+    UPDATE Accounts SET confirmation = p_new_confirmation WHERE id = p_account_id RETURNING id INTO updated_rows;
+
+    -- Если количество обновленных строк больше 0, значит обновление прошло успешно
+    IF updated_rows > 0 THEN
+        RETURN true;
+    ELSE
+        RETURN false;
+    END IF;
+END;
+$$ LANGUAGE PLPGSQL;
+
+CREATE
+OR REPLACE FUNCTION GET_ALL_SECTIONS () RETURNS TABLE (SECTION_ID INTEGER, SECTION_NAME VARCHAR(100)) AS $$
+BEGIN
+    RETURN QUERY SELECT id, name FROM Sections;
+END;
+$$ LANGUAGE PLPGSQL;

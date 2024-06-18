@@ -14,9 +14,6 @@ public class UpdateGroup
     [Required(ErrorMessage = "Дата начала набора обязательна")]
     public DateTime StartDate { get; set; }
 
-    [DateEndValidation(ErrorMessage = "Дата окончания набора должна быть после даты начала")]
-    public DateTime? EndDate { get; set; }
-
     [RegularExpression(@"\d+,\d{2}", ErrorMessage = "Цена должна быть в формате 00,00")]
     public string Price { get; set; }
 

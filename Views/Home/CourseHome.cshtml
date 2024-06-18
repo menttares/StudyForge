@@ -2,10 +2,11 @@
     List<StudyGroup> studyGroups = ViewData["studyGroups"] as List<StudyGroup>;
     UserProfileInfo userProfileInfo = ViewData["userProfileInfo"] as UserProfileInfo;
     List<ProgramCourse> programs = ViewData["program"] as List<ProgramCourse>;
+    Course course = ViewData["Course"] as Course;
     bool isAdmin = User.IsInRole("admin");
     bool isBannedCourse = (bool)ViewData["isBannedCourse"];
 }
-@model Course
+@model ContactFormModel
 
 
 
@@ -16,9 +17,9 @@
             <a asp-action="Search" asp-controller="Home" class="">
                 назад </a>
             <div>
-                <h1 class="fs-1 fw-bold">@Model.CourseName</h1>
+                <h1 class="fs-1 fw-bold">@course.CourseName</h1>
             </div>
-            <div class="mb-5">@Model.SectionName</div>
+            <div class="mb-5">@course.SectionName</div>
 
             @if (isAdmin)
             {
@@ -33,7 +34,7 @@
                 }
             }
             <p class="fs-5 fw-bold">Описание</p>
-            <p class="">@Model.CourseDescription</p>
+            <p class="">@course.CourseDescription</p>
         </div>
     </div>
 
@@ -118,7 +119,6 @@
                         </div>
                         <div class="col" style="min-width: 300px;">
                             <p>Имя: @userProfileInfo.Name</p>
-                            <p>Специализация: @userProfileInfo.Specialization</p>
                             <p class="">О себе: @userProfileInfo.AboutMe</p>
                         </div>
                     </div>
@@ -149,36 +149,49 @@
                 </button>
             </div>
             <div class="modal-body">
-                <form id="contactForm">
+                <form asp-action="CreateApplication" method="post" id="contactForm">
+
+                    <input type="hidden" asp-for="IdStudyGroup" />
                     <div class="form-group">
-                        <label for="firstName">Имя</label>
-                        <input type="text" class="form-control" id="firstName" required>
+                        <label asp-for="FirstName">Имя</label>
+                        <input asp-for="FirstName" class="form-control" />
+                        <span asp-validation-for="FirstName" class="text-danger"></span>
                     </div>
                     <div class="form-group">
-                        <label for="lastName">Фамилия</label>
-                        <input type="text" class="form-control" id="lastName" required>
+                        <label asp-for="LastName">Фамилия</label>
+                        <input asp-for="LastName" class="form-control" />
+                        <span asp-validation-for="LastName" class="text-danger"></span>
                     </div>
                     <div class="form-group">
-                        <label for="middleName">Отчество (если есть)</label>
-                        <input type="text" class="form-control" id="middleName">
+                        <label asp-for="MiddleName">Отчество</label>
+                        <input asp-for="MiddleName" class="form-control" />
+                        <span asp-validation-for="MiddleName" class="text-danger"></span>
                     </div>
                     <div class="form-group">
-                        <label for="phone">Телефон</label>
-                        <input type="text" class="form-control" id="phone" pattern="\+375\d{2}\d{3}\d{2}\d{2}" required>
+                        <label asp-for="Phone">Телефон</label>
+                        <input asp-for="Phone" class="form-control" />
                         <small class="form-text text-muted">Формат: +375 (XX) XXX-XX-XX</small>
+                        <span asp-validation-for="Phone" class="text-danger"></span>
                     </div>
                     <div class="form-group">
-                        <label for="dob">Дата рождения</label>
-                        <input type="date" class="form-control" id="dob" required>
-                        <div class="error-message" id="dobError"></div>
+                        <label asp-for="Dob">Дата рождения</label>
+                        <input asp-for="Dob" class="form-control" />
+                        <span asp-validation-for="Dob" class="text-danger"></span>
                     </div>
                     <div class="form-group">
-                        <label for="email">Email</label>
-                        <input type="email" class="form-control" id="email" required>
+                        <label asp-for="Email">Почта</label>
+                        <input asp-for="Email" class="form-control" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
                     </div>
-                    <div>
-                        <button type="submit" class="btn btn-primary mt-2">Записаться</button>
+                    <div class="form-group form-check">
+                        <input asp-for="Agreement" class="form-check-input" id="agreementCheckbox" />
+                        <label asp-for="Agreement" class="form-check-label">Согласие на обработку данных</label>
+                        <span asp-validation-for="Agreement" class="text-danger"></span>
                     </div>
+                    <div class="form-group">
+                        <span id="generalErrors" class="text-danger"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-2">Записаться</button>
                 </form>
             </div>
         </div>
@@ -250,7 +263,7 @@
         $.ajax({
             url: '/admin/ban-course',
             type: 'POST',
-            data: { courseId: @Model.CourseId, reason: reason },
+            data: { courseId: @course.CourseId, reason: reason },
             success: function (response) {
                 $('.modal-backdrop').remove();
                 $('#banModal').removeClass('show').hide();
@@ -261,7 +274,7 @@
                 button.attr('data-target', '#unbanModal');
             },
             error: function (xhr, status, error) {
-                
+
             }
         });
         $('#banModal').modal('hide');
@@ -269,7 +282,7 @@
     });
 
     $('#confirmUnbanButton').click(function () {
-        var CourseId = @Model.CourseId
+        var CourseId = @course.CourseId
 
             $.ajax({
                 url: '/admin/unban-course',
@@ -298,56 +311,53 @@
 
     $('#contactModal').on('show.bs.modal', function (event) {
         triggeringButton = $(event.relatedTarget); // Сохраняем ссылку на кнопку, вызвавшую модальное окно
+        $("#IdStudyGroup").val(triggeringButton.data("id"));
     });
 
 
-    $('#contactForm').on('submit', function (event) {
-        event.preventDefault();
+    $(document).ready(function () {
+        $('#agreementCheckbox').change(function () {
+            if ($(this).is(':checked')) {
+                $('#submitButton').prop('disabled', false);
+            } else {
+                $('#submitButton').prop('disabled', true);
+            }
+        });
 
-        const dob = new Date($('#dob').val());
-        const age = new Date().getFullYear() - dob.getFullYear();
-        const dobError = $('#dobError');
-        const dobField = $('#dob');
+        // Инициализация состояния кнопки при загрузке страницы
+        if (!$('#agreementCheckbox').is(':checked')) {
+            $('#submitButton').prop('disabled', true);
+        }
 
-        if (age < 18) {
-            dobError.text('Возраст должен быть не менее 18 лет.');
-            dobField.addClass('is-invalid');
-        } else {
-
-            const formData = {
-                IdStudyGroup: triggeringButton.data("id"),
-                FirstName: $('#firstName').val(),
-                LastName: $('#lastName').val(),
-                Surname: $('#middleName').val(),
-                Phone: $('#phone').val(),
-                Birthday: $('#dob').val(),
-                Email: $('#email').val(),
-            };
-
+        $('#contactForm').submit(function (event) {
+            event.preventDefault(); // Prevent the form from submitting via the browser
+            var formData = $(this).serialize();
             $.ajax({
                 type: 'POST',
-                url: '/Home/CreateApplication',
-                data: formData, // Сериализуем данные формы для отправки
+                url: '@Url.Action("CreateApplication", "Home")',
+                data: $(this).serialize(),
                 success: function (response) {
-                    dobError.text('');
-                    dobField.removeClass('is-invalid');
-                    $('#contactModal').modal('hide');
-                    $('#contactModal').removeClass('show');
-                    $('body').removeClass('modal-open'); // Удаление класса 'modal-open' из <body>
-                    $('.modal-backdrop').remove(); // Удаление фона модального окна
+                    if (response.success) {
+                        // Handle success (e.g., redirect or show a success message)
+                        $('#contactModal').modal('hide');
+                        $('#contactModal').removeClass('show');
+                        $('body').removeClass('modal-open'); // Удаление класса 'modal-open' из <body>
+                        $('.modal-backdrop').remove(); // Удаление фона модального окна
 
-                    if (triggeringButton) {
-                        triggeringButton.text('отправлено...').removeClass('btn-primary').addClass('btn-secondary').prop('disabled', true);
+                        Message("Успех!", "Вы отправили заявку на курс");
+                        $('.text-danger').html('');
+                    } else {
+                        // Handle errors
+                        $('.text-danger').html(''); // Clear previous errors
+                        response.errors.forEach(function (error) {
+                            $('#generalErrors').append('<div>' + error + '</div>');
+                        });
                     }
-                    Message("Успех!", "Ждите ответа от организатора");
-                },
-                error: function (xhr, status, error) {
-                    console.error(xhr.responseText);
-                    Message("Ошибка!", "Вероятно с что-то с сервером,повторите в другой раз");
                 }
             });
+        });
 
-        }
+
     });
 
 

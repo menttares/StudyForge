@@ -45,6 +45,7 @@ public class СontrolPanelController : Controller
 
         if (Confirmation)
         {
+
             return View();
         }
 
@@ -83,8 +84,14 @@ public class СontrolPanelController : Controller
     /// <returns>Результат действия, возвращающий частичное представление со статистикой.</returns>
     public IActionResult Statistics()
     {
+
         var ClaimIdentifier = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
         var id = int.Parse(ClaimIdentifier.Value);
+
+        bool Confirmation = _database.CheckAccountConfirmation(id);
+
+        if (!Confirmation)
+        { return PartialView("Block"); }
 
         List<ApplicationsPerCourse> data = _database.GetCourseApplicationsStatisticsByCreatorId(id);
 
@@ -100,6 +107,11 @@ public class СontrolPanelController : Controller
         var ClaimIdentifier = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
         var id = int.Parse(ClaimIdentifier.Value);
 
+        bool Confirmation = _database.CheckAccountConfirmation(id);
+
+        if (!Confirmation)
+        { return PartialView("Block"); }
+
         List<Course> CourseInfo = _database.GetCoursesByProfile(id);
 
         return PartialView(CourseInfo);
@@ -114,6 +126,13 @@ public class СontrolPanelController : Controller
     [HttpGet]
     public IActionResult GetApplications(int courseId, int? statusId)
     {
+        var ClaimIdentifier = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+        var id = int.Parse(ClaimIdentifier.Value);
+
+        bool Confirmation = _database.CheckAccountConfirmation(id);
+
+        if (!Confirmation)
+        { return PartialView("Block"); }
         List<ApplicationDetails> applications = _database.GetApplications(courseId, statusId);
         return Json(applications);
     }
@@ -127,6 +146,14 @@ public class СontrolPanelController : Controller
     [HttpPut("/СontrolPanel/ChangeApplicationStatus/{applicationId}/{newStatus}")]
     public async Task<IActionResult> ChangeApplicationStatus(int applicationId, int newStatus)
     {
+        var ClaimIdentifier = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+        var id = int.Parse(ClaimIdentifier.Value);
+
+        bool Confirmation = _database.CheckAccountConfirmation(id);
+
+        if (!Confirmation)
+        { return PartialView("Block"); }
+
         try
         {
             bool isUpdate = _database.UpdateApplicationStatus(applicationId, newStatus);
@@ -189,10 +216,16 @@ public class СontrolPanelController : Controller
     /// <returns>Результат действия, возвращающий частичное представление с профилем пользователя.</returns>
     public IActionResult Profile()
     {
+
         var ClaimIdentifier = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
         var id = int.Parse(ClaimIdentifier.Value);
 
-        ViewData["Specializations"] = _database.GetAllSpecializations();
+
+        bool Confirmation = _database.CheckAccountConfirmation(id);
+
+        if (!Confirmation)
+        { return PartialView("Block"); }
+
         ViewData["User"] = _database.GetUserProfileInfo(id);
 
         return PartialView();
@@ -207,14 +240,18 @@ public class СontrolPanelController : Controller
         var ClaimIdentifier = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
         var id = int.Parse(ClaimIdentifier.Value);
 
-        ViewData["Specializations"] = _database.GetAllSpecializations();
+
+        bool Confirmation = _database.CheckAccountConfirmation(id);
+
+        if (!Confirmation)
+        { return PartialView("Block"); }
+
         UserProfileInfo user = _database.GetUserProfileInfo(id);
 
         UpdateUserProfileModel model = new()
         {
             name = user.Name,
             aboutMe = user.AboutMe,
-            specializationId = user.SpecializationId,
             email = user.Email,
             phone = user.Phone
         };
@@ -233,11 +270,16 @@ public class СontrolPanelController : Controller
         var ClaimIdentifier = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
         var id = int.Parse(ClaimIdentifier.Value);
 
+
+        bool Confirmation = _database.CheckAccountConfirmation(id);
+
+        if (!Confirmation)
+        { return PartialView("Block"); }
+
         bool isUpdate = _database.UpdateUserProfile(
             id,
             data.name,
             data.aboutMe,
-            data.specializationId,
             data.email,
             data.phone
         );
@@ -263,6 +305,12 @@ public class СontrolPanelController : Controller
         var ClaimIdentifier = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
         var id = int.Parse(ClaimIdentifier.Value);
 
+
+        bool Confirmation = _database.CheckAccountConfirmation(id);
+
+        if (!Confirmation)
+        { return PartialView("Block"); }
+
         List<Course> CourseInfo = _database.GetCoursesByProfile(id);
 
         return PartialView(CourseInfo);
@@ -277,6 +325,12 @@ public class СontrolPanelController : Controller
     {
         var ClaimIdentifier = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
         var id = int.Parse(ClaimIdentifier.Value);
+
+
+        bool Confirmation = _database.CheckAccountConfirmation(id);
+
+        if (!Confirmation)
+        { return PartialView("Block"); }
 
         int insertedId = _database.CreateCourse(
             id,
@@ -299,6 +353,12 @@ public class СontrolPanelController : Controller
     {
         var ClaimIdentifier = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
         var id = int.Parse(ClaimIdentifier.Value);
+
+
+        bool Confirmation = _database.CheckAccountConfirmation(id);
+
+        if (!Confirmation)
+        { return PartialView("Block"); }
 
         _database.DeleteCourse(courseId);
 

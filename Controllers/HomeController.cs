@@ -59,13 +59,14 @@ public class HomeController : Controller
 
 
         // Устанавливаем данные в данные представления
- 
+
         ViewData["isBannedCourse"] = _database.IsCourseBanned(CourseId); // Проверяем на бан курса
         ViewData["studyGroups"] = studyGroups;
         ViewData["userProfileInfo"] = userProfileInfo;
         ViewData["program"] = programCourses;
+        ViewData["Course"] = course;
 
-        return View(course);
+        return View();
     }
 
 
@@ -76,10 +77,8 @@ public class HomeController : Controller
         var data = _database.FilterCoursesAndGroups(
             searchModel.SectionId,
             searchModel.StartDate,
-            searchModel.EndDate,
             searchModel.MinPrice,
             searchModel.MaxPrice,
-            searchModel.DurationHours,
             searchModel.Organization,
             searchModel.FreeStudyGroup,
             searchModel.SearchQuery
@@ -99,24 +98,36 @@ public class HomeController : Controller
 
 
     [HttpPost]
-    public IActionResult CreateApplication([FromForm] Application model)
+    public IActionResult CreateApplication([FromForm] ContactFormModel model)
     {
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors)
+                                           .Select(e => e.ErrorMessage)
+                                           .ToList();
+            return Json(new { success = false, errors });
+        }
+
+        if (!model.Agreement)
+        {
+            return Json(new { success = false, errors = new List<string> { "Вы должны быть согласны на обработку" } });
+        }
         int newId = _database.CreateApplication(
             model.IdStudyGroup,
             model.FirstName,
             model.LastName,
-            model.Surname,
+            model.MiddleName,
             model.Phone,
-            model.Birthday,
+            model.Dob,
             model.Email
         );
 
         if (newId == 0)
         {
-            return BadRequest();
+            return Json(new { success = false, errors = new List<string> { "Ошибка при создании заявки" } });
         }
 
-        return Ok();
+        return Json(new { success = true });
     }
 
     public IActionResult Privacy()

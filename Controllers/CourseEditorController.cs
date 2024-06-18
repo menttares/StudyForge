@@ -37,6 +37,15 @@ public class CourseEditorController : Controller
     /// <returns>Результат действия, возвращающий представление для просмотра курса.</returns>
     public IActionResult Course(int CourseId)
     {
+        var ClaimIdentifier = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+        var id = int.Parse(ClaimIdentifier.Value);
+
+
+        bool Confirmation = _database.CheckAccountConfirmation(id);
+
+        if (!Confirmation)
+        { return View("Block"); }
+
         ViewData["CourseId"] = CourseId;
         return View();
     }
@@ -49,6 +58,15 @@ public class CourseEditorController : Controller
     [HttpGet]
     public IActionResult Main(int CourseId)
     {
+        var ClaimIdentifier = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+        var id = int.Parse(ClaimIdentifier.Value);
+
+
+        bool Confirmation = _database.CheckAccountConfirmation(id);
+
+        if (!Confirmation)
+        { return View("Block"); }
+
         Course course = _database.GetCourseInfo(CourseId);
         ViewData["Subsections"] = _database.GetSubsections();
         ViewData["User"] = course;
@@ -72,6 +90,15 @@ public class CourseEditorController : Controller
     [HttpPost]
     public IActionResult CoursePut(UpdateCourse courseViewModel)
     {
+        var ClaimIdentifier = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+        var id = int.Parse(ClaimIdentifier.Value);
+
+
+        bool Confirmation = _database.CheckAccountConfirmation(id);
+
+        if (!Confirmation)
+        { return View("Block"); }
+
         bool isUpdate = _database.UpdateCourse(
             courseViewModel.CourseId,
             courseViewModel.CourseName,
@@ -98,6 +125,15 @@ public class CourseEditorController : Controller
     /// <returns>Результат действия, возвращающий частичное представление с группами обучения для курса.</returns>
     public IActionResult StudyGroups(int CourseId)
     {
+        var ClaimIdentifier = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+        var id = int.Parse(ClaimIdentifier.Value);
+
+
+        bool Confirmation = _database.CheckAccountConfirmation(id);
+
+        if (!Confirmation)
+        { return View("Block"); }
+
         ViewData["CourseId"] = CourseId;
         List<StudyGroup> studyGroups = _database.GetAllStudyGroupCourse(CourseId);
 
@@ -111,6 +147,15 @@ public class CourseEditorController : Controller
     /// <returns>Результат действия, возвращающий частичное представление с программами для курса.</returns>
     public IActionResult Programs(int CourseId)
     {
+        var ClaimIdentifier = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+        var id = int.Parse(ClaimIdentifier.Value);
+
+
+        bool Confirmation = _database.CheckAccountConfirmation(id);
+
+        if (!Confirmation)
+        { return View("Block"); }
+
         List<ProgramCourse> programs = _database.GetProgramsByCourseId(CourseId);
         ViewData["CourseId"] = CourseId;
         return PartialView(programs);
@@ -124,6 +169,15 @@ public class CourseEditorController : Controller
     [HttpPost]
     public IActionResult CreateProgram(int CourseId)
     {
+        var ClaimIdentifier = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+        var id = int.Parse(ClaimIdentifier.Value);
+
+
+        bool Confirmation = _database.CheckAccountConfirmation(id);
+
+        if (!Confirmation)
+        { return View("Block"); }
+
         int ProgramID = _database.CreateProgramCourse(
             "Новый",
             null,
@@ -147,6 +201,15 @@ public class CourseEditorController : Controller
     [HttpPut]
     public IActionResult UpdateProgram(ProgramCourse program)
     {
+        var ClaimIdentifier = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+        var id = int.Parse(ClaimIdentifier.Value);
+
+
+        bool Confirmation = _database.CheckAccountConfirmation(id);
+
+        if (!Confirmation)
+        { return View("Block"); }
+
         bool isUpdate = _database.UpdateProgramCourse(
             program.Id,
             program.Name,
@@ -167,6 +230,15 @@ public class CourseEditorController : Controller
     [HttpDelete]
     public IActionResult DeleteProgram(int id)
     {
+        var ClaimIdentifier = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+        var idp = int.Parse(ClaimIdentifier.Value);
+
+
+        bool Confirmation = _database.CheckAccountConfirmation(idp);
+
+        if (!Confirmation)
+        { return View("Block"); }
+
         bool isDelete = _database.DeleteProgramCourse(id);
 
         if (!isDelete)

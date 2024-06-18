@@ -25,12 +25,87 @@ public record class ResultPostgresData<T>(ResultPostgresStatus Status, T Result,
 public class PostgresDataService
 {
     private readonly string _connectionString;
+    private readonly string _tableName = "my_table";
 
     public PostgresDataService(string connectionString)
     {
         _connectionString = connectionString;
     }
 
+
+    public void EnsureDatabaseAndExecuteSql(string databaseName, string sqlFilePath)
+    {
+        using (var connection = new NpgsqlConnection(_connectionString))
+        {
+            try
+            {
+                connection.Open();
+
+                // Проверяем существование базы данных
+                if (!DatabaseExists(connection, databaseName))
+                {
+                    Console.WriteLine($"База данных '{databaseName}' не найдена. Создание...");
+
+                    // Создаем базу данных
+                    using (var createDbCmd = connection.CreateCommand())
+                    {
+                        createDbCmd.CommandText = $"CREATE DATABASE {databaseName}";
+                        createDbCmd.ExecuteNonQuery();
+                    }
+
+                    Console.WriteLine($"База данных '{databaseName}' успешно создана.");
+                }
+                else
+                {
+                    Console.WriteLine($"База данных '{databaseName}' уже существует.");
+                }
+
+                // Подключаемся к новой или существующей базе данных
+                string databaseConnectionString = BuildDatabaseConnectionString(databaseName);
+                using (var databaseConnection = new NpgsqlConnection(databaseConnectionString))
+                {
+                    databaseConnection.Open();
+
+                    // Выполняем SQL-скрипт
+                    ExecuteSqlScript(databaseConnection, sqlFilePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при обработке базы данных: {ex.Message}");
+            }
+        }
+    }
+
+    private bool DatabaseExists(NpgsqlConnection connection, string databaseName)
+    {
+        using (var command = new NpgsqlCommand())
+        {
+            command.Connection = connection;
+            command.CommandText = "SELECT 1 FROM pg_database WHERE datname = @databaseName";
+            command.Parameters.AddWithValue("databaseName", databaseName);
+            return command.ExecuteScalar() != null;
+        }
+    }
+
+    private void ExecuteSqlScript(NpgsqlConnection connection, string sqlFilePath)
+    {
+        string sqlScript = File.ReadAllText(sqlFilePath);
+
+        using (var command = new NpgsqlCommand())
+        {
+            command.Connection = connection;
+            command.CommandText = sqlScript;
+            command.ExecuteNonQuery();
+        }
+    }
+
+    private string BuildDatabaseConnectionString(string databaseName)
+    {
+        var builder = new NpgsqlConnectionStringBuilder(_connectionString);
+        builder.Database = databaseName;
+        return builder.ToString();
+    }
 
     public ResultPostgresData login_user(string email, string password)
     {
@@ -159,10 +234,8 @@ public class PostgresDataService
     public List<CourseAndGroupView> FilterCoursesAndGroups(
         int? sectionId = null, // Id раздела, по которому ищем курс
         DateTime? startDate = null, // Дата старта набора
-        DateTime? endDate = null, // Дата окончания набора
         decimal? minPrice = null, // Цена минимульная
         decimal? maxPrice = null, // Цена максимальная
-        int? durationHours = null, // Продолжительность часов
         bool organizationOnly = false, // Является ли курс от организации?
         bool freeOnly = false, // Есть ли свободные места в организации?
         string? searchQuery = null // Строка для поиска по частичному совпадению
@@ -175,15 +248,13 @@ public class PostgresDataService
         {
             connection.Open();
 
-            using (NpgsqlCommand command = new NpgsqlCommand("SELECT * FROM filter_courses_and_groups(@p_section_id, @p_start_date, @p_end_date, @p_min_price, @p_max_price, @p_duration_hours, @p_organization_only, @p_free_only, @p_search_query)", connection))
+            using (NpgsqlCommand command = new NpgsqlCommand("SELECT * FROM filter_courses_and_groups(@p_section_id, @p_start_date, @p_min_price, @p_max_price, @p_organization_only, @p_free_only, @p_search_query)", connection))
             {
                 // Добавление параметров
                 command.Parameters.AddWithValue("p_section_id", NpgsqlDbType.Integer, (object)sectionId ?? DBNull.Value);
                 command.Parameters.AddWithValue("p_start_date", NpgsqlDbType.Date, (object)startDate ?? DBNull.Value);
-                command.Parameters.AddWithValue("p_end_date", NpgsqlDbType.Date, (object)endDate ?? DBNull.Value);
                 command.Parameters.AddWithValue("p_min_price", NpgsqlDbType.Numeric, (object)minPrice ?? DBNull.Value);
                 command.Parameters.AddWithValue("p_max_price", NpgsqlDbType.Numeric, (object)maxPrice ?? DBNull.Value);
-                command.Parameters.AddWithValue("p_duration_hours", NpgsqlDbType.Integer, (object)durationHours ?? DBNull.Value);
                 command.Parameters.AddWithValue("p_organization_only", NpgsqlDbType.Boolean, (object)organizationOnly ?? DBNull.Value);
                 command.Parameters.AddWithValue("p_free_only", NpgsqlDbType.Boolean, (object)freeOnly ?? DBNull.Value);
                 command.Parameters.AddWithValue("p_search_query", NpgsqlDbType.Varchar, (object)searchQuery ?? DBNull.Value);
@@ -207,14 +278,13 @@ public class PostgresDataService
                         courseAndGroup.GroupId = reader.GetInt32(9);
                         courseAndGroup.GroupEnrollment = reader.GetInt32(10);
                         courseAndGroup.GroupDateStart = reader.GetDateTime(11);
-                        courseAndGroup.GroupDateEnd = reader.IsDBNull(12) ? null : reader.GetDateTime(12);
-                        courseAndGroup.GroupPrice = reader.GetDecimal(13);
-                        courseAndGroup.GroupDuration = reader.GetInt32(14);
-                        courseAndGroup.AcceptedApplicationsCount = reader.GetInt32(15);
-                        courseAndGroup.ScheduleDays = reader.GetString(16);
-                        courseAndGroup.CourseClosed = reader.GetBoolean(17);
-                        courseAndGroup.FormTrainingName = reader.IsDBNull(18) ? null : reader.GetString(18);
-                        courseAndGroup.CityName = reader.IsDBNull(19) ? null : reader.GetString(19);
+                        courseAndGroup.GroupPrice = reader.GetDecimal(12);
+                        courseAndGroup.GroupDuration = reader.GetInt32(13);
+                        courseAndGroup.AcceptedApplicationsCount = reader.GetInt32(14);
+                        courseAndGroup.ScheduleDays = reader.GetString(15);
+                        courseAndGroup.CourseClosed = reader.GetBoolean(16);
+                        courseAndGroup.FormTrainingName = reader.IsDBNull(17) ? null : reader.GetString(17);
+                        courseAndGroup.CityName = reader.IsDBNull(18) ? null : reader.GetString(18);
 
                         coursesAndGroups.Add(courseAndGroup);
                     }
@@ -222,7 +292,7 @@ public class PostgresDataService
             }
         }
 
-        
+
         return coursesAndGroups;
     }
 
@@ -246,14 +316,10 @@ public class PostgresDataService
                         // Присваиваем значения, только если они не являются DBNull
                         var userProfileInfo = new UserProfileInfo();
                         userProfileInfo.AccountId = reader["account_id"] != DBNull.Value ? Convert.ToInt32(reader["account_id"]) : 0;
-                        userProfileInfo.ProfileImageId = reader["profile_image_id"] != DBNull.Value ? Convert.ToInt32(reader["profile_image_id"]) : 0;
-                        userProfileInfo.ProfileImage = reader["profile_image"] != DBNull.Value ? reader["profile_image"].ToString() : string.Empty;
                         userProfileInfo.Email = reader["email"] != DBNull.Value ? reader["email"].ToString() : string.Empty;
                         userProfileInfo.Phone = reader["phone"] != DBNull.Value ? reader["phone"].ToString() : string.Empty;
                         userProfileInfo.Name = reader["name"] != DBNull.Value ? reader["name"].ToString() : string.Empty;
                         userProfileInfo.AboutMe = reader["about_me"] != DBNull.Value ? reader["about_me"].ToString() : string.Empty;
-                        userProfileInfo.SpecializationId = reader["specialization_id"] != DBNull.Value ? Convert.ToInt32(reader["specialization_id"]) : 0;
-                        userProfileInfo.Specialization = reader["specialization"] != DBNull.Value ? reader["specialization"].ToString() : string.Empty;
                         userProfileInfo.LicenseNumber = reader["license_number"] != DBNull.Value ? reader["license_number"].ToString() : string.Empty;
                         userProfileInfo.Confirmation = reader["confirmation"] != DBNull.Value ? Convert.ToBoolean(reader["confirmation"]) : false;
                         userProfileInfo.AccountCreatedAt = reader["account_created_at"] != DBNull.Value ? Convert.ToDateTime(reader["account_created_at"]) : DateTime.MinValue;
@@ -268,46 +334,18 @@ public class PostgresDataService
     }
 
 
-    public List<Specialization> GetAllSpecializations()
-    {
-        List<Specialization> specializations = new List<Specialization>();
-
-        using (var connection = new NpgsqlConnection(_connectionString))
-        {
-            connection.Open();
-
-            using (var command = new NpgsqlCommand("SELECT * FROM get_all_specializations()", connection))
-            {
-                using (var reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        specializations.Add(new Specialization
-                        {
-                            Id = Convert.ToInt32(reader["specialization_id"]),
-                            Name = reader["specialization_name"].ToString()
-                        });
-                    }
-                }
-            }
-        }
-
-        return specializations;
-    }
-
-    public bool UpdateUserProfile(int userId, string name, string aboutMe, int? specializationId, string email, string phone)
+    public bool UpdateUserProfile(int userId, string name, string aboutMe, string email, string phone)
     {
         try
         {
             using (var connection = new NpgsqlConnection(_connectionString))
             {
                 connection.Open();
-                using (var command = new NpgsqlCommand("SELECT update_user_profile(@p_user_id, @p_name, @p_about_me, @p_specialization, @p_email, @p_phone)", connection))
+                using (var command = new NpgsqlCommand("SELECT update_user_profile(@p_user_id, @p_name, @p_about_me, @p_email, @p_phone)", connection))
                 {
                     command.Parameters.AddWithValue("p_user_id", userId);
                     command.Parameters.AddWithValue("p_name", name);
-                    command.Parameters.AddWithValue("p_about_me",NpgsqlDbType.Varchar, !string.IsNullOrEmpty(aboutMe) ? aboutMe : DBNull.Value);
-                    command.Parameters.AddWithValue("p_specialization", specializationId.HasValue ? specializationId : DBNull.Value);
+                    command.Parameters.AddWithValue("p_about_me", NpgsqlDbType.Varchar, !string.IsNullOrEmpty(aboutMe) ? aboutMe : DBNull.Value);
                     command.Parameters.AddWithValue("p_email", email);
                     command.Parameters.AddWithValue("p_phone", phone);
 
@@ -575,18 +613,17 @@ public class PostgresDataService
                             Id = reader.GetInt32(0),
                             Enrollment = reader.GetInt32(1),
                             StartDate = reader.GetDateTime(2),
-                            EndDate = reader.IsDBNull(3) ? null : reader.GetDateTime(3),
-                            Price = reader.GetDecimal(4),
-                            FormsTrainingId = reader.GetInt32(5),
-                            CityId = reader.GetInt32(6),
-                            Duration = reader.GetInt32(7),
-                            CourseId = reader.GetInt32(8),
-                            AcceptedApplicationsCount = reader.GetInt32(9),
-                            FormTraining = reader.IsDBNull(11) ? null : reader.GetString(11),
-                            CityName = reader.IsDBNull(12) ? null : reader.GetString(12)
+                            Price = reader.GetDecimal(3),
+                            FormsTrainingId = reader.GetInt32(4),
+                            CityId = reader.GetInt32(5),
+                            Duration = reader.GetInt32(6),
+                            CourseId = reader.GetInt32(7),
+                            AcceptedApplicationsCount = reader.GetInt32(8),
+                            FormTraining = reader.IsDBNull(10) ? null : reader.GetString(10),
+                            CityName = reader.IsDBNull(11) ? null : reader.GetString(11)
 
                         };
-                        List<ScheduleDay> scheduleDays = JsonConvert.DeserializeObject<List<ScheduleDay>>(reader.GetString(10));
+                        List<ScheduleDay> scheduleDays = JsonConvert.DeserializeObject<List<ScheduleDay>>(reader.GetString(9));
                         groupData.ScheduleDays = scheduleDays;
                         groupList.Add(groupData);
                     }
@@ -619,18 +656,17 @@ public class PostgresDataService
                             Id = reader.GetInt32(0),
                             Enrollment = reader.GetInt32(1),
                             StartDate = reader.GetDateTime(2),
-                            EndDate = reader.IsDBNull(3) ? null : reader.GetDateTime(3),
-                            Price = reader.GetDecimal(4),
-                            FormsTrainingId = reader.GetInt32(5),
-                            CityId = reader.GetInt32(6),
-                            Duration = reader.GetInt32(7),
-                            CourseId = reader.GetInt32(8),
-                            AcceptedApplicationsCount = reader.GetInt32(9),
-                            FormTraining = reader.IsDBNull(11) ? null : reader.GetString(11),
-                            CityName = reader.IsDBNull(12) ? null : reader.GetString(12)
+                            Price = reader.GetDecimal(3),
+                            FormsTrainingId = reader.GetInt32(4),
+                            CityId = reader.GetInt32(5),
+                            Duration = reader.GetInt32(6),
+                            CourseId = reader.GetInt32(7),
+                            AcceptedApplicationsCount = reader.GetInt32(8),
+                            FormTraining = reader.IsDBNull(10) ? null : reader.GetString(10),
+                            CityName = reader.IsDBNull(11) ? null : reader.GetString(11)
 
                         };
-                        List<ScheduleDay> scheduleDays = JsonConvert.DeserializeObject<List<ScheduleDay>>(reader.GetString(10));
+                        List<ScheduleDay> scheduleDays = JsonConvert.DeserializeObject<List<ScheduleDay>>(reader.GetString(9));
                         result.ScheduleDays = scheduleDays;
                     }
                 }
@@ -660,23 +696,15 @@ public class PostgresDataService
                         group.Id = reader.GetInt32(0);
                         group.Enrollment = reader.GetInt32(1);
                         group.StartDate = reader.GetDateTime(2);
-                        if (!reader.IsDBNull(3))
-                        {
-                            group.EndDate = reader.GetDateTime(3);
-                        }
-                        else
-                        {
-                            group.EndDate = null;
-                        }
-                        group.Price = reader.GetDecimal(4);
-                        group.FormsTrainingId = reader.GetInt32(5);
-                        group.CityId = reader.GetInt32(6);
-                        group.Duration = reader.GetInt32(7);
-                        group.CourseId = reader.GetInt32(8);
-                        group.AcceptedApplicationsCount = reader.GetInt32(9);
+                        group.Price = reader.GetDecimal(3);
+                        group.FormsTrainingId = reader.GetInt32(4);
+                        group.CityId = reader.GetInt32(5);
+                        group.Duration = reader.GetInt32(6);
+                        group.CourseId = reader.GetInt32(7);
+                        group.AcceptedApplicationsCount = reader.GetInt32(8);
 
 
-                        List<ScheduleDay> scheduleDays = JsonConvert.DeserializeObject<List<ScheduleDay>>(reader.GetString(10));
+                        List<ScheduleDay> scheduleDays = JsonConvert.DeserializeObject<List<ScheduleDay>>(reader.GetString(9));
                         group.ScheduleDays = scheduleDays;
                     }
                 }
@@ -724,20 +752,19 @@ public class PostgresDataService
     }
 
 
-    public bool UpdateStudyGroup(int id, int enrollment, DateTime startDate, DateTime? endDate, decimal price,
+    public bool UpdateStudyGroup(int id, int enrollment, DateTime startDate, decimal price,
         int? formsTrainingId, int? cityId, int duration)
     {
         using (var connection = new NpgsqlConnection(_connectionString))
         {
             connection.Open();
-            using (var command = new NpgsqlCommand("select * from update_study_group(@p_id, @p_enrollment, @p_date_start, @p_date_end, @p_price, @p_id_forms_training, @p_id_city, @p_duration)", connection))
+            using (var command = new NpgsqlCommand("select * from update_study_group(@p_id, @p_enrollment, @p_date_start, @p_price, @p_id_forms_training, @p_id_city, @p_duration)", connection))
             {
 
 
                 command.Parameters.AddWithValue("p_id", id);
                 command.Parameters.AddWithValue("p_enrollment", enrollment);
                 command.Parameters.AddWithValue("p_date_start", NpgsqlDbType.Date, startDate);
-                command.Parameters.AddWithValue("p_date_end", NpgsqlDbType.Date, endDate.HasValue ? (object)endDate.Value : DBNull.Value);
                 command.Parameters.AddWithValue("p_price", price);
                 command.Parameters.AddWithValue("p_id_forms_training", formsTrainingId.HasValue ? formsTrainingId : DBNull.Value);
                 command.Parameters.AddWithValue("p_id_city", cityId.HasValue ? cityId : DBNull.Value);
@@ -810,7 +837,7 @@ public class PostgresDataService
         }
     }
 
-    public int CreateStudyGroup(int courseId, int enrollment, DateTime? dateStart, DateTime? dateEnd, decimal price, int formsTrainingId, int cityId, int duration)
+    public int CreateStudyGroup(int courseId, int enrollment, DateTime? dateStart, decimal price, int formsTrainingId, int cityId, int duration)
     {
         int newGroupId = 0;
 
@@ -818,11 +845,10 @@ public class PostgresDataService
         {
             connection.Open();
 
-            using (var command = new NpgsqlCommand("SELECT create_study_group(@p_enrollment, @p_date_start, @p_date_end, @p_price, @p_id_FormsTraining, @p_id_city, @p_duration, @p_id_course)", connection))
+            using (var command = new NpgsqlCommand("SELECT create_study_group(@p_enrollment, @p_date_start, @p_price, @p_id_FormsTraining, @p_id_city, @p_duration, @p_id_course)", connection))
             {
                 command.Parameters.AddWithValue("p_enrollment", NpgsqlDbType.Integer, enrollment);
                 command.Parameters.AddWithValue("p_date_start", NpgsqlDbType.Date, dateStart.HasValue ? dateStart : DateTime.Now);
-                command.Parameters.AddWithValue("p_date_end", NpgsqlDbType.Date, dateEnd.HasValue ? dateEnd : DBNull.Value);
                 command.Parameters.AddWithValue("p_price", NpgsqlDbType.Numeric, price);
                 command.Parameters.AddWithValue("p_id_FormsTraining", NpgsqlDbType.Integer, formsTrainingId);
                 command.Parameters.AddWithValue("p_id_city", NpgsqlDbType.Integer, cityId);
@@ -899,7 +925,6 @@ public class PostgresDataService
                             StudyGroupId = reader.GetInt32(reader.GetOrdinal("studygroup_id")),
                             Enrollment = reader.GetInt32(reader.GetOrdinal("enrollment")),
                             DateStart = reader.GetDateTime(reader.GetOrdinal("date_start")),
-                            DateEnd = reader.IsDBNull(reader.GetOrdinal("date_end")) ? null : (DateTime?)reader.GetDateTime(reader.GetOrdinal("date_end")),
                             Price = reader.IsDBNull(reader.GetOrdinal("price")) ? null : (decimal?)reader.GetDecimal(reader.GetOrdinal("price")),
                             Duration = reader.IsDBNull(reader.GetOrdinal("duration")) ? null : (int?)reader.GetInt32(reader.GetOrdinal("duration")),
                             FormTrainingName = reader.IsDBNull(reader.GetOrdinal("form_training_name")) ? null : reader.GetString(reader.GetOrdinal("form_training_name")),
@@ -1137,21 +1162,17 @@ public class PostgresDataService
                 {
                     while (reader.Read())
                     {
-                        UserProfileInfo userProfileInfo = new UserProfileInfo
-                        {
-                            AccountId = reader.GetInt32(0),
-                            ProfileImageId = reader.IsDBNull(1) ? 0 : reader.GetInt32(1), // Проверка на NULL и присвоение значения по умолчанию
-                            ProfileImage = reader.IsDBNull(2) ? string.Empty : reader.GetString(2), // Проверка на NULL и присвоение значения по умолчанию
-                            Email = reader.GetString(3),
-                            Phone = reader.GetString(4),
-                            Name = reader.GetString(5),
-                            AboutMe = reader.IsDBNull(6) ? string.Empty : reader.GetString(6), // Проверка на NULL и присвоение значения по умолчанию
-                            SpecializationId = reader.IsDBNull(7) ? null : reader.GetInt32(7),
-                            Specialization = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
-                            LicenseNumber = reader.GetString(9),
-                            Confirmation = reader.GetBoolean(10),
-                            AccountCreatedAt = reader.GetDateTime(11)
-                        };
+                        UserProfileInfo userProfileInfo = new UserProfileInfo();
+
+                        userProfileInfo.AccountId = reader.GetInt32(0);
+                        userProfileInfo.Email = reader.GetString(1);
+                        userProfileInfo.Phone = reader.GetString(2);
+                        userProfileInfo.Name = reader.GetString(3);
+                        userProfileInfo.AboutMe = reader.IsDBNull(4) ? string.Empty : reader.GetString(6); // Проверка на NULL и присвоение значения по умолчанию
+                        userProfileInfo.LicenseNumber = reader.GetString(5);
+                        userProfileInfo.Confirmation = reader.GetBoolean(6);
+                        userProfileInfo.AccountCreatedAt = reader.GetDateTime(7);
+
 
                         userProfileInfos.Add(userProfileInfo);
                     }
@@ -1335,12 +1356,11 @@ public class PostgresDataService
                         courseAndGroup.GroupId = reader.GetInt32(9);
                         courseAndGroup.GroupEnrollment = reader.GetInt32(10);
                         courseAndGroup.GroupDateStart = reader.GetDateTime(11);
-                        courseAndGroup.GroupDateEnd = reader.IsDBNull(12) ? (DateTime?)null : reader.GetDateTime(12);
-                        courseAndGroup.GroupPrice = reader.GetDecimal(13);
-                        courseAndGroup.GroupDuration = reader.GetInt32(14);
-                        courseAndGroup.AcceptedApplicationsCount = reader.GetInt32(15);
-                        courseAndGroup.ScheduleDays = reader.GetString(16);
-                        courseAndGroup.CourseClosed = reader.GetBoolean(17);
+                        courseAndGroup.GroupPrice = reader.GetDecimal(12);
+                        courseAndGroup.GroupDuration = reader.GetInt32(13);
+                        courseAndGroup.AcceptedApplicationsCount = reader.GetInt32(14);
+                        courseAndGroup.ScheduleDays = reader.GetString(15);
+                        courseAndGroup.CourseClosed = reader.GetBoolean(16);
 
                         coursesAndGroups.Add(courseAndGroup);
                     }

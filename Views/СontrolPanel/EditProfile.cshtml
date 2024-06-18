@@ -1,6 +1,5 @@
 @{
     List<Specialization> specializations = ViewData["Specializations"] as List<Specialization>;
-    @* UserProfileInfo user = ViewData["User"] as UserProfileInfo; *@
 
 }
 @model UpdateUserProfileModel
@@ -29,11 +28,6 @@
                     <span class="validation-span"> @Html.ValidationMessageFor(model => model.name) </span>
                 </div>
 
-                @* <div class="form-group">
-            @Html.LabelFor(model => model.aboutMe, "Описание", new { @class = "form-label" })
-            @Html.TextAreaFor(model => model.aboutMe, new { @class = "form-control", rows = "3" })
-            <span class="validation-span"> @Html.ValidationMessageFor(model => model.aboutMe) </span>
-            </div> *@
 
                 <div class="form-group">
                     @Html.LabelFor(model => model.aboutMe, "Описание", new { @class = "form-label" })
@@ -44,13 +38,6 @@
                             @Html.ValidationMessageFor(model => model.aboutMe)
                         }
                     </span>
-                </div>
-
-                <div class="form-group">
-                    @Html.LabelFor(model => model.specializationId, "Сфера деятельности", new { @class = "form-label" })
-                    @Html.DropDownListFor(model => model.specializationId, new SelectList(specializations, "Id", "Name"),
-                             "Выберите специализацию", new { @class = "form-control" })
-                    <span class="validation-span"> @Html.ValidationMessageFor(model => model.specializationId) </span>
                 </div>
 
                 <div class="form-group">

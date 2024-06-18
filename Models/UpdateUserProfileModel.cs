@@ -14,8 +14,6 @@ public class UpdateUserProfileModel
     [StringLength(1000, ErrorMessage = "Описание должен быть не длиннее 1000 символов")]
     public string aboutMe { get; set; } = "";
 
-    public int? specializationId { get; set; }
-
     [Required(ErrorMessage = "Поле 'Email' обязательно для заполнения")]
     [EmailAddress(ErrorMessage = "Некорректный формат адреса электронной почты")]
     [StringLength(100, ErrorMessage = "Email должен быть не длиннее 100 символов")]

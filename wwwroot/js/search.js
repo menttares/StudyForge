@@ -103,18 +103,10 @@ function createCourseCards(data) {
       }</td>
                 </tr>
                 <tr>
-                  <td class="fw-medium" >Дата старта:</td>
+                  <td class="fw-medium" >Дата старта обучения:</td>
                   <td>${new Date(
                     course.groupDateStart
                   ).toLocaleDateString()}</td>
-                </tr>
-                <tr>
-                  <td class="fw-medium" >Дата окончания:</td>
-                  <td>${
-                    course.endDate
-                      ? new Date(course.groupDateEnd).toLocaleDateString()
-                      : "не определено"
-                  }</td>
                 </tr>
                 <tr>
                   <td class="fw-medium" >Город:</td>

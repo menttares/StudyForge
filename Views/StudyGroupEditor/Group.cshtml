@@ -33,11 +33,6 @@
             @Html.ValidationMessageFor(m => m.StartDate, "", new { @class = "text-danger" })
         </div>
         <div class="form-group">
-            <label for="endDate">Дата конца:</label>
-            @Html.TextBoxFor(m => m.EndDate, "{0:yyyy-MM-dd}", new { @class = "form-control", id = "endDate", type = "date" })
-            @Html.ValidationMessageFor(m => m.EndDate, "", new { @class = "text-danger" })
-        </div>
-        <div class="form-group">
             <label for="price">Цена:</label>
             @Html.TextBoxFor(m => m.Price, "{0:F2}", new { @class = "form-control", id = "price", pattern = @"\d+,\d{2}" })
             @Html.ValidationMessageFor(m => m.Price, "", new { @class = "text-danger" })

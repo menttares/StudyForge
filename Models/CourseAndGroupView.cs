@@ -18,7 +18,6 @@ public class CourseAndGroupView
     public int GroupId { get; set; }
     public int GroupEnrollment { get; set; }
     public DateTime GroupDateStart { get; set; }
-    public DateTime? GroupDateEnd { get; set; }
     public decimal GroupPrice { get; set; }
     public int GroupDuration { get; set; }
     public int AcceptedApplicationsCount { get; set; }

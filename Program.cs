@@ -35,7 +35,11 @@ builder.Services.AddTransient<IEmailService, EmailService>();
 // Получает строку подключения к базе данных
 string? connectionString = builder.Configuration.GetConnectionString("ADO.NET");
 // Подключение сервиса для взаимодействия с БД postgres
-builder.Services.AddTransient<PostgresDataService>(_ => new PostgresDataService(connectionString));
+builder.Services.AddTransient<PostgresDataService>(_ => {
+    var newServices = new PostgresDataService(connectionString);
+    newServices.("", SQL/init.sql");
+    return newServices;
+});
 
 
 if (builder.Environment.IsDevelopment())

@@ -17,7 +17,7 @@
     }
 
     @@media(max - width: 768px) {
-        .profile-info  {
+        .profile-info {
             text-align: center;
         }
 
@@ -50,17 +50,10 @@
     <div class="row profile-info mt-2">
         <div class="col bg-light">
             <div class="bg-light text-center p-3">
-                @if (string.IsNullOrEmpty(user.ProfileImage))
-                {
-                    <img class="image-profile rounded-circle" src="~/images/ImageProfiles/profile.jpg"
-                        alt="Изображение профиля">
-                }
-                else
-                {
-                    <img class="image-profile rounded-circle"
-                        src="~/images/ImageProfiles/@(string.IsNullOrEmpty(user.ProfileImage) ? "default" : user.ProfileImage).png"
-                        alt="Изображение профиля">
-                }
+
+                <img class="image-profile rounded-circle" src="~/images/ImageProfiles/profile.jpg"
+                    alt="Изображение профиля">
+
             </div>
         </div>
         <div class="col bg-light">
@@ -73,21 +66,6 @@
                     <tr>
                         <th scope="row">Телефон</th>
                         <td>@user.Phone</td>
-                    </tr>
-                    <tr>
-                        <th scope="row">Сфера деятельности</th>
-                        <td>
-                            @if (string.IsNullOrEmpty(user.Specialization))
-                            {
-                                <text>Не определена</text>
-                            }
-                            else
-                            {
-                                <text>@user.Specialization</text>
-                            }
-
-
-                        </td>
                     </tr>
                     <tr>
                         <th scope="row">Лицензия ЕРЛ</th>
