@@ -119,7 +119,18 @@
                         </div>
                         <div class="col" style="min-width: 300px;">
                             <p>Имя: @userProfileInfo.Name</p>
-                            <p class="">О себе: @userProfileInfo.AboutMe</p>
+                            <p class="">О себе:
+                                @if (string.IsNullOrEmpty(userProfileInfo.AboutMe))
+                                {
+
+                                    <text>Нет описания</text>
+                                }
+                                else
+                                {
+
+                                    @userProfileInfo.AboutMe
+                                }
+                            </p>
                         </div>
                     </div>
                 </div>

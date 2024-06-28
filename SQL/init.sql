@@ -132,14 +132,9 @@ CREATE TABLE COURSES (
 		LENGTH(NAME) >= 3
 		AND LENGTH(NAME) <= 100
 	), -- Название курса
-	PRICE NUMERIC(10, 2) CHECK (
-		PRICE >= 0
-		AND PRICE < 10000000
-	) DEFAULT 0, -- Цена курса
 	DESCRIPTION VARCHAR(1000), -- Описание курса
 	CREATED_AT TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Дата создания (автоматически заполняется)
-	COURSE_CLOSED BOOL DEFAULT FALSE, -- Закрыт ли курс организатором?
-	DURATION_HOURS INTEGER CHECK (DURATION_HOURS >= 0) -- Длительность в часах
+	COURSE_CLOSED BOOL DEFAULT FALSE -- Закрыт ли курс организатором?
 );
 
 CREATE TABLE BANNEDCOURSES (

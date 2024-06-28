@@ -24,88 +24,90 @@ public record class ResultPostgresData<T>(ResultPostgresStatus Status, T Result,
 
 public class PostgresDataService
 {
-    private readonly string _connectionString;
-    private readonly string _tableName = "my_table";
+    private string _connectionString;
+    private readonly string _databaseName;
+    private readonly string _scriptFilePath;
 
-    public PostgresDataService(string connectionString)
+    public PostgresDataService(string masterConnectionString, string databaseName, string scriptFilePath)
     {
-        _connectionString = connectionString;
+        _connectionString = masterConnectionString;
+        _databaseName = databaseName;
+        _scriptFilePath = scriptFilePath;
+
+        EnsureDatabaseAndExecuteSql();
     }
 
+    private void EnsureDatabaseAndExecuteSql()
+    {
 
-    public void EnsureDatabaseAndExecuteSql(string databaseName, string sqlFilePath)
+        bool Exists = DatabaseExists(_databaseName);
+        // Проверяем, существует ли база данных
+        if (!Exists)
+        {
+            // Создаем базу данных
+            CreateDatabase(_databaseName);
+        }
+
+        // Подключаемся к созданной или существующей базе данных
+        _connectionString = BuildConnectionStringForDatabase(_connectionString, _databaseName);
+
+        if(!Exists)
+        {
+            // Выполняем SQL-скрипт инициализации
+            ExecuteSqlScript( _scriptFilePath);
+        }
+    }
+
+    private bool DatabaseExists(string databaseName)
     {
         using (var connection = new NpgsqlConnection(_connectionString))
         {
-            try
+            connection.Open();
+            using (var command = new NpgsqlCommand())
             {
-                connection.Open();
-
-                // Проверяем существование базы данных
-                if (!DatabaseExists(connection, databaseName))
-                {
-                    Console.WriteLine($"База данных '{databaseName}' не найдена. Создание...");
-
-                    // Создаем базу данных
-                    using (var createDbCmd = connection.CreateCommand())
-                    {
-                        createDbCmd.CommandText = $"CREATE DATABASE {databaseName}";
-                        createDbCmd.ExecuteNonQuery();
-                    }
-
-                    Console.WriteLine($"База данных '{databaseName}' успешно создана.");
-                }
-                else
-                {
-                    Console.WriteLine($"База данных '{databaseName}' уже существует.");
-                }
-
-                // Подключаемся к новой или существующей базе данных
-                string databaseConnectionString = BuildDatabaseConnectionString(databaseName);
-                using (var databaseConnection = new NpgsqlConnection(databaseConnectionString))
-                {
-                    databaseConnection.Open();
-
-                    // Выполняем SQL-скрипт
-                    ExecuteSqlScript(databaseConnection, sqlFilePath);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Ошибка при обработке базы данных: {ex.Message}");
+                command.Connection = connection;
+                command.CommandText = "SELECT 1 FROM pg_database WHERE datname = @databaseName";
+                command.Parameters.AddWithValue("@databaseName", databaseName);
+                return command.ExecuteScalar() != null;
             }
         }
     }
 
-    private bool DatabaseExists(NpgsqlConnection connection, string databaseName)
+    private void CreateDatabase(string databaseName)
     {
-        using (var command = new NpgsqlCommand())
+        using (var connection = new NpgsqlConnection(_connectionString))
         {
-            command.Connection = connection;
-            command.CommandText = "SELECT 1 FROM pg_database WHERE datname = @databaseName";
-            command.Parameters.AddWithValue("databaseName", databaseName);
-            return command.ExecuteScalar() != null;
+            connection.Open();
+            using (var command = new NpgsqlCommand())
+            {
+                command.Connection = connection;
+                command.CommandText = $"CREATE DATABASE \"{databaseName}\"";
+                command.ExecuteNonQuery();
+            }
         }
     }
 
-    private void ExecuteSqlScript(NpgsqlConnection connection, string sqlFilePath)
+    private string BuildConnectionStringForDatabase(string masterConnectionString, string databaseName)
     {
-        string sqlScript = File.ReadAllText(sqlFilePath);
-
-        using (var command = new NpgsqlCommand())
-        {
-            command.Connection = connection;
-            command.CommandText = sqlScript;
-            command.ExecuteNonQuery();
-        }
-    }
-
-    private string BuildDatabaseConnectionString(string databaseName)
-    {
-        var builder = new NpgsqlConnectionStringBuilder(_connectionString);
+        NpgsqlConnectionStringBuilder builder = new NpgsqlConnectionStringBuilder(masterConnectionString);
         builder.Database = databaseName;
         return builder.ToString();
     }
+
+    private void ExecuteSqlScript(string scriptFilePath)
+    {
+        string script = File.ReadAllText(scriptFilePath);
+
+        using (var connection = new NpgsqlConnection(_connectionString))
+        {
+            connection.Open();
+            using (var command = new NpgsqlCommand(script, connection))
+            {
+                command.ExecuteNonQuery();
+            }
+        }
+    }
+
 
     public ResultPostgresData login_user(string email, string password)
     {
@@ -233,7 +235,7 @@ public class PostgresDataService
     // метод, вызываемый при поиске учебных группы
     public List<CourseAndGroupView> FilterCoursesAndGroups(
         int? sectionId = null, // Id раздела, по которому ищем курс
-        DateTime? startDate = null, // Дата старта набора
+        DateTime? startDate = null, // Дата старта обучения
         decimal? minPrice = null, // Цена минимульная
         decimal? maxPrice = null, // Цена максимальная
         bool organizationOnly = false, // Является ли курс от организации?
@@ -1168,7 +1170,7 @@ public class PostgresDataService
                         userProfileInfo.Email = reader.GetString(1);
                         userProfileInfo.Phone = reader.GetString(2);
                         userProfileInfo.Name = reader.GetString(3);
-                        userProfileInfo.AboutMe = reader.IsDBNull(4) ? string.Empty : reader.GetString(6); // Проверка на NULL и присвоение значения по умолчанию
+                        userProfileInfo.AboutMe = reader.IsDBNull(4) ? string.Empty : reader.GetString(4); // Проверка на NULL и присвоение значения по умолчанию
                         userProfileInfo.LicenseNumber = reader.GetString(5);
                         userProfileInfo.Confirmation = reader.GetBoolean(6);
                         userProfileInfo.AccountCreatedAt = reader.GetDateTime(7);
